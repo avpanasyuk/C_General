@@ -132,7 +132,13 @@
     <Compile Include="CircBufferSafe.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="common_cpp.cpp">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="General.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Vector.h">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>

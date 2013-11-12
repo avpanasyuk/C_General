@@ -11,11 +11,12 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "Vector.h"
 //the size of CircBuffer is powers of 2 to simplify rollovers
 
 template <typename T, uint8_t sizePower2, typename tSize=uint8_t> class CircBuffer {
 protected:
-  T Data[1 << sizePower2];
+  avp::Vector8<T, 1 << sizePower2> Data;
   volatile struct _Pointer { // I am using structure with bitfields here to make pointers to wrap without any additional code
       tSize I:sizePower2;
   } BeingRead, BeingWritten;
