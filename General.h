@@ -23,6 +23,7 @@ namespace avp {
   template<typename Tin, typename Tout> inline constexpr Tout sqr(Tin const& a) { return a*a; }
 
   // following functions use  function of type to do formatted output bool write(void *Ptr, uint16_t Size);
+  // NOTE both functions do not write 0 !!!!!
   extern bool vprintf(bool (*pwrite)(const void *Ptr, size_t Size),char const *format, va_list ap);
   extern bool printf(bool (*pwrite)(const void *Ptr, size_t Size), char const *format, ...);
 }// avp
