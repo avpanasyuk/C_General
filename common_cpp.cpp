@@ -14,9 +14,9 @@ namespace avp {
   bool vprintf(bool (*pwrite)(const void *Ptr, size_t Size),char const *format, va_list ap) {
     size_t Size = vsnprintf(NULL,0,format,ap);
     if(Size < 0) return false;
-    char Buffer[Size+1];
+    char Buffer[Size+1]; // +1 to include ending zero byte
     vsprintf(Buffer,format,ap);
-    return (*pwrite)((void *)Buffer,Size);
+    return (*pwrite)((void *)Buffer,Size); // we do not write ending 0 byte
   } // vprintf
   bool printf(bool (*pwrite)(const void *Ptr, size_t Size), char const *format, ...) {
     va_list ap;

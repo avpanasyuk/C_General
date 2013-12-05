@@ -11,72 +11,42 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "BitVar.h"
 // the size of CircBuffer is powers of 2 to simplify rollovers
 
+// operation "read" moves pointer first and returns slot to read after. 
+// "write" returns slot to write and moves pointer on "FinishedWriting"
+// this class seems to be reenterable and safe for interrupts without additional protection
+  
 template <typename T, uint8_t sizePower2, typename tSize=uint8_t> class CircBuffer {
-protected:
-  T Data[1U << sizePower2];
-  volatile struct _Pointer { // I am using structure with bitfields here to make pointers to wrap without any additional code
-      tSize I:sizePower2;
-  } BeingRead, BeingWritten;
-	static constexpr tSize BitMask = (1LLU << sizePower2) - 1;
-public:
-  CircBuffer() { Emptify(); };
-  T *ForceSlotToWrite() { // never returns NULL, if we ran down sending pointer move it (and discard data)
-    if(++BeingWritten.I == BeingRead.I) ++BeingRead.I; // storing pointer ran down sending one, we discard a slot
-    return &Data[BeingWritten.I];
-  } // ForceSlotToStore
-  T *GetSlotToWrite() {
-    if(((BeingWritten.I+1) & BitMask) == BeingRead.I) return NULL; // storing pointer ran down sending one
-    return &Data[++BeingWritten.I];
-  } // GetSlotToStore
-  const T *GetSlotToRead() { return (BeingRead.I == BeingWritten.I)?NULL:&Data[++BeingRead.I]; }
-  void Emptify() { BeingRead.I = BeingWritten.I; }
-  uint16_t GetSlotSize() { return sizeof(T); /* *(1 << sizePower2);*/ }
-  tSize LeftToWrite() { return (BeingRead.I - BeingWritten.I - 1) & BitMask; }
-  tSize LeftToRead() { return (BeingWritten.I - BeingRead.I) & BitMask; }
-  void FinishedReading() {} // implemented in CircBufferSafe
-  void FinishedWriting() {}
-}; // CircBuffer
-
-// The difference from CircBuffer is that when we giving a slot we mark it dirty until "Finished..." routine is called
-// to mark it clean. This way we can not read slot still being written and vice versa.
-
-
-template <typename T, uint8_t sizePower2, typename tSize=uint8_t> class CircBufferSafe {
   protected:
   T Data[1U << sizePower2];
-  volatile struct _Pointer { // I am using structure with bitfields here to make pointers to wrap without any additional code
-    tSize I:sizePower2;
-  } BeingRead, BeingWritten;
-  volatile uint8_t NotYetWritten, NotYetRead; // 0 if the slot pointed to by Being????? is read/written, 1 if not yet
-  static constexpr tSize BitMask = (1LLU << sizePower2) - 1;
+  volatile struct BitVar<sizePower2, tSize>  BeingRead, BeingWritten;
   public:
-  CircBufferSafe() { Emptify(); };
-  T *GetSlotToWrite() { // does not discard reading slots
-    return (((BeingWritten.I+NotYetRead+1) & BitMask) == BeingRead.I)?NULL:
-    (NotYetWritten = 1,&Data[++BeingWritten.I]);
-  } // GetSlotToStore
-  T *ForceSlotToWrite() { // if next slot is DoneRead, can shift reading pointer thus discarding slots to read
-    // if next slot is still being read return NULL;
-    if(((BeingWritten.I+NotYetRead+1) & BitMask) == BeingRead.I) {
-    if(!NotYetRead) ++BeingRead.I; else return NULL; }
-    NotYetWritten = 1;
-    return &Data[++BeingWritten.I];
-  } // ForceSlotToStore
-  void FinishedWriting() { NotYetWritten = 0; }
-  void FinishedReading() { NotYetRead = 0; }
-  const T *GetSlotToRead() {
-    return (((BeingRead.I+NotYetWritten) & BitMask) == BeingWritten.I)?NULL:
-    (NotYetRead=1,&Data[++BeingRead.I]);
-  } // GetSlotToRead
-  void Emptify() { BeingRead.I = BeingWritten.I; NotYetWritten = NotYetRead = 0;}
-  uint16_t GetSlotSize() { return sizeof(T); /* *(1 << sizePower2);*/ }
-  tSize LeftToWrite() { return (BeingRead.I - BeingWritten.I - NotYetRead - 1) & BitMask; }
-  tSize LeftToRead() { return (BeingWritten.I - BeingRead.I - NotYetWritten) & BitMask; }
-}; // CircBufferSafe
+  CircBuffer() { Clear(); }
 
+  void Clear() {  BeingWritten = BeingRead + 1; }
+  tSize LeftToWrite() { return tSize(BeingRead - BeingWritten); }
+  tSize LeftToRead() { return tSize(BeingWritten - BeingRead - 1); }
+  T *GetSlotToWrite() { return &Data[tSize(BeingWritten)]; }
+  T const *GetSlotToRead() { return &Data[tSize(++BeingRead)]; }
+  void FinishedWriting() { ++BeingWritten; }
+  T *ForceSlotToWrite() {  if(!LeftToWrite()) ++BeingRead; return GetSlotToWrite(); }
+}; // CircBuffer
 
-
+template <class T> class SimpleCircBuffer { // I think none of the operations have to be atomic. 
+  // the algorithm is modified a bit to make it happen.
+protected:
+  T Buffer[1<<8];
+  uint8_t ReadI, WrittenI;
+public:
+  SimpleCircBuffer() { Clear(); }
+  uint8_t LeftToWrite() { return ReadI - WrittenI; }
+  uint8_t LeftToRead() { return WrittenI - ReadI - 1; }
+  void Write(T d) { Buffer[WrittenI++] = d; } 
+  T Read() { return Buffer[++ReadI]; } 
+  void ForceWrite(T d) { if(!LeftToWrite()) ++ReadI; Write(d); } 
+  void Clear() { WrittenI = ReadI + 1; }
+}; //  SimpleCircBuffer
 
 #endif /* CIRCBUFFER_H_ */

@@ -23,7 +23,7 @@ namespace avp {
   template<typename Tin, typename Tout> inline constexpr Tout sqr(Tin const& a) { return a*a; }
 
   // following functions use  function of type to do formatted output bool write(void *Ptr, uint16_t Size);
-  // NOTE both functions do not write 0 !!!!!
+  // NOTE both functions do not write string-ending 0 !!!!!
   extern bool vprintf(bool (*pwrite)(const void *Ptr, size_t Size),char const *format, va_list ap);
   extern bool printf(bool (*pwrite)(const void *Ptr, size_t Size), char const *format, ...);
 }// avp
@@ -39,6 +39,11 @@ inline uint16_t Word(const uint8_t *Params) {
 // following are operators which can be universaly derived from others
 template<typename T> T &operator++(T &v) { return v += 1; }
 template<typename T> T operator++(T &v, int) { T old(v); v += 1; return old; }
+template<typename T> bool operator!=(T const &v1, T const &v2) { return !(v1 == v2); }
+
+// preprocessor tricks
+#define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
+#define PRIMITIVE_CAT(a, ...) a ## __VA_ARGS__
 
 
 #endif /* GENERAL_H_ */
