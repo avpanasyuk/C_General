@@ -7,10 +7,15 @@
 // Vector.h
 #include <stdlib.h>
 #include <stdio.h>
+#include "General.h"
+#include "Vector.h"
+
+void Fail::default_function() { abort(); }
 
 namespace avp {
-  void (*bad_pointer_func)() = abort;
-  void (*bad_index_func)() = abort;
+  Fail::function bad_index_func = Fail::default_function;
+  Fail::function bad_pointer_func = Fail::default_function;
+
   bool vprintf(bool (*pwrite)(const void *Ptr, size_t Size),char const *format, va_list ap) {
     size_t Size = vsnprintf(NULL,0,format,ap);
     if(Size < 0) return false;

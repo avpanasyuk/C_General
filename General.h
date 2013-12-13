@@ -46,4 +46,10 @@ template<typename T> bool operator!=(T const &v1, T const &v2) { return !(v1 == 
 #define PRIMITIVE_CAT(a, ...) a ## __VA_ARGS__
 
 
+namespace Fail {
+  typedef void (*function)();
+  extern void default_function();
+} // Fail
+
+
 #endif /* GENERAL_H_ */

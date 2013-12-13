@@ -9,10 +9,12 @@
 #ifndef VECTOR_H_
 #define VECTOR_H_
 
+#include "General.h"
+
 
 namespace avp {
-  extern void (*bad_index_func)();
-  extern void (*bad_pointer_func)();
+  extern Fail::function bad_index_func;
+  extern Fail::function bad_pointer_func;
 
   template<typename T, typename SizeType, SizeType Length> class Vector {
     // index checking vector
