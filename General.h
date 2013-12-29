@@ -20,7 +20,7 @@ namespace avp {
   template<typename T> inline constexpr T min(T const& a, T const& b) { return a<b?a:b; }
   template<typename T> inline constexpr T Abs(T const& a) { return a<0?-a:a; }
   template<typename T> inline constexpr T round(T const& num, T const& denom) { return (num + num + denom)/denom/2; }
-  template<typename Tin, typename Tout> inline constexpr Tout sqr(Tin const& a) { return a*a; }
+  template<typename Tin, typename Tout> inline constexpr Tout sqr(Tin const& a) { return Tout(a)*Tout(a); }
 
   // following functions use  function of type to do formatted output bool write(void *Ptr, uint16_t Size);
   // NOTE both functions do not write string-ending 0 !!!!!
