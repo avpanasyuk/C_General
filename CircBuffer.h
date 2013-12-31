@@ -32,6 +32,7 @@ template <typename T, uint8_t sizePower2, typename tSize=uint8_t> class CircBuff
   T const *GetSlotToRead() { return &Data[tSize(++BeingRead)]; }
   void FinishedWriting() { ++BeingWritten; }
   T *ForceSlotToWrite() {  if(!LeftToWrite()) ++BeingRead; return GetSlotToWrite(); }
+  constexpr tSize GetFullSize() const { return (1U << sizePower2) - 1; };
 }; // CircBuffer
 
 template <class T> class SimpleCircBuffer { // I think none of the operations have to be atomic. 
@@ -47,6 +48,7 @@ public:
   T Read() { return Buffer[++ReadI]; } 
   void ForceWrite(T d) { if(!LeftToWrite()) ++ReadI; Write(d); } 
   void Clear() { WrittenI = ReadI + 1; }
+  constexpr uint8_t GetFullSize() const { return (1<<8) - 1; };
 }; //  SimpleCircBuffer
 
 #endif /* CIRCBUFFER_H_ */
