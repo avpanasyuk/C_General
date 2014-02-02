@@ -29,6 +29,11 @@ namespace avp {
   static inline uint16_t Word(const uint8_t *Params) {
     return (uint16_t(Params[1]) << 8)+Params[0];
   } // Word
+  template<class T=uint32_t> uint8_t checksum(uint8_t const *p, T size) {
+    uint8_t XORvalue = 0;
+    while(size--) XORvalue ^= *(p++);
+    return XORvalue;
+  } // checksum
 }// avp
 
 #define LOG10(x) ((x)>999?3:(x)>99?2:(x)>9?1:0)
@@ -48,7 +53,7 @@ template<typename T> bool operator!=(T const &v1, T const &v2) { return !(v1 == 
 #define DO_PRAGMA(x) _Pragma (#x)
 #define TODO(x) DO_PRAGMA(message ("TODO - " #x))
 
-// things to supress warning for a bit 
+// things to supress warning for a bit
 #define IGNORE(x) _Pragma ("GCC diagnostic push") \
 DO_PRAGMA(GCC diagnostic ignored #x)
 #define STOP_IGNORING _Pragma ("GCC diagnostic pop")

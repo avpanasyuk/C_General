@@ -1,11 +1,3 @@
-/*
- * Vector.h
- *
- * Created: 11/9/2013 5:09:10 PM
- *  Author: panasyuk
- */
-
-
 #ifndef VECTOR_H_
 #define VECTOR_H_
 
@@ -27,6 +19,7 @@ namespace avp {
 #endif
       return Data[i];
     }
+   // operator T *() const { return Data; }
   }; // class Vector
 
   template<typename T, typename SizeType, SizeType Length> class PointerVector:
