@@ -29,7 +29,7 @@ namespace avp {
   static inline uint16_t Word(const uint8_t *Params) {
     return (uint16_t(Params[1]) << 8)+Params[0];
   } // Word
-  template<class T=uint32_t> uint8_t checksum(uint8_t const *p, T size) {
+  template<class T=uint32_t> uint8_t checkXOR(uint8_t const *p, T size) {
     uint8_t XORvalue = 0;
     while(size--) XORvalue ^= *(p++);
     return XORvalue;
