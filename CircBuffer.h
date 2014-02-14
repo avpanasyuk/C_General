@@ -14,10 +14,10 @@
 #include "BitVar.h"
 // the size of CircBuffer is powers of 2 to simplify rollovers
 
-// operation "read" moves pointer first and returns slot to read after. 
+// operation "read" moves pointer first and returns slot to read after.
 // "write" returns slot to write and moves pointer on "FinishedWriting"
 // this class seems to be reenterable and safe for interrupts without additional protection
-  
+
 template <typename T, uint8_t sizePower2, typename tSize=uint8_t> class CircBuffer {
   protected:
   T Data[1U << sizePower2];
@@ -29,13 +29,15 @@ template <typename T, uint8_t sizePower2, typename tSize=uint8_t> class CircBuff
   tSize LeftToWrite() { return tSize(BeingRead - BeingWritten); }
   tSize LeftToRead() { return tSize(BeingWritten - BeingRead - 1); }
   T *GetSlotToWrite() { return &Data[tSize(BeingWritten)]; }
+  void Write(T d) { *GetSlotToWrite() = d; FinishedWriting(); }
   T const *GetSlotToRead() { return &Data[tSize(++BeingRead)]; }
+  T Read() { return *GetSlotToRead(); }
   void FinishedWriting() { ++BeingWritten; }
   T *ForceSlotToWrite() {  if(!LeftToWrite()) ++BeingRead; return GetSlotToWrite(); }
   constexpr tSize GetFullSize() const { return (1U << sizePower2) - 1; };
 }; // CircBuffer
 
-template <class T> class SimpleCircBuffer { // I think none of the operations have to be atomic. 
+template <class T> class SimpleCircBuffer { // I think none of the operations have to be atomic.
   // the algorithm is modified a bit to make it happen.
 protected:
   T Buffer[1<<8];
@@ -44,9 +46,9 @@ public:
   SimpleCircBuffer() { Clear(); }
   uint8_t LeftToWrite() { return ReadI - WrittenI; }
   uint8_t LeftToRead() { return WrittenI - ReadI - 1; }
-  void Write(T d) { Buffer[WrittenI++] = d; } 
-  T Read() { return Buffer[++ReadI]; } 
-  void ForceWrite(T d) { if(!LeftToWrite()) ++ReadI; Write(d); } 
+  void Write(T d) { Buffer[WrittenI++] = d; }
+  T Read() { return Buffer[++ReadI]; }
+  void ForceWrite(T d) { if(!LeftToWrite()) ++ReadI; Write(d); }
   void Clear() { WrittenI = ReadI + 1; }
   constexpr uint8_t GetFullSize() const { return (1<<8) - 1; };
 }; //  SimpleCircBuffer
