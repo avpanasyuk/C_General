@@ -17,7 +17,7 @@ namespace avp {
   Fail::function bad_pointer_func = Fail::default_function;
 
   bool vprintf(bool (*pwrite)(const void *Ptr, size_t Size),char const *format, va_list ap) {
-    size_t Size = vsnprintf(NULL,0,format,ap);
+    int Size = vsnprintf(NULL,0,format,ap);
     if(Size < 0) return false;
     char Buffer[Size+1]; // +1 to include ending zero byte
     vsprintf(Buffer,format,ap);
