@@ -44,6 +44,19 @@ namespace avp {
   } // checksum
 	// template<typename type> uint8_t log2(type x) { uint8_t out=0; while(x>>=1) out++; return out; }
 	template<typename type> constexpr int8_t log2(type x) { return x?log2<type>(x>>1)+1:-1; }
+	// 1<<CurValue/x ? x/(1<<(Curvalue-1)), (1<<(2*CurValue -1) ? x^2)   
+	template<typename type> constexpr uint8_t RoundLog2(type x, uint8_t CurValue=0) { 
+		return (1<<CurValue) > x?(
+			1UL << (2*CurValue-1) < avp::sqr<type,uint32_t>(x)?CurValue:CurValue-1
+			):RoundLog2<type>(x,CurValue+1); 
+	    }
+		// 1<<CurValue/x ? x/(1<<(Curvalue-1)), (1<<(2*CurValue -1) ? x^2)
+	// numer*2/denom ? denom/numer, numer^2*2	? denom^2
+	constexpr int8_t RoundLog2Ratio(uint32_t numer, uint32_t denom, bool Sorted=false) {
+		return Sorted?
+			(numer > denom?RoundLog2Ratio(numer,denom<<1,true)+1:(numer*numer*2 < denom*denom?0:1)
+			:(numer > denom?RoundLog2Ratio(numer,denom,true):-RoundLog2Ratio(denom,numer,true));
+	}
 }// avp
 
 #define LOG10(x) ((x)>999?3:(x)>99?2:(x)>9?1:0)
