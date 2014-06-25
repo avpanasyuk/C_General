@@ -19,17 +19,16 @@ public:
   BitVar() {}
   BitVar(tSize Value): I(Value) {}
   BitVar(BitVar const &V): I(V.I)  {}
-  BitVar(BitVar volatile const &V): I(V.I) {}
     
 // important thing here is not to let it to convert to tSize too early, becuase it compromises bit limit
 // That's why we make this conversion explicit
-  explicit operator tSize() volatile const { return I; } 
+  explicit operator tSize() const { return I; } 
 
-  BitVar volatile &operator=(BitVar V)  volatile { I= V.I; return (*this); }
-  BitVar volatile &operator+=(BitVar V)  volatile { I+= V.I; return (*this); }
-  BitVar operator+(BitVar V)  volatile const { return BitVar(*this) += V; }
-  BitVar volatile &operator-=(BitVar V) volatile { I-= V.I; return(*this); }
-  BitVar operator-(BitVar V) volatile const { return BitVar(*this) -= V; }
-  bool operator==( BitVar V) volatile { return I == V.I; }
+  BitVar &operator=(BitVar V)  { I= V.I; return (*this); }
+  BitVar &operator+=(BitVar V)  { I+= V.I; return (*this); }
+  BitVar operator+(BitVar V)  const { return BitVar(*this) += V; }
+  BitVar &operator-=(BitVar V) { I-= V.I; return(*this); }
+  BitVar operator-(BitVar V) const { return BitVar(*this) -= V; }
+  bool operator==( BitVar V) { return I == V.I; }
 }; // BitVar
 #endif /* BITVAR_H_ */

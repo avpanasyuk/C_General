@@ -46,16 +46,19 @@ namespace avp {
 	template<typename type> constexpr int8_t log2(type x) { return x?log2<type>(x>>1)+1:-1; }
 	// 1<<CurValue/x ? x/(1<<(Curvalue-1)), (1<<(2*CurValue -1) ? x^2)   
 	template<typename type> constexpr uint8_t RoundLog2(type x, uint8_t CurValue=0) { 
-		return (1<<CurValue) > x?(
-			1UL << (2*CurValue-1) < avp::sqr<type,uint32_t>(x)?CurValue:CurValue-1
+		return (1<<CurValue) > x?
+			(1UL << (2*CurValue-1) < avp::sqr<type,uint32_t>(x)?CurValue:CurValue-1
 			):RoundLog2<type>(x,CurValue+1); 
 	    }
 		// 1<<CurValue/x ? x/(1<<(Curvalue-1)), (1<<(2*CurValue -1) ? x^2)
 	// numer*2/denom ? denom/numer, numer^2*2	? denom^2
 	constexpr int8_t RoundLog2Ratio(uint32_t numer, uint32_t denom, bool Sorted=false) {
 		return Sorted?
-			(numer > denom?RoundLog2Ratio(numer,denom<<1,true)+1:(numer*numer*2 < denom*denom?0:1)
-			:(numer > denom?RoundLog2Ratio(numer,denom,true):-RoundLog2Ratio(denom,numer,true));
+			(numer > denom?
+				(numer > 0x4000?
+					RoundLog2Ratio(numer>>1,denom,true):RoundLog2Ratio(numer,denom<<1,true)
+				)+1:(numer*numer*2 < denom*denom?0:1)
+			):(numer > denom?RoundLog2Ratio(numer,denom,true):-RoundLog2Ratio(denom,numer,true));
 	}
 }// avp
 
@@ -72,6 +75,11 @@ template<typename T> bool operator!=(T const &v1, T const &v2) { return !(v1 == 
 // preprocessor tricks
 #define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
 #define PRIMITIVE_CAT(a, ...) a ## __VA_ARGS__
+
+#define __COMB(a,b,c) a##b##c
+#define _COMB(a,b,c) __COMB(a,b,c)
+#define __COMB2(a,b) a##b
+#define _COMB2(a,b) __COMB2(a,b)
 
 #define DO_PRAGMA(x) _Pragma (#x)
 #define TODO(x) DO_PRAGMA(message ("TODO - " #x))

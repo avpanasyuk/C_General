@@ -21,7 +21,7 @@
 template <typename T, uint8_t sizePower2, typename tSize=uint8_t> class CircBuffer {
   protected:
   T Data[1U << sizePower2];
-  volatile struct BitVar<sizePower2, tSize>  BeingRead, BeingWritten;
+  /* volatile */ struct BitVar<sizePower2, tSize>  BeingRead, BeingWritten;
   public:
   CircBuffer() { Clear(); }
 
