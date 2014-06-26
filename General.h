@@ -23,6 +23,15 @@ namespace avp {
 		{ return (num + num + denom)/denom/2; }
   template<typename Tin, typename Tout> inline constexpr Tout sqr(Tin const& a) 
 		{ return Tout(a)*Tout(a); }
+  /*!
+     *  @brief last_bit is the last_bit 
+     */
+  template<typename type> inline constexpr type bits(type x, uint8_t first_bit) {
+    return x >> first_bit;
+  } // bits
+  template<typename type> inline constexpr type bits(type x, uint8_t first_bit, uint8_t last_bit) {
+    return (x >> first_bit) & ((type(1U) << (last_bit - first_bit + 1)) - 1);
+  } // bits
 
   // following functions use  function of type to do formatted output bool write(void *Ptr, uint16_t Size);
   // NOTE both functions do not write string-ending 0 !!!!!
