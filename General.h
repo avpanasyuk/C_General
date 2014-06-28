@@ -19,10 +19,10 @@ namespace avp {
   template<typename T> inline constexpr T max(T const& a, T const& b) { return a>b?a:b; }
   template<typename T> inline constexpr T min(T const& a, T const& b) { return a<b?a:b; }
   template<typename T> inline constexpr T Abs(T const& a) { return a<0?-a:a; }
-  template<typename T> inline constexpr T RoundRatio(T const& num, T const& denom) 
-		{ return (num + num + denom)/denom/2; }
-  template<typename Tin, typename Tout> inline constexpr Tout sqr(Tin const& a) 
-		{ return Tout(a)*Tout(a); }
+  template<typename T> inline constexpr T RoundRatio(T const& num, T const& denom)
+  { return (num + num + denom)/denom/2; }
+  template<typename Tin, typename Tout> inline constexpr Tout sqr(Tin const& a)
+  { return Tout(a)*Tout(a); }
 
   // following functions use  function of type to do formatted output bool write(void *Ptr, uint16_t Size);
   // NOTE both functions do not write string-ending 0 !!!!!
@@ -37,29 +37,34 @@ namespace avp {
     return XORvalue;
   } // checksum
   template<class OutType, class ElType, class SzType>
-    OutType sum(const ElType *p, SzType size) {
+  OutType sum(const ElType *p, SzType size) {
     OutType out = 0;
     while(size--) out += *(p++);
     return out;
   } // checksum
-	// template<typename type> uint8_t log2(type x) { uint8_t out=0; while(x>>=1) out++; return out; }
-	template<typename type> constexpr int8_t log2(type x) { return x?log2<type>(x>>1)+1:-1; }
-	// 1<<CurValue/x ? x/(1<<(Curvalue-1)), (1<<(2*CurValue -1) ? x^2)   
-	template<typename type> constexpr uint8_t RoundLog2(type x, uint8_t CurValue=0) { 
-		return (1<<CurValue) > x?
-			(1UL << (2*CurValue-1) < avp::sqr<type,uint32_t>(x)?CurValue:CurValue-1
-			):RoundLog2<type>(x,CurValue+1); 
-	    }
-		// 1<<CurValue/x ? x/(1<<(Curvalue-1)), (1<<(2*CurValue -1) ? x^2)
-	// numer*2/denom ? denom/numer, numer^2*2	? denom^2
-	constexpr int8_t RoundLog2Ratio(uint32_t numer, uint32_t denom, bool Sorted=false) {
-		return Sorted?
-			(numer > denom?
-				(numer > 0x4000?
-					RoundLog2Ratio(numer>>1,denom,true):RoundLog2Ratio(numer,denom<<1,true)
-				)+1:(numer*numer*2 < denom*denom?0:1)
-			):(numer > denom?RoundLog2Ratio(numer,denom,true):-RoundLog2Ratio(denom,numer,true));
-	}
+  // template<typename type> uint8_t log2(type x) { uint8_t out=0; while(x>>=1) out++; return out; }
+  template<typename type> constexpr int8_t log2(type x) { return x?log2<type>(x>>1)+1:-1; }
+  // 1<<CurValue/x ? x/(1<<(Curvalue-1)), (1<<(2*CurValue -1) ? x^2)
+  template<typename type> constexpr uint8_t RoundLog2(type x, uint8_t CurValue=0) {
+    return (1<<CurValue) > x?
+           (1UL << (2*CurValue-1) < avp::sqr<type,uint32_t>(x)?CurValue:CurValue-1
+           ):RoundLog2<type>(x,CurValue+1);
+  }
+  // 1<<CurValue/x ? x/(1<<(Curvalue-1)), (1<<(2*CurValue -1) ? x^2)
+  // numer*2/denom ? denom/numer, numer^2*2	? denom^2
+  constexpr int8_t RoundLog2Ratio(uint32_t numer, uint32_t denom, bool Sorted=false) {
+    return Sorted?
+           (numer > denom?
+            (numer > 0x4000?
+             RoundLog2Ratio(numer>>1,denom,true):RoundLog2Ratio(numer,denom<<1,true)
+            )+1:(numer*numer*2 < denom*denom?-1:0)
+           ):(numer > denom?RoundLog2Ratio(numer,denom,true):-RoundLog2Ratio(denom,numer,true));
+  }
+  inline void high(volatile uint8_t *reg, uint8_t bit) { *reg |= 1 << bit; }
+  inline void low(volatile uint8_t *reg, uint8_t bit) { *reg &= ~(1 << bit); }
+  inline void setbit(volatile uint8_t *reg, uint8_t bit, bool value) {
+    value?high(reg,bit):low(reg,bit);
+  } // setbit
 }// avp
 
 #define LOG10(x) ((x)>999?3:(x)>99?2:(x)>9?1:0)
@@ -86,13 +91,11 @@ template<typename T> bool operator!=(T const &v1, T const &v2) { return !(v1 == 
 
 // things to supress warning for a bit
 #define IGNORE(x) _Pragma ("GCC diagnostic push") \
-DO_PRAGMA(GCC diagnostic ignored #x)
+  DO_PRAGMA(GCC diagnostic ignored #x)
 #define STOP_IGNORING _Pragma ("GCC diagnostic pop")
 
 namespace Fail {
   typedef void (*function)();
   extern void default_function();
 } // Fail
-
-
 #endif /* GENERAL_H_ */
