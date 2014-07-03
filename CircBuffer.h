@@ -20,37 +20,51 @@
 
 template <typename T, uint8_t sizePower2, typename tSize=uint8_t> class CircBuffer {
   protected:
-  T Data[1U << sizePower2];
-  /* volatile */ struct BitVar<sizePower2, tSize>  BeingRead, BeingWritten;
+  T Buffer[1U << sizePower2];
+  struct BitVar<sizePower2, tSize>  BeingRead, BeingWritten;
   public:
   CircBuffer() { Clear(); }
 
-  void Clear() {  BeingWritten = BeingRead + 1; }
-  tSize LeftToWrite() { return tSize(BeingRead - BeingWritten); }
-  tSize LeftToRead() { return tSize(BeingWritten - BeingRead - 1); }
-  T *GetSlotToWrite() { return &Data[tSize(BeingWritten)]; }
-  void Write(T d) { *GetSlotToWrite() = d; FinishedWriting(); }
-  T const *GetSlotToRead() { return &Data[tSize(++BeingRead)]; }
-  T Read() { return *GetSlotToRead(); }
-  void FinishedWriting() { ++BeingWritten; }
-  T *ForceSlotToWrite() {  if(!LeftToWrite()) ++BeingRead; return GetSlotToWrite(); }
+#define MEMBERS_CIRCBUFFER1(...) \
+  void Clear() __VA_ARGS__ {  BeingWritten = BeingRead + 1; } \
+  tSize LeftToWrite() const __VA_ARGS__ { return tSize(BeingRead - BeingWritten); } \
+  tSize LeftToRead() const __VA_ARGS__ { return tSize(BeingWritten - BeingRead - 1); } \
+  T __VA_ARGS__ *GetSlotToWrite() __VA_ARGS__ { return &Buffer[tSize(BeingWritten)]; } \
+  void Write(T d) __VA_ARGS__ { *GetSlotToWrite() = d; FinishedWriting(); } \
+  T const __VA_ARGS__ *GetSlotToRead() __VA_ARGS__ { return &Buffer[tSize(++BeingRead)]; } \
+  T Read() __VA_ARGS__ { return *GetSlotToRead(); } \
+  void FinishedWriting() __VA_ARGS__ { ++BeingWritten; } \
+  T *ForceSlotToWrite() __VA_ARGS__ {  if(!LeftToWrite()) ++BeingRead; return GetSlotToWrite(); } 
+    
+// this class often used with interrupts, so it is often volatile, so we need two sets of members - volatile and not
+MEMBERS_CIRCBUFFER1(volatile)
+MEMBERS_CIRCBUFFER1()
+    
   constexpr tSize GetFullSize() const { return (1U << sizePower2) - 1; };
 }; // CircBuffer
 
-template <class T> class SimpleCircBuffer { // I think none of the operations have to be atomic.
+//! simplest form is 256 entries
+template<typename T> class CircBuffer<T,8> { // I think none of the operations have to be atomic.
   // the algorithm is modified a bit to make it happen.
 protected:
-  T Buffer[1<<8];
+  T Buffer[1U<<8];
   uint8_t ReadI, WrittenI;
 public:
-  SimpleCircBuffer() { Clear(); }
-  uint8_t LeftToWrite() { return ReadI - WrittenI; }
-  uint8_t LeftToRead() { return WrittenI - ReadI - 1; }
-  void Write(T d) { Buffer[WrittenI++] = d; }
-  T Read() { return Buffer[++ReadI]; }
-  void ForceWrite(T d) { if(!LeftToWrite()) ++ReadI; Write(d); }
-  void Clear() { WrittenI = ReadI + 1; }
-  constexpr uint8_t GetFullSize() const { return (1<<8) - 1; };
-}; //  SimpleCircBuffer
+  CircBuffer() { Clear(); }
+
+#define MEMBERS_CIRCBUFFER2(...) \
+  uint8_t LeftToWrite() const __VA_ARGS__ { return ReadI - WrittenI; } \
+  uint8_t LeftToRead() const __VA_ARGS__ { return WrittenI - ReadI - 1; } \
+  void Write(T d) __VA_ARGS__ { Buffer[WrittenI++] = d; } \
+  T Read() __VA_ARGS__ { return Buffer[++ReadI]; } \
+  void ForceWrite(T d) __VA_ARGS__ { if(!LeftToWrite()) ++ReadI; Write(d); } \
+  void Clear() __VA_ARGS__ { WrittenI = ReadI + 1; } 
+
+// this class often used with interrupts, so it is often volatile, so we need two sets of members - volatile and not
+MEMBERS_CIRCBUFFER2(volatile)
+MEMBERS_CIRCBUFFER2()
+
+  constexpr uint8_t GetFullSize() const { return (1U<<8) - 1; }
+}; //  CircBuffer
 
 #endif /* CIRCBUFFER_H_ */

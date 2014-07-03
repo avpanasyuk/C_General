@@ -19,6 +19,8 @@ namespace avp {
   template<typename T> inline constexpr T max(T const& a, T const& b) { return a>b?a:b; }
   template<typename T> inline constexpr T min(T const& a, T const& b) { return a<b?a:b; }
   template<typename T> inline constexpr T Abs(T const& a) { return a<0?-a:a; }
+  template<typename T> inline constexpr T CeilRatio(T const& num, T const& denom)
+  { return (num + denom - 1)/denom; }
   template<typename T> inline constexpr T RoundRatio(T const& num, T const& denom)
   { return (num + num + denom)/denom/2; }
   template<typename Tin, typename Tout> inline constexpr Tout sqr(Tin const& a)
@@ -50,6 +52,7 @@ namespace avp {
            (1UL << (2*CurValue-1) < avp::sqr<type,uint32_t>(x)?CurValue:CurValue-1
            ):RoundLog2<type>(x,CurValue+1);
   }
+  
   // 1<<CurValue/x ? x/(1<<(Curvalue-1)), (1<<(2*CurValue -1) ? x^2)
   // numer*2/denom ? denom/numer, numer^2*2	? denom^2
   constexpr int8_t RoundLog2Ratio(uint32_t numer, uint32_t denom, bool Sorted=false) {
@@ -60,11 +63,35 @@ namespace avp {
             )+1:(numer*numer*2 < denom*denom?-1:0)
            ):(numer > denom?RoundLog2Ratio(numer,denom,true):-RoundLog2Ratio(denom,numer,true));
   }
-  inline void high(volatile uint8_t *reg, uint8_t bit) { *reg |= 1 << bit; }
-  inline void low(volatile uint8_t *reg, uint8_t bit) { *reg &= ~(1 << bit); }
-  inline void setbit(volatile uint8_t *reg, uint8_t bit, bool value) {
-    value?high(reg,bit):low(reg,bit);
+  constexpr int8_t CeilLog2Ratio(uint32_t numer, uint32_t denom) {
+    return avp::log2((avp::CeilRatio(numer,denom) << 1) - 1); 
+  }
+  
+template<typename out_type, typename in_type> out_type Sqrt(in_type y) {
+  in_type x = 1, old_x, y_=y;
+  while(y_>>=2) x <<= 1; // rough estimate
+  do {
+    old_x = x;
+    x = (old_x+y/old_x)>>1;
+  } while (x != old_x && x + 1 != old_x);
+  return x;
+} //Sqrt
+
+  // ***** BIT HANDLING FUNCTIONS
+  template<typename type> inline constexpr type make_mask(uint8_t lowest_bit, uint8_t numbits) {
+    return ((type(1) << numbits) - 1) << lowest_bit;
+  }
+  template<typename type> inline void set_high(type &var, uint8_t bitI) { var |= 1 << bitI; }
+  template<typename type> inline void set_low(type &var, uint8_t bitI) { var &= ~(1 << bitI); }
+  template<typename type> inline void setbit(type &var, uint8_t bitI, bool value) {
+    value?set_high(var,bitI):set_low(var,bitI);
   } // setbit
+  template<typename type> inline constexpr bool getbit(type const &var,uint8_t bitI) {
+    return (var >> bitI) & 1;
+  }
+  template<typename type> inline void setbits(type &var, uint8_t lowest_bit, uint8_t numbits, type value) {
+    var = (var & ~make_mask<type>(lowest_bit,numbits)) | (value << lowest_bit);
+  }
 }// avp
 
 #define LOG10(x) ((x)>999?3:(x)>99?2:(x)>9?1:0)
