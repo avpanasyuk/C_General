@@ -101,17 +101,18 @@ template<typename out_type, typename in_type> out_type Sqrt(in_type y) {
 
 // following are operators which can be universaly derived from others
 template<typename T> T &operator++(T &v) { return v += 1; }
+template<typename T> T operator++(T volatile &v) { return v += 1; }
 template<typename T> T operator++(T &v, int) { T old(v); v += 1; return old; }
 template<typename T> bool operator!=(T const &v1, T const &v2) { return !(v1 == v2); }
 
-// preprocessor tricks
+// preprocessor tricks. __VA_ARGS__ is used so the last parameter may be empty
 #define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
 #define PRIMITIVE_CAT(a, ...) a ## __VA_ARGS__
 
-#define __COMB(a,b,c) a##b##c
-#define _COMB(a,b,c) __COMB(a,b,c)
-#define __COMB2(a,b) a##b
-#define _COMB2(a,b) __COMB2(a,b)
+#define __COMB(a,b,...) a##b##__VA_ARGS__
+#define _COMB(a,b,...) __COMB(a,b,__VA_ARGS__)
+#define __COMB2(a,...) a##__VA_ARGS__
+#define _COMB2(a,...) __COMB2(a,__VA_ARGS__) // second parameter may be absent
 
 #define DO_PRAGMA(x) _Pragma (#x)
 #define TODO(x) DO_PRAGMA(message ("TODO - " #x))

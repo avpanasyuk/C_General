@@ -22,16 +22,25 @@ public:
 // That's why we make this conversion explicit
 #define MEMBERS_BITVAR(...) \
   BitVar(BitVar const __VA_ARGS__ &V): I(V.I)  {} \
-  explicit operator tSize() const __VA_ARGS__ { return I; } 
-  BitVar __VA_ARGS__ &operator=(BitVar V)  __VA_ARGS__ { I = V.I; return (*this); } \
-  BitVar __VA_ARGS__ &operator+=(BitVar V)  __VA_ARGS__ { I+= V.I; return (*this); } \                      
+  explicit operator tSize() const __VA_ARGS__ { return I; } \
   BitVar operator+(BitVar V)  const __VA_ARGS__ { return BitVar(*this) += V; } \
-  BitVar __VA_ARGS__ &operator-=(BitVar V) __VA_ARGS__ { I-= V.I; return(*this); } \
   BitVar operator-(BitVar V) const __VA_ARGS__ { return BitVar(*this) -= V; } \
   bool operator==( BitVar V) const __VA_ARGS__ { return I == V.I; }
     
 // this class often used with interrupts, so it is often volatile, so we need two sets of members - volatile and not  
   MEMBERS_BITVAR(volatile);
   MEMBERS_BITVAR();    
+
+  // we have to define separate functions for volatile case here because "standard" definition of these functions 
+  // return reference to volatile object and this reference most of the time is ignored, so compiler is screaming about
+  // volatile object is not being read. So we just return non-volatile copy
+  BitVar operator=(BitVar V)  volatile { I = V.I; return (*this); } 
+  BitVar operator+=(BitVar V)  volatile { I += V.I; return (*this); } 
+  BitVar operator-=(BitVar V) volatile { I -= V.I; return(*this); } 
+
+  // FOR NONJ-VOLATILE CASE FUNCTIONS ARE "STANDARD"
+  BitVar &operator=(BitVar V) { I = V.I; return (*this); }
+  BitVar &operator+=(BitVar V){ I+= V.I; return (*this); }
+  BitVar &operator-=(BitVar V){ I-= V.I; return(*this); }
 }; // BitVar
 #endif /* BITVAR_H_ */
