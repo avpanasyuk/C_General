@@ -1,5 +1,5 @@
 /*
- * General.h
+ * AVP_LIBS/General/General.h
  *
  * Created: 7/28/2013 10:37:52 AM
  *  Author: panasyuk
@@ -100,10 +100,10 @@ template<typename out_type, typename in_type> out_type Sqrt(in_type y) {
 #define LOG2(x) avp::log2(x)
 
 // following are operators which can be universaly derived from others
-template<typename T> T &operator++(T &v) { return v += 1; }
-template<typename T> T operator++(T volatile &v) { return v += 1; }
-template<typename T> T operator++(T &v, int) { T old(v); v += 1; return old; }
-template<typename T> bool operator!=(T const &v1, T const &v2) { return !(v1 == v2); }
+template<typename T> inline T &operator++(T &v) { return v += 1; }
+template<typename T> inline T operator++(T volatile &v) { return v += 1; }
+template<typename T> inline T operator++(T &v, int) { T old(v); v += 1; return old; }
+template<typename T> inline bool operator!=(T const &v1, T const &v2) { return !(v1 == v2); }
 
 // preprocessor tricks. __VA_ARGS__ is used so the last parameter may be empty
 #define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
