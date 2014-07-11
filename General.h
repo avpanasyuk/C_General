@@ -25,15 +25,6 @@ namespace avp {
   { return (num + num + denom)/denom/2; }
   template<typename Tin, typename Tout> inline constexpr Tout sqr(Tin const& a)
   { return Tout(a)*Tout(a); }
-  /*!
-     *  @brief last_bit is the last_bit 
-     */
-  template<typename type> inline constexpr type bits(type x, uint8_t first_bit) {
-    return x >> first_bit;
-  } // bits
-  template<typename type> inline constexpr type bits(type x, uint8_t first_bit, uint8_t last_bit) {
-    return (x >> first_bit) & ((type(1U) << (last_bit - first_bit + 1)) - 1);
-  } // bits
 
   // following functions use  function of type to do formatted output bool write(void *Ptr, uint16_t Size);
   // NOTE both functions do not write string-ending 0 !!!!!
@@ -90,22 +81,31 @@ namespace avp {
   template<typename type> inline constexpr type make_mask(uint8_t lowest_bit, uint8_t numbits) {
     return ((type(1) << numbits) - 1) << lowest_bit;
   }
+  // SETTING BITS
   template<typename type> inline void set_high(type &var, uint8_t bitI) { var |= 1 << bitI; }
   template<typename type> inline void set_low(type &var, uint8_t bitI) { var &= ~(1 << bitI); }
   template<typename type> inline void setbit(type &var, uint8_t bitI, bool value) {
     value?set_high(var,bitI):set_low(var,bitI);
   } // setbit
-  template<typename type> inline constexpr bool getbit(type const &var,uint8_t bitI) {
-    return (var >> bitI) & 1;
-  }
   template<typename type> inline void setbits(type &var, uint8_t lowest_bit, uint8_t numbits, type value) {
     var = (var & ~make_mask<type>(lowest_bit,numbits)) | (value << lowest_bit);
   }
+  // GETTING BITS
+  //! single bit
+  template<typename type> inline constexpr bool getbit(type const &var,uint8_t bitI) {
+    return (var >> bitI) & 1;
+  }
+  //! range of bits
+  template<typename type> inline constexpr type bits(type x, uint8_t first_bit, uint8_t last_bit) {
+    return (x >> first_bit) & ((type(1U) << (last_bit - first_bit + 1)) - 1);
+  } // bits
+  //! when last_bit is the last bit
+  template<typename type> inline constexpr type bits(type x, uint8_t first_bit) {
+    return x >> first_bit;
+  } // bits
 }// avp
 
 #define LOG10(x) ((x)>999?3:(x)>99?2:(x)>9?1:0)
-// #define LOG2(x) ((x)>32767?15:(x)>16384?14:(x)>8191?13:(x)>4095?12:(x)>2047?11: \
-// (x)>1023?10:(x)>511?9:(x)>255?8:(x)>127?7:(x)>63?6:(x)>31?5:(x)>15?4:(x)>7?3:(x)>3?2:(x)>1?1:0)
 #define LOG2(x) avp::log2(x)
 
 // following are operators which can be universaly derived from others
