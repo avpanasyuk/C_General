@@ -106,9 +106,6 @@ template<typename T> inline T operator++(T &v, int) { T old(v); v += 1; return o
 template<typename T> inline bool operator!=(T const &v1, T const &v2) { return !(v1 == v2); }
 
 // preprocessor tricks. __VA_ARGS__ is used so the last parameter may be empty
-#define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
-#define PRIMITIVE_CAT(a, ...) a ## __VA_ARGS__
-
 #define __COMB(a,b,...) a##b##__VA_ARGS__
 #define _COMB(a,b,...) __COMB(a,b,__VA_ARGS__)
 #define __COMB2(a,...) a##__VA_ARGS__
