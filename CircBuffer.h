@@ -33,7 +33,7 @@ template <typename T, uint8_t sizePower2, typename tSize=uint8_t> class CircBuff
   void Write(T d) __VA_ARGS__ { *GetSlotToWrite() = d; FinishedWriting(); } \
   T const __VA_ARGS__ *GetSlotToRead() __VA_ARGS__ { return &Buffer[tSize(++BeingRead)]; } \
   T Read() __VA_ARGS__ { return *GetSlotToRead(); } \
-  void FinishedWriting() __VA_ARGS__ { BeingWritten++; } \
+  void FinishedWriting() __VA_ARGS__ { ++BeingWritten; } \
   T *ForceSlotToWrite() __VA_ARGS__ {  if(!LeftToWrite()) ++BeingRead; return GetSlotToWrite(); } 
     
 // this class often used with interrupts, so it is often volatile, so we need two sets of members - volatile and not
