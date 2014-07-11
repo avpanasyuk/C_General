@@ -52,7 +52,7 @@ namespace avp {
            (1UL << (2*CurValue-1) < avp::sqr<type,uint32_t>(x)?CurValue:CurValue-1
            ):RoundLog2<type>(x,CurValue+1);
   }
-  
+
   // 1<<CurValue/x ? x/(1<<(Curvalue-1)), (1<<(2*CurValue -1) ? x^2)
   // numer*2/denom ? denom/numer, numer^2*2	? denom^2
   constexpr int8_t RoundLog2Ratio(uint32_t numer, uint32_t denom, bool Sorted=false) {
@@ -64,18 +64,18 @@ namespace avp {
            ):(numer > denom?RoundLog2Ratio(numer,denom,true):-RoundLog2Ratio(denom,numer,true));
   }
   constexpr int8_t CeilLog2Ratio(uint32_t numer, uint32_t denom) {
-    return avp::log2((avp::CeilRatio(numer,denom) << 1) - 1); 
+    return avp::log2((avp::CeilRatio(numer,denom) << 1) - 1);
   }
-  
-template<typename out_type, typename in_type> out_type Sqrt(in_type y) {
-  in_type x = 1, old_x, y_=y;
-  while(y_>>=2) x <<= 1; // rough estimate
-  do {
-    old_x = x;
-    x = (old_x+y/old_x)>>1;
-  } while (x != old_x && x + 1 != old_x);
-  return x;
-} //Sqrt
+
+  template<typename out_type, typename in_type> out_type Sqrt(in_type y) {
+    in_type x = 1, old_x, y_=y;
+    while(y_>>=2) x <<= 1; // rough estimate
+    do {
+      old_x = x;
+      x = (old_x+y/old_x)>>1;
+    } while (x != old_x && x + 1 != old_x);
+    return x;
+  } //Sqrt
 
   // ***** BIT HANDLING FUNCTIONS
   template<typename type> inline constexpr type make_mask(uint8_t lowest_bit, uint8_t numbits) {
