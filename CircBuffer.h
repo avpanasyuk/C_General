@@ -34,17 +34,17 @@ template <typename T, uint8_t sizePower2, typename tSize=uint8_t> class CircBuff
   T const __VA_ARGS__ *GetSlotToRead() __VA_ARGS__ { return &Buffer[tSize(++BeingRead)]; } \
   T Read() __VA_ARGS__ { return *GetSlotToRead(); } \
   void FinishedWriting() __VA_ARGS__ { ++BeingWritten; } \
-  T *ForceSlotToWrite() __VA_ARGS__ {  if(!LeftToWrite()) ++BeingRead; return GetSlotToWrite(); } 
-    
+  T *ForceSlotToWrite() __VA_ARGS__ {  if(!LeftToWrite()) ++BeingRead; return GetSlotToWrite(); }
+
 // this class often used with interrupts, so it is often volatile, so we need two sets of members - volatile and not
 MEMBERS_CIRCBUFFER1(volatile)
 MEMBERS_CIRCBUFFER1()
-    
+
   constexpr tSize GetFullSize() const { return (1U << sizePower2) - 1; };
 }; // CircBuffer
 
 //! simplest form is 256 entries
-template<typename T> class CircBuffer<T,8> { 
+template<typename T> class CircBuffer<T,8> {
 protected:
   T Buffer[1U<<8];
   uint8_t ReadI, WrittenI;
@@ -57,7 +57,7 @@ public:
   void Write(T d) __VA_ARGS__ { Buffer[WrittenI++] = d; } \
   T Read() __VA_ARGS__ { return Buffer[++ReadI]; } \
   void ForceWrite(T d) __VA_ARGS__ { if(!LeftToWrite()) ++ReadI; Write(d); } \
-  void Clear() __VA_ARGS__ { WrittenI = ReadI + 1; } 
+  void Clear() __VA_ARGS__ { WrittenI = ReadI + 1; }
 
 // this class often used with interrupts, so it is often volatile, so we need two sets of members - volatile and not
 MEMBERS_CIRCBUFFER2(volatile)

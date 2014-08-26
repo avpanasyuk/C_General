@@ -26,10 +26,12 @@ namespace avp {
   template<typename Tin, typename Tout> inline constexpr Tout sqr(Tin const& a)
   { return Tout(a)*Tout(a); }
 
-  // following functions use  function of type to do formatted output bool write(void *Ptr, uint16_t Size);
+  // following functions use general "write" function of type bool write(const void *Ptr, uint16_t Size) to do formatted output;
   // NOTE both functions do not write string-ending 0 !!!!!
   extern bool vprintf(bool (*pwrite)(const void *Ptr, size_t Size),char const *format, va_list ap);
   extern bool printf(bool (*pwrite)(const void *Ptr, size_t Size), char const *format, ...);
+
+  // bit-banging functions
   static inline constexpr uint16_t Word(const uint8_t *Bytes) {
     return (uint16_t(Bytes[1]) << 8)+Bytes[0];
   } // Word
@@ -133,4 +135,14 @@ namespace Fail {
   typedef void (*function)();
   extern void default_function();
 } // Fail
+
+#if  defined ( __GNUC__ )
+  #ifndef __weak
+    #define __weak   __attribute__((weak))
+  #endif /* __weak */
+  #ifndef __packed
+    #define __packed __attribute__((__packed__))
+  #endif /* __packed */
+#endif /* __GNUC__ */
+
 #endif /* GENERAL_H_ */

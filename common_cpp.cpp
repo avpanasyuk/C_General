@@ -8,13 +8,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "General.h"
-#include "Vector.h"
 
 void Fail::default_function() { abort(); }
 
 namespace avp {
   Fail::function bad_index_func = Fail::default_function;
   Fail::function bad_pointer_func = Fail::default_function;
+
+  int AssertError = 0;
 
   bool vprintf(bool (*pwrite)(const void *Ptr, size_t Size),char const *format, va_list ap) {
     int Size = vsnprintf(NULL,0,format,ap);
@@ -23,6 +24,7 @@ namespace avp {
     vsprintf(Buffer,format,ap);
     return (*pwrite)((void *)Buffer,Size); // we do not write ending 0 byte
   } // vprintf
+
   bool printf(bool (*pwrite)(const void *Ptr, size_t Size), char const *format, ...) {
     va_list ap;
     va_start(ap,format);
@@ -30,4 +32,10 @@ namespace avp {
     va_end(ap);
     return Out;
   } // printf
+
+  __weak bool error_output(const void *Ptr, size_t Size) { return fwrite(Ptr, 1, Size, stderr) == Size; }
+  __weak void hang_cpu() { while(1); }
+IGNORE(-Wunused-variable)
+  __weak void major_fail(uint8_t reason) { volatile uint8_t reason_copy = reason; hang_cpu(); }
+STOP_IGNORING
 }
