@@ -145,4 +145,6 @@ namespace Fail {
   #endif /* __packed */
 #endif /* __GNUC__ */
 
+// static inline void* operator new (std::size_t size, void* ptr) noexcept { return ptr; }
+
 #endif /* GENERAL_H_ */

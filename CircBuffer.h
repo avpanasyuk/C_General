@@ -12,58 +12,95 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "BitVar.h"
-// the size of CircBuffer is powers of 2 to simplify rollovers
 
-// operation "read" moves pointer first and returns slot to read after.
-// "write" returns slot to write and moves pointer on "FinishedWriting"
-// this class seems to be reenterable and safe for interrupts without additional protection
+/** Circular Buffer of elements of class T. One reader and one writer may work in parallel. Reader is using
+  * only BeingRead index, and writer only BeingWritten, so index are volatile ONLY when cross-used,
+  * like in Clear()
+  * NOTE: the size of CircBuffer is whateven fit into variable of tSize, probably 255 or 65535.
+  *  to avoid conditional rollovers (when we compare index with an end of buffer all the time)
+  * @tSize - type of size variable, has to be unsigned!
+  * NOTE: When both BeingRead and BeingWritten refer the same block the buffer is empty, as this block is
+  * not written yet, so there is nothing to read
+  * NOTE: Writing and reading function DO NOT CHECK WHETHER THERE IS SPACE! Call LeftTo... function beforehand
+  */
+template <typename T, typename tSize=uint8_t> struct CircBufferFullType {
+  // *********** General functions
+  CircBufferFullType() { Clear(); }
+  void Clear() volatile {  BeingWritten = BeingRead; }
+  static constexpr tSize GetCapacity() { return tSize(-1); }; // how may elements fit
 
-template <typename T, uint8_t sizePower2, typename tSize=uint8_t> class CircBuffer {
-  protected:
-  T Buffer[1U << sizePower2];
-  struct BitVar<sizePower2, tSize>  BeingRead, BeingWritten;
-  public:
+  //************* Writer functions, "BeingRead" is volatile here
+  tSize LeftToWrite() const volatile { return BeingRead - 1 - BeingWritten; }
+  T *GetSlotToWrite() { return &Buffer[BeingWritten]; }
+  void FinishedWriting() { ++BeingWritten; }
+  void Write(T d) { *GetSlotToWrite() = d; FinishedWriting(); }
+  // It is risky function because BeingRead may change in between. We have to disable interrupts accross it
+  T *ForceSlotToWrite() volatile {  if(!LeftToWrite()) ++BeingRead; return GetSlotToWrite(); }
+
+  //************* Reader functions, "BeingWritten" is volatile here
+  tSize LeftToRead() const volatile { return BeingWritten - BeingRead; }
+  T const *GetSlotToRead() { return &Buffer[BeingRead]; }
+  T const *GetContinousBlockToRead(tSize *Sz) volatile {
+    if(Sz != nullptr) {
+        long tempSz = (long)BeingWritten - BeingRead; // it is here, so we address BeingWritten only once
+        *Sz = tempSz < 0?(unsigned long)GetCapacity()+1-BeingRead:tempSz;
+    }
+    return (T const *)&Buffer[BeingRead];
+  } // GetContinousBlockToRead
+  // if FinishedReading is used after GetContinousBlockToRead Sz should be specified
+  void FinishedReading(tSize Sz = 1) { BeingRead += Sz; }
+  T Read() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
+protected:
+  T Buffer[(unsigned long)GetCapacity()+1];
+  tSize BeingRead, BeingWritten; //!< indexes of buffer currently being ....
+}; // CircBufferFullType
+
+/** Circular Buffer of size less then a full type
+  * NOTE: the size of CircBuffer is powers of 2 to avoid conditional rollovers (when we compare
+  * index with an end of buffer all the time
+  * @tparam sizeLog2 -  Log2(Size)
+  * @tSize - type of size variable
+  * NOTE: we do not use inheritance because Buffer is wrong size,
+  * and we do not want to make virtual functions
+  * NOTE: see CircBufferFullType comments
+  */
+template <typename T, uint8_t sizeLog2, typename tSize=uint8_t> struct CircBuffer {
+  // *********** General functions
   CircBuffer() { Clear(); }
+  void Clear() volatile {  BeingWritten = BeingRead; }
+  static constexpr tSize GetCapacity() { return (1UL << sizeLog2) - 1; };
 
-#define MEMBERS_CIRCBUFFER1(...) \
-  void Clear() __VA_ARGS__ {  BeingWritten = BeingRead + 1; } \
-  tSize LeftToWrite() const __VA_ARGS__ { return tSize(BeingRead - BeingWritten); } \
-  tSize LeftToRead() const __VA_ARGS__ { return tSize(BeingWritten - BeingRead - 1); } \
-  T __VA_ARGS__ *GetSlotToWrite() __VA_ARGS__ { return &Buffer[tSize(BeingWritten)]; } \
-  void Write(T d) __VA_ARGS__ { *GetSlotToWrite() = d; FinishedWriting(); } \
-  T const __VA_ARGS__ *GetSlotToRead() __VA_ARGS__ { return &Buffer[tSize(++BeingRead)]; } \
-  T Read() __VA_ARGS__ { return *GetSlotToRead(); } \
-  void FinishedWriting() __VA_ARGS__ { ++BeingWritten; } \
-  T *ForceSlotToWrite() __VA_ARGS__ {  if(!LeftToWrite()) ++BeingRead; return GetSlotToWrite(); }
+  //************* Writer functions, "BeingRead" is volatile here
+  tSize LeftToWrite() const volatile { return (BeingRead - 1 - BeingWritten) & Mask; }
+  T *GetSlotToWrite() { return &Buffer[BeingWritten]; }
+  void FinishedWriting() { BeingWritten = (BeingWritten + 1) & Mask; }
+  void Write(T d) { *GetSlotToWrite() = d; FinishedWriting(); }
+  // It is risky function because BeingRead may change in between. We have to disable interrupts across it
+  T *ForceSlotToWrite() volatile {
+    if(!LeftToWrite()) BeingRead = (BeingRead + 1) & Mask;
+    return GetSlotToWrite();
+  } // ForceSlotToWrite
 
-// this class often used with interrupts, so it is often volatile, so we need two sets of members - volatile and not
-MEMBERS_CIRCBUFFER1(volatile)
-MEMBERS_CIRCBUFFER1()
-
-  constexpr tSize GetFullSize() const { return (1U << sizePower2) - 1; };
+  //************* Reader functions, "BeingWritten" is volatile here
+   tSize LeftToRead() const volatile { return (BeingWritten - BeingRead) & Mask; }
+  T const *GetSlotToRead() { return &Buffer[BeingRead]; }
+  T const *GetContinousBlockToRead(tSize *Sz) volatile {
+    if(Sz != nullptr) {
+        long tempSz = (long)BeingWritten - BeingRead; // it is here, so we address BeingWritten only once
+        *Sz = tempSz < 0?(unsigned long)GetCapacity()+1-BeingRead:tempSz;
+    }
+    return (T const *)&Buffer[BeingRead];
+  } // GetContinousBlockToRead
+  void FinishedReading(tSize Sz = 1) { BeingRead = (BeingRead + Sz) & Mask; }
+  T Read() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
+protected:
+  T Buffer[(unsigned long)GetCapacity()+1];
+  static constexpr tSize Mask = GetCapacity(); // marks used bits in index variables
+  // we do not care what happens in upper bits
+  tSize BeingRead, BeingWritten; //!< indexes of buffer currently being ....
 }; // CircBuffer
 
-//! simplest form is 256 entries
-template<typename T> class CircBuffer<T,8> {
-protected:
-  T Buffer[1U<<8];
-  uint8_t ReadI, WrittenI;
-public:
-  CircBuffer() { Clear(); }
-
-#define MEMBERS_CIRCBUFFER2(...) \
-  uint8_t LeftToWrite() const __VA_ARGS__ { return ReadI - WrittenI; } \
-  uint8_t LeftToRead() const __VA_ARGS__ { return WrittenI - ReadI - 1; } \
-  void Write(T d) __VA_ARGS__ { Buffer[WrittenI++] = d; } \
-  T Read() __VA_ARGS__ { return Buffer[++ReadI]; } \
-  void ForceWrite(T d) __VA_ARGS__ { if(!LeftToWrite()) ++ReadI; Write(d); } \
-  void Clear() __VA_ARGS__ { WrittenI = ReadI + 1; }
-
-// this class often used with interrupts, so it is often volatile, so we need two sets of members - volatile and not
-MEMBERS_CIRCBUFFER2(volatile)
-MEMBERS_CIRCBUFFER2()
-
-  constexpr uint8_t GetFullSize() const { return (1U<<8) - 1; }
-}; //  CircBuffer
+// template<typename T, uint8_t sizeLog2, typename tSize=uint8_t>
+// constexpr tSize CircBuffer<T,sizeLog2,tSize>::Mask;
 
 #endif /* CIRCBUFFER_H_ */
