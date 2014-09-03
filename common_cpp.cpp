@@ -18,7 +18,7 @@ namespace avp {
   int AssertError = 0;
 
   // Note about following two functions - they should be used with BLOCKED pwrite which
-  // returns only after data pointed by Ptr are used.
+  // returns only after data pointed by Ptr are used. Or it makes a copy.
   bool vprintf(bool (*pwrite)(const void *Ptr, size_t Size),char const *format, va_list ap) {
     int Size = vsnprintf(NULL,0,format,ap);
     if(Size < 0) return false;

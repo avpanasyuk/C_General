@@ -46,6 +46,10 @@ namespace avp {
     while(size--) out += *(p++);
     return out;
   } // checksum
+  // making it macro to avoid ugly template
+  #define ROUND_RATIO(a,b) ((2*(a)+(b))/(b)/2)
+
+
   // template<typename type> uint8_t log2(type x) { uint8_t out=0; while(x>>=1) out++; return out; }
   template<typename type> constexpr int8_t log2(type x) { return x?log2<type>(x>>1)+1:-1; }
   // 1<<CurValue/x ? x/(1<<(Curvalue-1)), (1<<(2*CurValue -1) ? x^2)
@@ -144,7 +148,5 @@ namespace Fail {
     #define __packed __attribute__((__packed__))
   #endif /* __packed */
 #endif /* __GNUC__ */
-
-// static inline void* operator new (std::size_t size, void* ptr) noexcept { return ptr; }
 
 #endif /* GENERAL_H_ */
