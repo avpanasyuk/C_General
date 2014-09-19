@@ -35,13 +35,13 @@ namespace avp {
   static inline constexpr uint16_t Word(const uint8_t *Bytes) {
     return (uint16_t(Bytes[1]) << 8)+Bytes[0];
   } // Word
-  template<class ElType, class SzType> ElType checkXOR(const ElType *p, SzType size) {
+  template<typename ElType, typename SzType> ElType checkXOR(const ElType *p, SzType size) {
     ElType XORvalue = 0;
     while(size--) XORvalue ^= *(p++);
     return XORvalue;
   } // checksum
-  template<class OutType, class ElType, class SzType>
-  OutType sum(const ElType *p, SzType size) {
+  template<typename OutType, typename ElType, typename SzType>
+  OutType sum(const ElType *p, SzType size = sizeof(ElType)) {
     OutType out = 0;
     while(size--) out += *(p++);
     return out;
