@@ -9,11 +9,19 @@
 #ifndef GENERAL_H_
 #define GENERAL_H_
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdarg.h>
 #include <stddef.h>
 
 #define N_ELEMENTS(array) (sizeof(array)/sizeof(array[0]))
+// things to suppress warning for a bit
+#define IGNORE(x) _Pragma ("GCC diagnostic push") \
+  DO_PRAGMA(GCC diagnostic ignored #x)
+#define STOP_IGNORING _Pragma ("GCC diagnostic pop")
+
+// IGNORE(-Wno-psabi)
+//  IGNORE(-Wunused-function)
 
 namespace avp {
   template<typename T> inline constexpr T max(T const& a, T const& b) { return a>b?a:b; }
@@ -28,8 +36,28 @@ namespace avp {
 
   // following functions use general "write" function of type bool write(const void *Ptr, uint16_t Size) to do formatted output;
   // NOTE both functions do not write string-ending 0 !!!!!
-  extern bool vprintf(bool (*pwrite)(const void *Ptr, size_t Size),char const *format, va_list ap);
-  extern bool printf(bool (*pwrite)(const void *Ptr, size_t Size), char const *format, ...);
+  // extern bool vprintf(bool (*pwrite)(volatile void *Ptr, size_t Size),char const *format, va_list ap);
+  // extern bool printf(bool (*pwrite)(volatile void *Ptr, size_t Size), char const *format, ...);
+ // Note about following two functions - they should be used with BLOCKED pwrite which
+  // returns only after data pointed by Ptr are used. Or it makes a copy.
+
+  // following functions use general "write" function of type bool write(const void *Ptr, uint16_t Size) to do formatted output;
+  // NOTE both functions do not write string-ending 0 !!!!!
+  template<bool (*pwrite)(volatile void *Ptr, size_t Size)> bool vprintf(char const *format, va_list ap) {
+    int Size = vsnprintf(NULL,0,format,ap);
+    if(Size < 0) return false;
+    char Buffer[Size+1]; // +1 to include ending zero byte
+    vsprintf(Buffer,format,ap);
+    return (*pwrite)((volatile void *)Buffer,Size); // we do not write ending 0 byte
+  } // vprintf
+
+  template<bool (*vprintf)(char const *format, va_list ap)> bool printf(char const *format, ...) {
+    va_list ap;
+    va_start(ap,format);
+    bool Out =  vprintf(format,ap);
+    va_end(ap);
+    return Out;
+  } // printf
 
   // bit-banging functions
   static inline constexpr uint16_t Word(const uint8_t *Bytes) {
@@ -129,11 +157,6 @@ template<typename T> inline bool operator!=(T const &v1, T const &v2) { return !
 
 #define DO_PRAGMA(x) _Pragma (#x)
 #define TODO(x) DO_PRAGMA(message ("TODO - " #x))
-
-// things to supress warning for a bit
-#define IGNORE(x) _Pragma ("GCC diagnostic push") \
-  DO_PRAGMA(GCC diagnostic ignored #x)
-#define STOP_IGNORING _Pragma ("GCC diagnostic pop")
 
 namespace Fail {
   typedef void (*function)();
