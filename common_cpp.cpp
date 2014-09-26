@@ -6,6 +6,7 @@
  */
 #include <stdlib.h>
 #include "General.h"
+#include "Macros.h"
 
 void Fail::default_function() { abort(); }
 
@@ -17,7 +18,7 @@ namespace avp {
 
   __weak bool error_output(volatile void *Ptr, size_t Size) { return fwrite((const void *)Ptr, 1, Size, stderr) == Size; }
   __weak void hang_cpu() { while(1); }
-IGNORE(-Wunused-variable)
+  IGNORE(-Wunused-variable)
   __weak void major_fail(uint8_t reason) { volatile uint8_t reason_copy = reason; hang_cpu(); }
-STOP_IGNORING
+  STOP_IGNORING
 } // namespace avp

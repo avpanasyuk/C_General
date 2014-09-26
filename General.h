@@ -14,15 +14,6 @@
 #include <stdarg.h>
 #include <stddef.h>
 
-#define N_ELEMENTS(array) (sizeof(array)/sizeof(array[0]))
-// things to suppress warning for a bit
-#define IGNORE(x) _Pragma ("GCC diagnostic push") \
-  DO_PRAGMA(GCC diagnostic ignored #x)
-#define STOP_IGNORING _Pragma ("GCC diagnostic pop")
-
-// IGNORE(-Wno-psabi)
-//  IGNORE(-Wunused-function)
-
 namespace avp {
   template<typename T> inline constexpr T max(T const& a, T const& b) { return a>b?a:b; }
   template<typename T> inline constexpr T min(T const& a, T const& b) { return a<b?a:b; }
@@ -68,8 +59,8 @@ namespace avp {
     while(size--) XORvalue ^= *(p++);
     return XORvalue;
   } // checksum
-  template<typename OutType, typename ElType, typename SzType>
-  OutType sum(const ElType *p, SzType size = sizeof(ElType)) {
+  template<typename OutType, typename ElType>
+  OutType sum(const ElType *p, size_t size = sizeof(ElType)) {
     OutType out = 0;
     while(size--) out += *(p++);
     return out;
@@ -140,23 +131,12 @@ namespace avp {
   } // bits
 }// avp
 
-#define LOG10(x) ((x)>999?3:(x)>99?2:(x)>9?1:0)
-#define LOG2(x) avp::log2(x)
 
 // following are operators which can be universaly derived from others
 template<typename T> inline T &operator++(T &v) { return v += 1; }
 template<typename T> inline T operator++(T volatile &v) { return v += 1; }
 template<typename T> inline T operator++(T &v, int) { T old(v); v += 1; return old; }
 template<typename T> inline bool operator!=(T const &v1, T const &v2) { return !(v1 == v2); }
-
-// preprocessor tricks. __VA_ARGS__ is used so the last parameter may be empty
-#define __COMB(a,b,...) a##b##__VA_ARGS__
-#define _COMB(a,b,...) __COMB(a,b,__VA_ARGS__)
-#define __COMB2(a,...) a##__VA_ARGS__
-#define _COMB2(a,...) __COMB2(a,__VA_ARGS__) // second parameter may be absent
-
-#define DO_PRAGMA(x) _Pragma (#x)
-#define TODO(x) DO_PRAGMA(message ("TODO - " #x))
 
 namespace Fail {
   typedef void (*function)();
