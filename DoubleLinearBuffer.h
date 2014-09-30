@@ -3,61 +3,60 @@
   * @author Alexander Panasyuk
   * @brief User case - we prepare blocks to transfer something by adding single elements.
   * Like DMA transfer in UART - we may be adding char by char, but we want to transfer
-  * big blocks when DMA becomes available
-  * NOTE this thing does not work with interrupts because we have to consistently change two variables
+  * big blocks when DMA becomes available.
+  * Buffers are not supposed to run to end
   */
-
-#include <AVP_LIBS/General/Error.h>
 
 #ifndef DOUBLELINEARBUFFER_H_INCLUDED
 #define DOUBLELINEARBUFFER_H_INCLUDED
 
+#include <AVP_LIBS/General/Error.h>
+
 template<typename T, size_t Size> class DoubleLinearBuffer {
 protected:
-  T *Buffer[2];
-  volatile T *pToRead, *pToStore;
-  volatile uint8_t SideToReadI, SideToStoreI;
+  T *Buffer[2]; //!< two buffers - one being read, another written
+  T *pWriter; //!< current position in write buffer
+  uint8_t WriteBufferI;
+  volatile bool ReadBufferDone; //!< Whether Read buffer had been read
 public:
   DoubleLinearBuffer() {
-      Buffer[0] = new T[Size];
-      Buffer[1] = new T[Size];
-      pToStore = pToRead = Buffer[SideToStoreI = SideToReadI = 0];
-    } // constructor
+    pWriter = Buffer[WriteBufferI = 0] = new T[Size];
+    Buffer[1] = new T[Size];
+    ReadBufferDone = true;
+  } // constructor
 
   ~DoubleLinearBuffer() {
-      delete[] Buffer[0];
-      delete[] Buffer[1];
-   }  // destructor
+    delete[] Buffer[0];
+    delete[] Buffer[1];
+  }  // destructor
 
-  bool Add(const T *pNew) {
-    if(pToStore == Buffer[SideToStoreI] + Size) { // ran out of this buffer side
-      if(SideToReadI != SideToStoreI) return false; // we are still reading from another side
-      pToStore = Buffer[SideToStoreI = 1 - SideToStoreI];
-      return Add(pNew);
-    } else {
-        *(pToStore++) = *pNew;
-        return true;
-    }
+  bool Add(T x) {
+    if(pWriter == Buffer[WriteBufferI]+Size) return false;
+    *(pWriter++) = x;
+    return true;
   } // Add
 
-  T *GetOneAndMark() {
-    if(pToRead == pToStore) return nullptr;
-    if(pToRead == Buffer[SideToReadI] + Size) { // read this whole Side
-      pToRead = Buffer[SideToReadI = 1 - SideToReadI];
-      return GetOneAndMark();
-    } else return pToRead++;
-  } // GetOne
+  size_t LeftToRead() { return pWriter - Buffer[WriteBufferI]; }
 
-  const T *GetBlock(size_t *Sz = nullptr) {
-    if(pToRead == pToStore) return nullptr;
-    if(Sz != 0)
-      *Sz = (SideToReadI == SideToStoreI?pToStore:Buffer[SideToReadI] + Size) - pToRead;
-    // removing volatiliness because pointed values are not going to change until we are done
-    return (T const *)pToRead;
-  } // GetBlock
+  /**
+  * @param[out] pSz - pointer to store size to read, default null_ptr
+  * @return pointer to the buffer currently being written. If another buffer is still being
+  * read, so we can not switch to it, returns null_ptr while pSz returns correct size - this
+  * is error condition
+  */
+  const T *GetBlockToRead(size_t *pSz = nullptr) {
+    if(!LeftToRead()) { // nothing to get
+      return null_ptr;
+    } else {
+      if(pSz != null_ptr) *pSz = LeftToRead();
+      if(!ReadBufferDone) return null_ptr;
+      // another buffer is already read, we can switch to it
+      ReadBufferDone = false;
+      pWriter = Buffer[WriteBufferI = 1 - WriteBufferI];
+      return Buffer[1 - WriteBufferI];
+    }
+  } // GetBlockToRead
 
-  void MarkAsDone() {
-    pToRead = SideToReadI == SideToStoreI?pToStore:Buffer[SideToReadI = 1 - SideToReadI];
-  } // MarkAsDone
+  void ReadDone() { ReadBufferDone = true; };
 }; // DoubleLinearBuffer
 #endif /* DOUBLELINEARBUFFER_H_INCLUDED */

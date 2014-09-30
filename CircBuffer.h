@@ -40,20 +40,37 @@ template <typename T, typename tSize=uint8_t> struct CircBufferFullType {
   //************* Reader functions, "BeingWritten" is volatile here
   tSize LeftToRead() const volatile { return BeingWritten - BeingRead; }
   T const *GetSlotToRead() { return &Buffer[BeingRead]; }
-  T const *GetContinousBlockToRead(tSize *Sz) volatile {
-    if(Sz != nullptr) {
-        long tempSz = (long)BeingWritten - BeingRead; // it is here, so we address BeingWritten only once
-        *Sz = tempSz < 0?(unsigned long)GetCapacity()+1-BeingRead:tempSz;
-    }
-    return (T const *)&Buffer[BeingRead];
-  } // GetContinousBlockToRead
-  // if FinishedReading is used after GetContinousBlockToRead Sz should be specified
-  void FinishedReading(tSize Sz = 1) { BeingRead += Sz; }
+  void FinishedReading() { BeingRead += 1; }
   T Read() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
 protected:
   T Buffer[(unsigned long)GetCapacity()+1];
   tSize BeingRead, BeingWritten; //!< indexes of buffer currently being ....
 }; // CircBufferFullType
+
+template <typename T, typename tSize=uint8_t> struct CircBufferFullTypeAndContBlocks:
+  public CircBufferFullType<T,tSize> {
+  CircBufferFullTypeAndContBlocks()
+    : CircBufferFullType<T,tSize>(), ContSize(0) {}
+
+  long LeftContBlock() const volatile  {
+    return (long)CircBufferFullType<T,tSize>::BeingWritten -
+           CircBufferFullType<T,tSize>::BeingRead - ContSize;
+  } // LeftContBlock
+
+  T const *GetContinousBlockToRead(tSize *pSz) volatile {
+    long tempSz = LeftContBlock(); // it is here, so we address BeingWritten only once
+    tempSz = tempSz < 0?(unsigned long)CircBufferFullType<T,tSize>::GetCapacity() + 1 -
+             CircBufferFullType<T,tSize>::BeingRead - ContSize:tempSz;
+    ContSize += tempSz;
+    if(pSz != nullptr) *pSz = tempSz;
+    return (T const *)&CircBufferFullType<T,tSize>::Buffer[CircBufferFullType<T,tSize>::BeingRead+ContSize];
+  } // GetContinousBlockToRead
+
+  void FinishedReading(tSize Sz) { CircBufferFullType<T,tSize>::BeingRead += Sz; ContSize -= Sz; }
+protected:
+  tSize ContSize;
+}; // CircBufferFullTypeAndContBlocks
+
 
 /** Circular Buffer of size less then a full type
   * NOTE: the size of CircBuffer is powers of 2 to avoid conditional rollovers (when we compare
@@ -82,12 +99,12 @@ template <typename T, uint8_t sizeLog2, typename tSize=uint8_t> struct CircBuffe
   } // ForceSlotToWrite
 
   //************* Reader functions, "BeingWritten" is volatile here
-   tSize LeftToRead() const volatile { return (BeingWritten - BeingRead) & Mask; }
+  tSize LeftToRead() const volatile { return (BeingWritten - BeingRead) & Mask; }
   T const *GetSlotToRead() { return &Buffer[BeingRead]; }
   T const *GetContinousBlockToRead(tSize *Sz) volatile {
     if(Sz != nullptr) {
-        long tempSz = (long)BeingWritten - BeingRead; // it is here, so we address BeingWritten only once
-        *Sz = tempSz < 0?(unsigned long)GetCapacity()+1-BeingRead:tempSz;
+      long tempSz = (long)BeingWritten - BeingRead; // it is here, so we address BeingWritten only once
+      *Sz = tempSz < 0?(unsigned long)GetCapacity()+1-BeingRead:tempSz;
     }
     return (T const *)&Buffer[BeingRead];
   } // GetContinousBlockToRead
