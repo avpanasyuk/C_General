@@ -14,7 +14,7 @@
 #include "BitVar.h"
 
 /** Circular Buffer of elements of class T. One reader and one writer may work in parallel. Reader is using
-  * only BeingRead index, and writer only BeingWritten, so index are volatile ONLY when cross-used,
+  * only BeingRead index, and writer only BeingWritten, so index are  ONLY when cross-used,
   * like in Clear()
   * NOTE: the size of CircBuffer is whateven fit into variable of tSize, probably 255 or 65535.
   *  to avoid conditional rollovers (when we compare index with an end of buffer all the time)
@@ -26,19 +26,19 @@
 template <typename T, typename tSize=uint8_t> struct CircBufferFullType {
   // *********** General functions
   CircBufferFullType() { Clear(); }
-  void Clear() volatile {  BeingWritten = BeingRead; }
+  void Clear()  {  BeingWritten = BeingRead; }
   static constexpr tSize GetCapacity() { return tSize(-1); }; // how may elements fit
 
-  //************* Writer functions, "BeingRead" is volatile here
-  tSize LeftToWrite() const volatile { return BeingRead - 1 - BeingWritten; }
+  //************* Writer functions, "BeingRead" is  here
+  tSize LeftToWrite() const { return BeingRead - 1 - BeingWritten; }
   T *GetSlotToWrite() { return &Buffer[BeingWritten]; }
   void FinishedWriting() { ++BeingWritten; }
   void Write(T d) { *GetSlotToWrite() = d; FinishedWriting(); }
   // It is risky function because BeingRead may change in between. We have to disable interrupts accross it
-  T *ForceSlotToWrite() volatile {  if(!LeftToWrite()) ++BeingRead; return GetSlotToWrite(); }
+  T *ForceSlotToWrite()  {  if(!LeftToWrite()) ++BeingRead; return GetSlotToWrite(); }
 
-  //************* Reader functions, "BeingWritten" is volatile here
-  tSize LeftToRead() const volatile { return BeingWritten - BeingRead; }
+  //************* Reader functions, "BeingWritten" is  here
+  tSize LeftToRead() const  { return BeingWritten - BeingRead; }
   T const *GetSlotToRead() { return &Buffer[BeingRead]; }
   void FinishedReading() { BeingRead += 1; }
   T Read() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
@@ -52,12 +52,12 @@ template <typename T, typename tSize=uint8_t> struct CircBufferFullTypeAndContBl
   CircBufferFullTypeAndContBlocks()
     : CircBufferFullType<T,tSize>(), ContSize(0) {}
 
-  long LeftContBlock() const volatile  {
+  long LeftContBlock() const   {
     return (long)CircBufferFullType<T,tSize>::BeingWritten -
            CircBufferFullType<T,tSize>::BeingRead - ContSize;
   } // LeftContBlock
 
-  T const *GetContinousBlockToRead(tSize *pSz) volatile {
+  T const *GetContinousBlockToRead(tSize *pSz)  {
     long tempSz = LeftContBlock(); // it is here, so we address BeingWritten only once
     tempSz = tempSz < 0?(unsigned long)CircBufferFullType<T,tSize>::GetCapacity() + 1 -
              CircBufferFullType<T,tSize>::BeingRead - ContSize:tempSz;
@@ -84,24 +84,24 @@ protected:
 template <typename T, uint8_t sizeLog2, typename tSize=uint8_t> struct CircBuffer {
   // *********** General functions
   CircBuffer() { Clear(); }
-  void Clear() volatile {  BeingWritten = BeingRead; }
+  void Clear()  {  BeingWritten = BeingRead; }
   static constexpr tSize GetCapacity() { return (1UL << sizeLog2) - 1; };
 
-  //************* Writer functions, "BeingRead" is volatile here
-  tSize LeftToWrite() const volatile { return (BeingRead - 1 - BeingWritten) & Mask; }
+  //************* Writer functions, "BeingRead" is  here
+  tSize LeftToWrite() const  { return (BeingRead - 1 - BeingWritten) & Mask; }
   T *GetSlotToWrite() { return &Buffer[BeingWritten]; }
   void FinishedWriting() { BeingWritten = (BeingWritten + 1) & Mask; }
   void Write(T d) { *GetSlotToWrite() = d; FinishedWriting(); }
   // It is risky function because BeingRead may change in between. We have to disable interrupts across it
-  T *ForceSlotToWrite() volatile {
+  T *ForceSlotToWrite()  {
     if(!LeftToWrite()) BeingRead = (BeingRead + 1) & Mask;
     return GetSlotToWrite();
   } // ForceSlotToWrite
 
-  //************* Reader functions, "BeingWritten" is volatile here
-  tSize LeftToRead() const volatile { return (BeingWritten - BeingRead) & Mask; }
+  //************* Reader functions, "BeingWritten" is  here
+  tSize LeftToRead() const  { return (BeingWritten - BeingRead) & Mask; }
   T const *GetSlotToRead() { return &Buffer[BeingRead]; }
-  T const *GetContinousBlockToRead(tSize *Sz) volatile {
+  T const *GetContinousBlockToRead(tSize *Sz)  {
     if(Sz != nullptr) {
       long tempSz = (long)BeingWritten - BeingRead; // it is here, so we address BeingWritten only once
       *Sz = tempSz < 0?(unsigned long)GetCapacity()+1-BeingRead:tempSz;
