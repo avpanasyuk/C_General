@@ -29,7 +29,7 @@ namespace avp {
   // NOTE both functions do not write string-ending 0 !!!!!
   // extern bool vprintf(bool (*pwrite)(volatile void *Ptr, size_t Size),char const *format, va_list ap);
   // extern bool printf(bool (*pwrite)(volatile void *Ptr, size_t Size), char const *format, ...);
- // Note about following two functions - they should be used with BLOCKED pwrite which
+// Note about following two functions - they should be used with BLOCKED pwrite which
   // returns only after data pointed by Ptr are used. Or it makes a copy.
 
   // following functions use general "write" function of type bool write(const void *Ptr, uint16_t Size) to do formatted output;
@@ -66,12 +66,14 @@ namespace avp {
     return out;
   } // checksum
   // making it macro to avoid ugly template
-  #define ROUND_RATIO(a,b) ((2*(a)+(b))/(b)/2)
+#define ROUND_RATIO(a,b) ((2*(a)+(b))/(b)/2)
 
 
   // template<typename type> uint8_t log2(type x) { uint8_t out=0; while(x>>=1) out++; return out; }
   template<typename type> constexpr int8_t log2(type x) { return x?log2<type>(x>>1)+1:-1; }
   // 1<<CurValue/x ? x/(1<<(Curvalue-1)), (1<<(2*CurValue -1) ? x^2)
+  template<typename type> constexpr int8_t ceil_log2(type x) { return log2<type>(x-1)+1; }
+
   template<typename type> constexpr uint8_t RoundLog2(type x, uint8_t CurValue=0) {
     return (1<<CurValue) > x?
            (1UL << (2*CurValue-1) < avp::sqr<type,uint32_t>(x)?CurValue:CurValue-1
@@ -79,17 +81,17 @@ namespace avp {
   }
 
   // 1<<CurValue/x ? x/(1<<(Curvalue-1)), (1<<(2*CurValue -1) ? x^2)
-  // numer*2/denom ? denom/numer, numer^2*2	? denom^2
+  // numer*2/denom ? denom/numer, numer^2*2 ? denom^2
   constexpr int8_t RoundLog2Ratio(uint32_t numer, uint32_t denom, bool Sorted=false) {
     return Sorted?
            (numer > denom?
             (numer > 0x4000?
              RoundLog2Ratio(numer>>1,denom,true):RoundLog2Ratio(numer,denom<<1,true)
-            )+1:(numer*numer*2 < denom*denom?-1:0)
+        )+1:(numer*numer*2 < denom*denom?-1:0)
            ):(numer > denom?RoundLog2Ratio(numer,denom,true):-RoundLog2Ratio(denom,numer,true));
   }
   constexpr int8_t CeilLog2Ratio(uint32_t numer, uint32_t denom) {
-    return avp::log2((avp::CeilRatio(numer,denom) << 1) - 1);
+    return ceil_log2(CeilRatio(numer,denom));
   }
 
   template<typename out_type, typename in_type> out_type Sqrt(in_type y) {
@@ -144,12 +146,12 @@ namespace Fail {
 } // Fail
 
 #if  defined ( __GNUC__ )
-  #ifndef __weak
-    #define __weak   __attribute__((weak))
-  #endif /* __weak */
-  #ifndef __packed
-    #define __packed __attribute__((__packed__))
-  #endif /* __packed */
+#ifndef __weak
+#define __weak   __attribute__((weak))
+#endif /* __weak */
+#ifndef __packed
+#define __packed __attribute__((__packed__))
+#endif /* __packed */
 #endif /* __GNUC__ */
 
 #endif /* GENERAL_H_ */
