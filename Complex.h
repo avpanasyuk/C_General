@@ -11,6 +11,8 @@
 
 namespace avp {
   template<typename T> struct Complex {
+      T Real; T Imag;
+
       Complex() {}
       Complex(T Real_, T Imag_ = 0): Real(Real_), Imag(Imag_) {}
       Complex(const Complex &a2): Real(a2.Real), Imag(a2.Imag) {}
@@ -42,8 +44,6 @@ namespace avp {
 
       static Complex conj(const Complex &a) { Complex Temp(a); return Temp.conj(); }
       static T abs_sqr(const Complex &a) { return a.abs_sqr(); }
-    protected:
-      T Real; T Imag;
   };
 } // namespace avp
 

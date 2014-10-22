@@ -27,6 +27,9 @@ namespace avp {
 // "exp" should return 0 if success and error code if not
 #ifdef DEBUG
 
+// POLICY: AVP_ASSERT is used just before a deadly operation, like assigning zero
+// pointer, and not preliminary
+
 #define AVP_ASSERT_(exp,err_form,...) do{ if((avp::AssertError = !(exp))) \
 { AVP_ERROR("Expression (%s) is false in %s on line %d" err_form "!\n", \
             #exp, __FILE__, __LINE__,##__VA_ARGS__); }}while(0)
