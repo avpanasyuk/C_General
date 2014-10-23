@@ -52,8 +52,8 @@ struct CircBuffer {
 
   //************* Reader functions, "BeingWritten" is  here
   tSize LeftToRead() const  { return (BeingWritten - BeingRead) & Mask; }
-  T const *GetSlotToRead() { return &Buffer[BeingRead]; }
-  void FinishedReading(tSize Sz = 1) { BeingRead = (BeingRead + Sz) & Mask; }
+  T const *GetSlotToRead() { LastReadSize = 1; return &Buffer[BeingRead]; }
+  void FinishedReading() { BeingRead = (BeingRead + LastReadSize) & Mask; }
   T Read() {
     AVP_ASSERT(LeftToRead());
     T temp = *GetSlotToRead();
@@ -66,10 +66,12 @@ struct CircBuffer {
   *   release block after reading with FinishedReading(*pSz)
   *   @param[out] pSz - pointer to variable to return size in
   */
-  T const *GetContinousBlockToRead(tSize *pSz = &Idle) {
+  T const *GetContinousBlockToRead(tSize *pSz = nullptr) {
     if(BeingRead > BeingWritten) { // reading is wrapped, continous blocks goes just to the end of the buffer
-      *pSz = GetCapacity() + 1 - BeingRead;
-    } else  *pSz = LeftToRead();
+      LastReadSize = GetCapacity() + 1 - BeingRead;
+    } else  LastReadSize = LeftToRead();
+
+    if(pSz != nullptr) *pSz = LastReadSize;
 
     return GetSlotToRead();
   } // GetContinousBlockToRead
@@ -77,11 +79,7 @@ protected:
   T Buffer[size_t(GetCapacity())+1];
   static constexpr tSize Mask = GetCapacity(); //!< marks used bits in index variables
   // we do not care what happens in upper bits
-  tSize BeingRead, BeingWritten; //!< indexes of buffer currently being ....
-  static tSize Idle;
+  tSize BeingRead, BeingWritten, LastReadSize; //!< indexes of buffer currently being ....
 }; // CircBuffer
-
-template <typename T, typename tSize, uint8_t sizeLog2>
-tSize CircBuffer<T,tSize,sizeLog2>::Idle;
 
 #endif /* CIRCBUFFER_H_ */
