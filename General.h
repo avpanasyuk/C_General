@@ -20,7 +20,7 @@ namespace avp {
   template<typename T> inline constexpr T Abs(T const& a) { return a<0?-a:a; }
   template<typename T> inline constexpr T CeilRatio(T const& num, T const& denom)
   { return (num + denom - 1)/denom; }
-  template<typename T> inline constexpr T RoundRatio(T const& num, T const& denom)
+  template<typename T, typename T1> inline constexpr T RoundRatio(T const& num, T1 const& denom)
   { return (num + num + denom)/denom/2; }
   template<typename Tin, typename Tout> inline constexpr Tout sqr(Tin const& a)
   { return Tout(a)*Tout(a); }
@@ -66,7 +66,7 @@ namespace avp {
     return out;
   } // checksum
   // making it macro to avoid ugly template
-#define ROUND_RATIO(a,b) ((2*(a)+(b))/(b)/2)
+// #define ROUND_RATIO(a,b) ((2*(a)+(b))/(b)/2)
 
 
   // template<typename type> uint8_t log2(type x) { uint8_t out=0; while(x>>=1) out++; return out; }
