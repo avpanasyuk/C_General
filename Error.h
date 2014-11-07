@@ -12,9 +12,25 @@
 namespace avp {
   extern int AssertError;
 
+  /**
+  * foreground error output function
+  */
   bool error_output(const uint8_t *Ptr, size_t Size);
   void major_fail(uint8_t reason = 0);
   void hang_cpu();
+
+  namespace bg_error {
+    /**
+    * background output function, stores stuff in the Buffer
+    */
+    bool put_byte(uint8_t b);
+    typedef Out<put_byte> Out;
+
+    /**
+    * where real output occurs in foreround, got to be called in a loop
+    */
+    void process();
+  } // namespace bg_error
 }; //avp
 
 namespace Fail {

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 
 namespace avp {
   // following functions use general "write" function of type bool write(const void *Ptr, uint16_t Size) to do formatted output;
