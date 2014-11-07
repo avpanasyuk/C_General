@@ -67,13 +67,13 @@ struct CircBuffer {
   *   @param[out] pSz - pointer to variable to return size in
   */
   T const *GetContinousBlockToRead(tSize *pSz = nullptr) {
-    if(BeingRead > BeingWritten) { // reading is wrapped, continous blocks goes just to the end of the buffer
+    if(BeingRead > BeingWritten) { // reading is wrapped, continuous blocks goes just to the end of the buffer
       LastReadSize = GetCapacity() + 1 - BeingRead;
     } else  LastReadSize = LeftToRead();
 
     if(pSz != nullptr) *pSz = LastReadSize;
 
-    return GetSlotToRead();
+    return &Buffer[BeingRead];
   } // GetContinousBlockToRead
 protected:
   T Buffer[size_t(GetCapacity())+1];

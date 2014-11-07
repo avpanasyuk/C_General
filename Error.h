@@ -1,20 +1,26 @@
 /**
-  * @file
+  * @file AVP_LIBS/General/Error.h
   * @author Alexander Panasyuk
   */
 
 #ifndef ERROR_H_INCLUDED
 #define ERROR_H_INCLUDED
 
-#include "General.h"
+#include <stdint.h>
+#include "IO.h"
 
 namespace avp {
   extern int AssertError;
 
-  bool error_output(volatile void *Ptr, size_t Size);
+  bool error_output(const uint8_t *Ptr, size_t Size);
   void major_fail(uint8_t reason = 0);
   void hang_cpu();
 }; //avp
+
+namespace Fail {
+  typedef void (*function)();
+  extern void default_function();
+} // Fail
 
 #ifdef DEBUG
 #define AVP_ERROR(format, ...) do{ \

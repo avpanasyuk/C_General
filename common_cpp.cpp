@@ -5,6 +5,8 @@
  *  Author: panasyuk
  */
 #include <stdlib.h>
+#include <stdio.h>
+#include "Error.h"
 #include "General.h"
 #include "Macros.h"
 
@@ -16,7 +18,7 @@ namespace avp {
 
   int AssertError = 0;
 
-  __weak bool error_output(volatile void *Ptr, size_t Size) { return fwrite((const void *)Ptr, 1, Size, stderr) == Size; }
+  __weak bool error_output(const uint8_t *Ptr, size_t Size) { return fwrite((const void *)Ptr, 1, Size, stderr) == Size; }
   __weak void hang_cpu() { while(1); }
   IGNORE(-Wunused-variable)
   __weak void major_fail(uint8_t reason) { volatile uint8_t reason_copy = reason; hang_cpu(); }
