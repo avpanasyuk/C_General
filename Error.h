@@ -24,6 +24,10 @@ namespace avp {
     * background output function, stores stuff in the Buffer
     */
     bool put_byte(uint8_t b);
+
+    /**
+    * Out is where all the functions to use are
+    */
     typedef Out<put_byte> Out;
 
     /**
