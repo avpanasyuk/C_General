@@ -6,6 +6,9 @@
   * @author Alexander Panasyuk
   */
 
+#include <stdint.h>
+#include <stdlib.h>
+
 namespace avp {
   // bit-banging functions
   static inline constexpr uint16_t Word(const uint8_t *Bytes) {
