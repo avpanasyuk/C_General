@@ -20,13 +20,12 @@ namespace avp {
     return XORvalue;
   } // checksum
   template<typename OutType, typename ElType>
-  OutType sum(const ElType *p, size_t size = sizeof(ElType)) {
+  OutType sum(const ElType *p_, size_t size = sizeof(ElType)) {
     OutType out = 0;
+    const uint8_t *p = (const uint8_t *)p_;
     while(size--) out += *(p++);
     return out;
   } // checksum
-  // making it macro to avoid ugly template
-// #define ROUND_RATIO(a,b) ((2*(a)+(b))/(b)/2)
 
   // ***** BIT HANDLING FUNCTIONS
   template<typename type> inline constexpr type make_mask(uint8_t lowest_bit, uint8_t numbits) {
