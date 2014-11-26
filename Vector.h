@@ -4,26 +4,67 @@
 #include <stdlib.h>
 #include "General.h"
 
+#define SELF_OP_T(Class,...) \
+      const Class &operator __VA_ARGS__##=(const T &rhs) { \
+      size_t i=0;  do Vector<T,Length>::Data[i] __VA_ARGS__##= rhs; while(++i < Length); return *this; }
+#define SELF_OP_V(Class,...) \
+      const Class &operator __VA_ARGS__##=(const Class<T,Length> &rhs) { \
+        size_t i=0;  do Vector<T,Length>::Data[i] __VA_ARGS__##= rhs.Data[i]; while(++i < Length); return *this; }
+
 namespace avp {
   extern Fail::function bad_index_func;
   extern Fail::function bad_pointer_func;
 
-  template<typename T, size_t Length> class Vector {
+  template<typename T, size_t Length>
+  class Vector {
     // index checking vector
   protected:
     T Data[Length];
   public:
+    Vector() {}
+    Vector(const T &rhs) { *this = rhs; }
+    Vector(const Vector<T,Length> &rhs) { *this = rhs; }
+
     T &operator[](uint8_t i) {
 #ifdef DEBUG
       if(i>=Length) (*bad_index_func)();
 #endif
       return Data[i];
     }
-    // operator T const *() const { return Data; }
+
+   const T &operator[](uint8_t i) const {
+#ifdef DEBUG
+      if(i>=Length) (*bad_index_func)();
+#endif
+      return Data[i];
+    }
+
+    constexpr size_t N() const { return Length; }
+    SELF_OP_T(Vector)
+    SELF_OP_V(Vector)
   }; // class Vector
 
-  template<typename T, size_t Length> class PointerVector:
-    public Vector<T *, Length> {
+  template<typename T, size_t Length>
+  class ArithVector: public Vector<T,Length> {
+  public:
+    ArithVector() {}
+    ArithVector(const T &rhs) { *this = rhs; }
+    ArithVector(const Vector<T,Length> &rhs) { *this = rhs; }
+
+    SELF_OP_T(ArithVector)
+    SELF_OP_T(ArithVector,+)
+    SELF_OP_T(ArithVector,-)
+    SELF_OP_T(ArithVector,*)
+    SELF_OP_T(ArithVector,/)
+    SELF_OP_V(ArithVector)
+    SELF_OP_V(ArithVector,+)
+    SELF_OP_V(ArithVector,-)
+    SELF_OP_V(ArithVector,*)
+    SELF_OP_V(ArithVector,/)
+  }; // class ArithVector
+
+  template<typename T, size_t Length>
+  class PointerVector: public Vector<T *, Length> {
     // this is vector of pointers which never lets dereference NULL pointer
     // instead of Vector::operator[] which returns T* &
     // PointerVector::operator[] return Token which can be dereferenced
@@ -37,7 +78,7 @@ namespace avp {
       Token &operator=(T *Ptr) { Ref = Ptr; return *this; }
       T &operator*() const {
         if(Ref == NULL) (*bad_pointer_func)();
-        return *Ref; // we dereferencing NULL pointer here, but program
+        return *Ref; // we may be dereferencing NULL pointer here, but program
         // should terminate on the line above
       }
       T *operator-> () const { return &(this->operator*()); }
