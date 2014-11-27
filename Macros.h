@@ -21,6 +21,7 @@
 
 #define LOG10(x) ((x)>999?3:(x)>99?2:(x)>9?1:0)
 
+#if 0
 /*
 Why is this important? Well when a macro is scanned and expanding, it creates a disabling context.
 This disabling context will cause a token, that refers to the currently expanding macro, to be painted blue.
@@ -65,15 +66,20 @@ macros from becoming painted blue. We will just need to apply more scans to the 
 #define DEC_9 8
 
 // LOGIC
+/*
+* CHECK(PROBE(~)) is 1 if a is not empty, and 0 otherwise
+*/
 
 #define CHECK_N(x, n, ...) n
 #define CHECK(...) CHECK_N(__VA_ARGS__, 0,)
+#define PROBE(x) x,1,
+
 
 #define NOT(x) CHECK(PRIMITIVE_CAT(NOT_, x))
 #define NOT_0 ~, 1,
 
-// x == 0: NOT(x) -> CHECK(NOT_0) -> CHECK(~,1,) -> CHECK_N(~,1,0,) -> 1
-// x == 1: NOT(x) -> CHECK(NOT_1) -> CHECK_N(NOT_1,0,) -> 0
+// NOT(0) -> CHECK(NOT_0) -> CHECK(~,1,) -> CHECK_N(~,1,0,) -> 1
+// NOT(anything) -> CHECK(NOT_anything) -> CHECK_N(NOT_anything,0,) -> 0
 
 #define COMPL(b) PRIMITIVE_CAT(COMPL_, b)
 #define COMPL_0 1
@@ -91,4 +97,29 @@ macros from becoming painted blue. We will just need to apply more scans to the 
 #define EXPAND(...) __VA_ARGS__
 #define WHEN(c) IF(c)(EXPAND, EAT)
 
+#define SPLIT(i, ...) PRIMITIVE_CAT(SPLIT_, i)(__VA_ARGS__)
+#define SPLIT_0(a, ...) a
+#define SPLIT_1(a, ...) __VA_ARGS__
+
+#define IS_VARIADIC(...) \
+    SPLIT(0, CAT(IS_VARIADIC_R_, IS_VARIADIC_C __VA_ARGS__)) \
+    /**/
+#define IS_VARIADIC_C(...) 1
+#define IS_VARIADIC_R_1 1,
+#define IS_VARIADIC_R_IS_VARIADIC_C 0,
+
+#define IS_EMPTY_NON_FUNCTION(...) \
+    IIF(IS_VARIADIC(__VA_ARGS__))( \
+        0, \
+        IS_VARIADIC(IS_EMPTY_NON_FUNCTION_C __VA_ARGS__ ()) \
+    ) \
+    /**/
+#define IS_EMPTY_NON_FUNCTION_C() ()
+
+#define IS_EMPTY(x) IIF(BOOL(PRIMITIVE_CAT(CHECK_AFTER_,x)))
+#define CHECK_AFTER_ 0
+
+#endif
+
 #endif /* MACROS_H_INCLUDED */
+
