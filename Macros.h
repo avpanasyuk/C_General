@@ -11,7 +11,14 @@
 #define TODO(x) DO_PRAGMA(message ("TODO - " #x))
 
 #define N_ELEMENTS(array) (sizeof(array)/sizeof(array[0]))
+
 // things to suppress warning for a bit
+// how it really works
+//         #pragma GCC diagnostic push
+//          #pragma GCC diagnostic ignored "-Wno-psabi"
+//            foo(b);                       /* no diagnostic for this one */
+//          #pragma GCC diagnostic pop
+
 #define IGNORE(x) _Pragma ("GCC diagnostic push") \
   DO_PRAGMA(GCC diagnostic ignored #x)
 #define STOP_IGNORING _Pragma ("GCC diagnostic pop")

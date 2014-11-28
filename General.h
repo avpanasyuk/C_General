@@ -16,7 +16,7 @@ template<typename T> inline bool operator!=(T const &v1, T const &v2) { return !
 
 #define BINARY_OP_FROM_SELF(op) \
 template<typename T> \
-inline const T operator op (const T &x1, const T &x2) { T out(x1); return x1 op##= x2; }
+inline T operator op (const T &x1, const T &x2) { T out(x1); return out op##= x2; }
 
 BINARY_OP_FROM_SELF(-)
 BINARY_OP_FROM_SELF(+)
