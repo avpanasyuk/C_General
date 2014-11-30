@@ -14,7 +14,7 @@ namespace avp {
   { return (num + denom - 1)/denom; }
   template<typename T, typename T1> inline constexpr T RoundRatio(T const& num, T1 const& denom)
   { return (num + num + denom)/denom/2; }
-  template<typename Tin, typename Tout> inline constexpr Tout sqr(Tin const& a)
+  template<typename Tin, typename Tout = Tin> inline constexpr Tout sqr(Tin const& a)
   { return Tout(a)*Tout(a); }
 
     // template<typename type> uint8_t log2(type x) { uint8_t out=0; while(x>>=1) out++; return out; }

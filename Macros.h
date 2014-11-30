@@ -2,10 +2,10 @@
 #define MACROS_H_INCLUDED
 
 // preprocessor tricks. __VA_ARGS__ is used so the last parameter may be empty
-#define __COMB(a,b,...) a##b##__VA_ARGS__
-#define _COMB(a,b,...) __COMB(a,b,__VA_ARGS__)
-#define __COMB2(a,...) a##__VA_ARGS__
-#define _COMB2(a,...) __COMB2(a,__VA_ARGS__) // second parameter may be absent
+#define _COMB2(a,...) a##__VA_ARGS__
+#define COMB2(a,...) _COMB2(a,__VA_ARGS__) // second parameter may be absent
+#define _COMB3(a,b,...) a##b##__VA_ARGS__
+#define COMB3(a,b,...) _COMB3(a,b,__VA_ARGS__)
 
 #define DO_PRAGMA(x) _Pragma (#x)
 #define TODO(x) DO_PRAGMA(message ("TODO - " #x))

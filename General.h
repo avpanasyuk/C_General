@@ -9,9 +9,10 @@
 #define GENERAL_H_
 
 // following are operators which can be universaly derived from others
-template<typename T> inline T &operator++(T &v) { return v += 1; }
-template<typename T> inline T operator++(T volatile &v) { return v += 1; }
+template<typename T> inline T operator++(T &v) { return v += 1; }
 template<typename T> inline T operator++(T &v, int) { T old(v); v += 1; return old; }
+template<typename T> inline T operator--(T &v) { return v -= 1; }
+template<typename T> inline T operator--(T &v, int) { T old(v); v -= 1; return old; }
 template<typename T> inline bool operator!=(T const &v1, T const &v2) { return !(v1 == v2); }
 
 #define BINARY_OP_FROM_SELF(op) \

@@ -23,7 +23,7 @@ namespace avp {
   public:
     Vector() {}
     Vector(const T &rhs) { *this = rhs; }
-    Vector(const Vector<T,Length> &rhs) { *this = rhs; }
+    // Vector(const Vector<T,Length> &rhs) { *this = rhs; } // the same as default
 
     T &operator[](uint8_t i) {
 #ifdef DEBUG
@@ -41,7 +41,7 @@ namespace avp {
 
     constexpr size_t N() const { return Length; }
     SELF_OP_T(Vector)
-    SELF_OP_V(Vector)
+    // SELF_OP_V(Vector) // this is default operation=
   }; // class Vector
 
   template<typename T, size_t Length>
@@ -49,14 +49,14 @@ namespace avp {
   public:
     ArithVector() {}
     ArithVector(const T &rhs) { *this = rhs; }
-    ArithVector(const Vector<T,Length> &rhs) { *this = rhs; }
+    // ArithVector(const Vector<T,Length> &rhs) { *this = rhs; } // it is default
 
     SELF_OP_T(ArithVector)
     SELF_OP_T(ArithVector,+)
     SELF_OP_T(ArithVector,-)
     SELF_OP_T(ArithVector,*)
     SELF_OP_T(ArithVector,/)
-    SELF_OP_V(ArithVector)
+    // SELF_OP_V(ArithVector) // it is default
     SELF_OP_V(ArithVector,+)
     SELF_OP_V(ArithVector,-)
     SELF_OP_V(ArithVector,*)
