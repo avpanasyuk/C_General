@@ -56,7 +56,9 @@ namespace Fail {
             #exp, avp::AssertError, __FILE__, __LINE__); }}while(0)
 #else
 #define AVP_ERROR(format,...) avp::major_fail()
-#define AVP_ASSERT_(exp,...) do{ (exp); }while(0)
+
+#define AVP_ASSERT_(exp,...) do{ bool Unused __attribute__((unused)) = (exp); }while(0)
+
 #define ASSERT_BEING_0(exp,...) AVP_ASSERT(exp)
 #endif
 

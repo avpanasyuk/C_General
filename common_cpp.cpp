@@ -22,9 +22,7 @@ namespace avp {
 
   __weak bool error_output(const uint8_t *Ptr, size_t Size) { return fwrite((const void *)Ptr, 1, Size, stderr) == Size; }
   __weak void hang_cpu() { while(1); }
-  IGNORE(-Wunused-variable)
-  __weak void major_fail(uint8_t reason) { volatile uint8_t reason_copy = reason; hang_cpu(); }
-  STOP_IGNORING
+  __weak void major_fail(uint8_t reason) { volatile uint8_t reason_copy __attribute__((unused)) = reason; hang_cpu(); }
 
   namespace bg_error {
     static CircBuffer<char> Buffer;
