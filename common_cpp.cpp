@@ -15,8 +15,8 @@
 void Fail::default_function() { abort(); }
 
 namespace avp {
-  Fail::function bad_index_func = Fail::default_function;
-  Fail::function bad_pointer_func = Fail::default_function;
+  Fail::funct bad_index_func = Fail::default_function;
+  Fail::funct bad_pointer_func = Fail::default_function;
 
   int AssertError = 0;
 

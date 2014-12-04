@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include "General.h"
+#include "Error.h"
 
 #define SELF_OP_T(Class,...) \
       const Class &operator __VA_ARGS__##=(const T &rhs) { \
@@ -12,8 +13,8 @@
         size_t i=0;  do Vector<T,Length>::Data[i] __VA_ARGS__##= rhs.Data[i]; while(++i < Length); return *this; }
 
 namespace avp {
-  extern Fail::function bad_index_func;
-  extern Fail::function bad_pointer_func;
+  extern Fail::funct bad_index_func;
+  extern Fail::funct bad_pointer_func;
 
   template<typename T, size_t Length>
   class Vector {

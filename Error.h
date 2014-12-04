@@ -38,7 +38,7 @@ namespace avp {
 }; //avp
 
 namespace Fail {
-  typedef void (*function)();
+  typedef void (*funct)();
   extern void default_function();
 } // Fail
 
