@@ -13,7 +13,7 @@ template<typename T> inline T operator++(T &v) { return v += 1; }
 template<typename T> inline T operator++(T &v, int) { T old(v); v += 1; return old; }
 template<typename T> inline T operator--(T &v) { return v -= 1; }
 template<typename T> inline T operator--(T &v, int) { T old(v); v -= 1; return old; }
-template<typename T> inline bool operator!=(T const &v1, T const &v2) { return !(v1 == v2); }
+template<typename T, typename T2> inline bool operator!=(T const &v1, T2 const &v2) { return !(v1 == v2); }
 
 #define BINARY_OP_FROM_SELF(op) \
 template<typename T> \

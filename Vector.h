@@ -63,6 +63,7 @@ namespace avp {
     SELF_OP_V(ArithVector,/)
   }; // class ArithVector
 
+#if 0
   template<typename T, size_t Length>
   class PointerVector: public Vector<T *, Length> {
     // this is vector of pointers which never lets dereference NULL pointer
@@ -89,6 +90,7 @@ namespace avp {
       return Vector<T *,Length>::operator[](i);
     }
   }; // class  PointerVector
+  #endif
 } // namespace avp
 
 #endif /* VECTOR_H_ */

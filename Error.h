@@ -43,6 +43,7 @@ namespace Fail {
 } // Fail
 
 #ifdef DEBUG
+
 #define AVP_ERROR(format, ...) do{ \
  avp::printf<avp::vprintf<avp::error_output> >("Error in file %s, line %d: " format, \
              __FILE__, __LINE__, ##__VA_ARGS__); avp::major_fail(); }while(0)
@@ -54,10 +55,13 @@ namespace Fail {
 #define ASSERT_BEING_0(exp) do{ if(avp::AssertError = (exp)) \
   { AVP_ERROR("Expression (%s) equals %d != 0 in %s on line %d!\n", \
             #exp, avp::AssertError, __FILE__, __LINE__); }}while(0)
-#else
+
+#else // RELEASE
+
 #define AVP_ERROR(format,...) avp::major_fail()
 
-#define AVP_ASSERT_(exp,...) do{ bool Unused __attribute__((unused)) = (exp); }while(0)
+
+#define AVP_ASSERT_(exp,...) do{ [] (...) {} (exp,##__VA_ARGS__); }while(0)
 
 #define ASSERT_BEING_0(exp,...) AVP_ASSERT(exp)
 #endif

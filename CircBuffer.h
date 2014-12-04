@@ -30,7 +30,7 @@ template <typename T, typename tSize=uint8_t, uint8_t sizeLog2 = sizeof(tSize)*8
 struct CircBuffer {
   // *********** General functions
   CircBuffer() { Clear(); }
-  void Clear()  {  BeingWritten = BeingRead; }
+  void Clear()  {  BeingWritten = BeingRead; LastReadSize = 0;}
   static constexpr tSize GetCapacity() { return (1UL << sizeLog2) - 1; };
 
   //************* Writer functions, "BeingRead" is  here
@@ -40,7 +40,7 @@ struct CircBuffer {
   T *GetSlotToWrite() { return &Buffer[BeingWritten]; }
   void FinishedWriting() { BeingWritten = (BeingWritten + 1) & Mask; }
   void Write(T const &d) {
-    AVP_ASSERT(LeftToWrite());
+    AVP_ASSERT(LeftToWrite() != 0);
     *GetSlotToWrite() = d;
     FinishedWriting();
   }
@@ -52,10 +52,11 @@ struct CircBuffer {
 
   //************* Reader functions, "BeingWritten" is  here
   tSize LeftToRead() const  { return (BeingWritten - BeingRead) & Mask; }
+  //! @brief returns the same slot if called several times in a row. Omly FinishReading moves pointer
   T const *GetSlotToRead() { LastReadSize = 1; return &Buffer[BeingRead]; }
-  void FinishedReading() { BeingRead = (BeingRead + LastReadSize) & Mask; }
+  void FinishedReading() { BeingRead = (BeingRead + LastReadSize) & Mask; LastReadSize = 0; }
   T Read() {
-    AVP_ASSERT(LeftToRead());
+    AVP_ASSERT(LeftToRead() != 0);
     T temp = *GetSlotToRead();
     FinishedReading();
     return temp;
@@ -64,9 +65,11 @@ struct CircBuffer {
   // ************* Continous block reading functions
   /** instead of a single entry marks for reading a continous block
   *   release block after reading with FinishedReading(*pSz)
+  *   We can not make two calls to this without FinishReading in between
   *   @param[out] pSz - pointer to variable to return size in
   */
   T const *GetContinousBlockToRead(tSize *pSz = nullptr) {
+    AVP_ASSERT(LastReadSize == 0); // should be interleaved with FinishReading
     if(BeingRead > BeingWritten) { // reading is wrapped, continuous blocks goes just to the end of the buffer
       LastReadSize = GetCapacity() + 1 - BeingRead;
     } else  LastReadSize = LeftToRead();
