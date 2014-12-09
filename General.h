@@ -14,10 +14,12 @@ template<typename T> inline T operator++(T &v, int) { T old(v); v += 1; return o
 template<typename T> inline T operator--(T &v) { return v -= 1; }
 template<typename T> inline T operator--(T &v, int) { T old(v); v -= 1; return old; }
 template<typename T, typename T2> inline bool operator!=(T const &v1, T2 const &v2) { return !(v1 == v2); }
+template<typename T> inline T operator-(const T &x) { T out(0); return out -= x; } // unitary minus
 
 #define BINARY_OP_FROM_SELF(op) \
 template<typename T> \
 inline T operator op (const T &x1, const T &x2) { T out(x1); return out op##= x2; }
+
 
 BINARY_OP_FROM_SELF(-)
 BINARY_OP_FROM_SELF(+)
