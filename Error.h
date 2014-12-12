@@ -64,7 +64,7 @@ namespace Fail {
 #define AVP_ASSERT_(exp,...) do{ [] (...) {} (exp,##__VA_ARGS__); }while(0)
 
 #define ASSERT_BEING_0(exp,...) AVP_ASSERT(exp)
-#endif
+#endif // DEBUG
 
 #define AVP_ASSERT(exp) AVP_ASSERT_(exp,"")
 #define AVP_ASSERT_ERRNUM(exp, ERRNUM) AVP_ASSERT_(exp,", error #%d", ERRNUM)

@@ -13,13 +13,18 @@ template<typename T> inline T operator++(T &v) { return v += 1; }
 template<typename T> inline T operator++(T &v, int) { T old(v); v += 1; return old; }
 template<typename T> inline T operator--(T &v) { return v -= 1; }
 template<typename T> inline T operator--(T &v, int) { T old(v); v -= 1; return old; }
-template<typename T, typename T2> inline bool operator!=(T const &v1, T2 const &v2) { return !(v1 == v2); }
-template<typename T> inline T operator-(const T &x) { T out(0); return out -= x; } // unitary minus
+template<typename T> inline T operator-(const T &x) { return 0 - x; } // unitary minus
+
+#if 0
+// DO NOT REDEFINE BUILT-IN OPERATORS!!!!! INFINITE RECURSION HELL
+// DO NOT DEFINE BINARTY OPERATORS FROM UNITARY USING TEMPLATE FUNCTIONS. COMPLILER DOES NOT
+// TRY USING IMPLICIT CONVERSION TO FIT PARAMETER TYPES
+// USE TEMPLATE CLASS FRIEND FUNCTIONS - THEY ARE SYMMETRIC AND COMPILER TRIES
+// IMPLICIT CONVERSIONS
+// LIKE THIS: for template<typename type> class T:
 
 #define BINARY_OP_FROM_SELF(op) \
-template<typename T> \
-inline T operator op (const T &x1, const T &x2) { T out(x1); return out op##= x2; }
-
+inline friend T operator op (const T &x1, const T &x2) { return T(x1) op##= x2; }
 
 BINARY_OP_FROM_SELF(-)
 BINARY_OP_FROM_SELF(+)
@@ -27,6 +32,12 @@ BINARY_OP_FROM_SELF(*)
 BINARY_OP_FROM_SELF(/)
 BINARY_OP_FROM_SELF(&)
 BINARY_OP_FROM_SELF(|)
+#undef BINARY_OP_FROM_SELF
+
+inline friend bool operator==(T const &v1, T const &v2) { return equal(v1,v2); }
+inline friend bool operator!=(T const &v1, T const &v2) { return !(v1 == v2); }
+
+#endif
 
 #if  defined ( __GNUC__ )
 #ifndef __weak
