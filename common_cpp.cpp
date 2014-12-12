@@ -12,12 +12,7 @@
 #include "CircBuffer.h"
 #include "Error.h"
 
-void Fail::default_function() { abort(); }
-
 namespace avp {
-  Fail::funct bad_index_func = Fail::default_function;
-  Fail::funct bad_pointer_func = Fail::default_function;
-
   int AssertError = 0;
 
   __weak bool error_output(const uint8_t *Ptr, size_t Size) { return fwrite((const void *)Ptr, 1, Size, stderr) == Size; }

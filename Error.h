@@ -37,11 +37,6 @@ namespace avp {
   } // namespace bg_error
 }; //avp
 
-namespace Fail {
-  typedef void (*funct)();
-  extern void default_function();
-} // Fail
-
 #ifdef DEBUG
 
 #define AVP_ERROR(format, ...) do{ \

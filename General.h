@@ -23,8 +23,9 @@ template<typename T> inline T operator-(const T &x) { return 0 - x; } // unitary
 // IMPLICIT CONVERSIONS
 // LIKE THIS: for template<typename type> class T:
 
+#define CLASS xxxxx
 #define BINARY_OP_FROM_SELF(op) \
-inline friend T operator op (const T &x1, const T &x2) { return T(x1) op##= x2; }
+inline friend CLASS operator op (const CLASS &x1, const CLASS &x2) { return CLASS(x1) op##= x2; }
 
 BINARY_OP_FROM_SELF(-)
 BINARY_OP_FROM_SELF(+)
@@ -34,8 +35,8 @@ BINARY_OP_FROM_SELF(&)
 BINARY_OP_FROM_SELF(|)
 #undef BINARY_OP_FROM_SELF
 
-inline friend bool operator==(T const &v1, T const &v2) { return equal(v1,v2); }
-inline friend bool operator!=(T const &v1, T const &v2) { return !(v1 == v2); }
+inline friend bool operator==(CLASS const &v1, CLASS const &v2) { return equal(v1,v2); }
+inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 == v2); }
 
 #endif
 

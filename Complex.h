@@ -67,7 +67,6 @@ inline friend Complex operator op (const Complex &x1, const Complex &x2) \
 
     inline friend bool operator==(Complex const &v1, Complex const &v2) { return v1.Real == v2.Real && v1.Imag == v2.Imag; }
     inline friend bool operator!=(Complex const &v1, Complex const &v2) { return !(v1 == v2); }
-
   }; // Complex
 } // namespace avp
 
