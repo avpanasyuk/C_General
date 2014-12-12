@@ -13,7 +13,7 @@
 #include "Error.h"
 
 /** Circular Buffer of elements of class T. One reader and one writer may work in parallel. Reader is using
-  * only BeingRead index, and writer only BeingWritten, so index are  ONLY when cross-used,
+  * only BeingRead index, and writer only BeingWritten, so index can be screwed-up ONLY when cross-used,
   * like in Clear()
   * NOTE: When both BeingRead and BeingWritten refer the same block the buffer is empty, as this block is
   * not written yet, so there is nothing to read
@@ -64,7 +64,7 @@ struct CircBuffer {
 
   // ************* Continous block reading functions
   /** instead of a single entry marks for reading a continous block
-  *   release block after reading with FinishedReading(*pSz)
+  *   release block after reading with FinishedReading()
   *   We can not make two calls to this without FinishReading in between
   *   @param[out] pSz - pointer to variable to return size in
   */
