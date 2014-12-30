@@ -27,6 +27,10 @@ namespace avp {
       if(Out) Reset();
       return Out;
     }
+    static void Pause(T Delay) {
+      TimePeriod Timer(Delay);
+      while(!Timer.Passed());
+    } // Pause
   }; // TimePeriod
 
   //! @tparam T should be unsigned!
@@ -47,7 +51,6 @@ namespace avp {
 
   template<typename TickType, TickType (*TickFunction)(), void (*Func)(), TickType Period>
   TimePeriod<TickFunction, uint32_t> RunPeriodically<TickType,TickFunction,Func,Period>::TP(Period);
-
 }; // namespace avp
 
 #endif /* TIME_H_INCLUDED */
