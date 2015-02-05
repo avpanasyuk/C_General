@@ -23,7 +23,7 @@ namespace avp {
   { return (num + denom - 1)/denom; }
   template<typename T> inline constexpr T RoundRatio(T const& num, T const& denom)
   { return (num + num + denom)/denom/2; }
-  template<typename Tin, typename Tout> inline constexpr Tout sqr(Tin const& a)
+  template<typename Tin, typename Tout=Tin> inline constexpr Tout sqr(Tin const& a)
   { return Tout(a)*Tout(a); }
 
   // following functions use  function of type to do formatted output bool write(void *Ptr, uint16_t Size);
@@ -67,7 +67,7 @@ namespace avp {
     return avp::log2((avp::CeilRatio(numer,denom) << 1) - 1);
   }
 
-  template<typename out_type, typename in_type> out_type Sqrt(in_type y) {
+  template<typename in_type, typename out_type=in_type> out_type Sqrt(in_type y) {
     in_type x = 1, old_x, y_=y;
     while(y_>>=2) x <<= 1; // rough estimate
     do {
