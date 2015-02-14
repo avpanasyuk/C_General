@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
+#include "CircBuffer.h"
 
 namespace avp {
   // following functions use general "write" function of type bool write(const void *Ptr, uint16_t Size) to do formatted output;
@@ -61,7 +62,38 @@ namespace avp {
       return Out;
     } // printf
   }; // class Out
-} // namespace avp
 
+  bool debug_write(const uint8_t *Src, size_t Size); // defined week, should be replaced if stderr is not good enough
+  // template<uint8_t BufferSizeLog2, typename TypeOfSize> bool bg_message<BufferSizeLog2,TypeOfSize>::put(uint8_t b);
+
+  template<uint8_t BufferSizeLog2 = 8, typename TypeOfSize=uint8_t>
+  struct bg_message_mgr {
+    static_assert(sizeof(TypeOfSize)*8 >= BufferSizeLog2,"bg_message:Size variable is too small to hold size!");
+
+    static CircBuffer<uint8_t,TypeOfSize,BufferSizeLog2> Buffer;
+
+    static bool put(uint8_t b) { if(!Buffer.LeftToWrite()) return false; Buffer.Write(b); return true; }
+    static void send() {
+      if(Buffer.LeftToRead()) {
+        uint8_t Sz;
+        const uint8_t *p = Buffer.GetContinousBlockToRead(&Sz);
+        const char *msg = "Error in bg_message::Buffer!\n";
+        if(p == nullptr) debug_write((const uint8_t *)msg,strlen(msg));
+        else debug_write(p,Sz);
+        Buffer.FinishedReading();
+      }
+    } // send
+  }; // bg_message_mgr
+
+  template<uint8_t BufferSizeLog2 = 8, typename TypeOfSize=uint8_t>
+  struct bg_message: public Out<bg_message_mgr<BufferSizeLog2,TypeOfSize>::put> {
+    static void send() { bg_message_mgr<BufferSizeLog2,TypeOfSize>::send(); }
+  }; // bg_message
+
+  template<uint8_t BufferSizeLog2, typename TypeOfSize>
+  CircBuffer<uint8_t,TypeOfSize,BufferSizeLog2> bg_message_mgr<BufferSizeLog2,TypeOfSize>::Buffer;
+
+
+} // namespace avp
 
 #endif /* IO_H_INCLUDED */

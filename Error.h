@@ -7,6 +7,7 @@
 #define ERROR_H_INCLUDED
 
 #include <stdint.h>
+#include <stddef.h>
 #include "IO.h"
 
 namespace avp {
@@ -15,32 +16,14 @@ namespace avp {
   /**
   * foreground error output function
   */
-  bool error_output(const uint8_t *Ptr, size_t Size);
   void major_fail(uint8_t reason = 0);
   void hang_cpu();
-
-  namespace bg_error {
-    /**
-    * background output function, stores stuff in the Buffer
-    */
-    bool put_byte(uint8_t b);
-
-    /**
-    * Out is where all the functions to use are
-    */
-    typedef Out<put_byte> Out;
-
-    /**
-    * where real output occurs in foreround, got to be called in a loop
-    */
-    void process();
-  } // namespace bg_error
 }; //avp
 
 #ifdef DEBUG
 
 #define AVP_ERROR(format, ...) do{ \
- avp::printf<avp::vprintf<avp::error_output> >("Error in file %s, line %d: " format, \
+ avp::printf<avp::vprintf<avp::debug_write> >("Error in file %s, line %d: " format, \
              __FILE__, __LINE__, ##__VA_ARGS__); avp::major_fail(); }while(0)
 // POLICY: AVP_ASSERT is used just before a deadly operation, like assigning zero
 // pointer, and not preliminary

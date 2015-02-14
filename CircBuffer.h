@@ -10,7 +10,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "Error.h"
 
 /** Circular Buffer of elements of class T. One reader and one writer may work in parallel. Reader is using
   * only BeingRead index, and writer only BeingWritten, so index can be screwed-up ONLY when cross-used,
@@ -39,10 +38,14 @@ struct CircBuffer {
   }
   T *GetSlotToWrite() { return &Buffer[BeingWritten]; }
   void FinishedWriting() { BeingWritten = (BeingWritten + 1) & Mask; }
-  void Write(T const &d) {
-    AVP_ASSERT(LeftToWrite() != 0);
+  void Write_(T const &d) {
     *GetSlotToWrite() = d;
     FinishedWriting();
+  }
+  bool Write(T const &d) {
+    if(LeftToWrite() == 0) return false;
+    Write_(d);
+    return true;
   }
   // It is risky function because BeingRead may change in between. We have to disable interrupts across it
   T *ForceSlotToWrite()  {
@@ -55,11 +58,16 @@ struct CircBuffer {
   //! @brief returns the same slot if called several times in a row. Omly FinishReading moves pointer
   T const *GetSlotToRead() { LastReadSize = 1; return &Buffer[BeingRead]; }
   void FinishedReading() { BeingRead = (BeingRead + LastReadSize) & Mask; LastReadSize = 0; }
-  T Read() {
-    AVP_ASSERT(LeftToRead() != 0);
+  T Read_() {
     T temp = *GetSlotToRead();
     FinishedReading();
     return temp;
+  }
+
+  bool Read(T* Dst) {
+    if(LeftToRead() == 0) return false;
+    *Dst = Read_();
+    return true;
   }
 
   // ************* Continous block reading functions
@@ -69,7 +77,7 @@ struct CircBuffer {
   *   @param[out] pSz - pointer to variable to return size in
   */
   T const *GetContinousBlockToRead(tSize *pSz = nullptr) {
-    AVP_ASSERT(LastReadSize == 0); // should be interleaved with FinishReading
+    if(LastReadSize != 0) return nullptr; // should be interleaved with FinishReading
     if(BeingRead > BeingWritten) { // reading is wrapped, continuous blocks goes just to the end of the buffer
       LastReadSize = GetCapacity() + 1 - BeingRead;
     } else  LastReadSize = LeftToRead();
