@@ -10,7 +10,8 @@
 
 namespace avp {
   //! @tparam T should be unsigned!
-  template<uint32_t (*pTickFunction)(), typename T=uint32_t> class TimePeriod {
+  template<uint32_t (*pTickFunction)(), typename T=uint32_t> 
+  class TimePeriod {
     T NextTime;
     const T Period;
   public:
@@ -41,7 +42,7 @@ namespace avp {
     operator bool() { return TimePeriod<TickFunction,T>::Passed();  }
   }; // TimeOut
 
-  template<typename TickType, TickType (*TickFunction)(), void (*Func)(), TickType Period>
+  template<uint32_t (*TickFunction)(), void (*Func)(), uint32_t Period>
   class RunPeriodically {
     static TimePeriod<TickFunction, uint32_t> TP;
   public:
@@ -49,8 +50,8 @@ namespace avp {
     static void Reset() { TP.Reset(); }
   }; // RunPeriodically
 
-  template<typename TickType, TickType (*TickFunction)(), void (*Func)(), TickType Period>
-  TimePeriod<TickFunction, uint32_t> RunPeriodically<TickType,TickFunction,Func,Period>::TP(Period);
+  template<uint32_t (*TickFunction)(), void (*Func)(), uint32_t Period>
+  TimePeriod<TickFunction, uint32_t> RunPeriodically<TickFunction,Func,Period>::TP(Period);
 }; // namespace avp
 
 #endif /* TIME_H_INCLUDED */

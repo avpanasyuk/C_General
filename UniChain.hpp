@@ -11,14 +11,16 @@
  *
  */
 
-template<typename T> class UniLink {
-protected:
-  const UniLink * const pNext;
-  const T *obj;
-public:
-  UniLink(const UniLink *pLast): pNext(pLast) {}
-
-  // UniLink *GetNext() { return pLast; }
-  virtual bool IsIt(IsItType T) const = 0;
-}; // class UniLink
+class UniChain {
+	class Link {
+		friend class UniChain;
+		const Link *pPrev;
+		virtual ~Link() {}; 
+		
+		
+		} *pLast;
+	UniChain(): pLast(nullptr) {}
+	void Add(Link *pNew) { pNew->pPrev = pLast; pLast = pNew; }
+				
+	};
 #endif /* UNICHAIN_HPP_INCLUDED */
