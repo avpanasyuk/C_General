@@ -19,13 +19,6 @@ namespace avp {
     while(size--) XORvalue ^= *(p++);
     return XORvalue;
   } // checksum
-  template<typename OutType, typename ElType>
-  OutType sum(const ElType *p_, size_t size = sizeof(ElType)) {
-    OutType out = 0;
-    const uint8_t *p = (const uint8_t *)p_;
-    while(size--) out += *(p++);
-    return out;
-  } // checksum
 
   // ***** BIT HANDLING FUNCTIONS
   template<typename type> inline constexpr type make_mask(uint8_t lowest_bit, uint8_t numbits) {
@@ -38,7 +31,7 @@ namespace avp {
   template<typename type> inline void setbit(type &var, uint8_t bitI, bool value) {
     value?set_high(var,bitI):set_low(var,bitI);
   } // setbit
-  template<typename type> inline void setbits(type &var, uint8_t lowest_bit, uint8_t numbits, type value) {
+  template<typename type, typename type1> inline void setbits(type &var, uint8_t lowest_bit, uint8_t numbits, type1 value) {
     var = (var & ~make_mask<type>(lowest_bit,numbits)) | (value << lowest_bit);
   }
   // GETTING BITS

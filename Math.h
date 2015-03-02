@@ -5,6 +5,7 @@
   * @file AVP_LIBS/General/Math.h
   * @author Alexander Panasyuk
   */
+#include <stdlib.h>
 
 namespace avp {
   template<typename T> inline constexpr T max(T const& a, T const& b) { return a>b?a:b; }
@@ -17,7 +18,7 @@ namespace avp {
   template<typename Tin, typename Tout = Tin> inline constexpr Tout sqr(Tin const& a)
   { return Tout(a)*Tout(a); }
 
-    // template<typename type> uint8_t log2(type x) { uint8_t out=0; while(x>>=1) out++; return out; }
+  // template<typename type> uint8_t log2(type x) { uint8_t out=0; while(x>>=1) out++; return out; }
   template<typename type> constexpr int8_t log2(type x) { return x?log2<type>(x>>1)+1:-1; }
   // 1<<CurValue/x ? x/(1<<(Curvalue-1)), (1<<(2*CurValue -1) ? x^2)
   template<typename type> constexpr int8_t ceil_log2(type x) { return log2<type>(x-1)+1; }
@@ -35,7 +36,7 @@ namespace avp {
            (numer > denom?
             (numer > 0x4000?
              RoundLog2Ratio(numer>>1,denom,true):RoundLog2Ratio(numer,denom<<1,true)
-        )+1:(numer*numer*2 < denom*denom?-1:0)
+            )+1:(numer*numer*2 < denom*denom?-1:0)
            ):(numer > denom?RoundLog2Ratio(numer,denom,true):-RoundLog2Ratio(denom,numer,true));
   }
   constexpr int8_t CeilLog2Ratio(uint32_t numer, uint32_t denom) {
@@ -51,6 +52,14 @@ namespace avp {
     } while (x != old_x && x + 1 != old_x);
     return x;
   } //Sqrt
+
+  template<typename OutType, typename ElType>
+  OutType sum(const ElType *p_, size_t size = sizeof(ElType)) {
+    OutType out = 0;
+    const uint8_t *p = (const uint8_t *)p_;
+    while(size--) out += *(p++);
+    return out;
+  } // sum
 } // namespace avp
 
 #endif /* MATH_H_INCLUDED */

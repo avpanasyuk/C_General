@@ -95,7 +95,7 @@ namespace avp {
     static uint8_t LeftToTX() { return BufferTX.LeftToRead(); }
 
     //! stores character along pd, returns true if there was a character
-    static bool read(uint8_t *pd) { return BufferRX.Read(pd); }  
+    static bool read(uint8_t *pd) { return BufferRX.Read(pd); }
 
     // ALL write function return false is overrun and true if OK
     static bool write_(uint8_t d) {
@@ -139,20 +139,22 @@ namespace avp {
       if(!BufferTX.LeftToWrite()) return false;
       bool Res = write_pointed_(Ptr,Size,pReleaseFunc);
       HW_UART_::EnableTX_Interrupt(); // got something to transmit, reenable interrupt
-      return true;
+      return Res;
     } // write
 
     static uint8_t GetStatusRX() { return HW_UART_::GetStatusRX(); }
-
-    template<typename T> static bool write(T const *p) { return write(p,sizeof(T)); }
+    static bool GotSomething() { return BufferRX.LeftToRead() != 0; }
+    static uint8_t GetByte() { uint8_t out; read(&out); return out; }
+      
+    template<typename T> static bool write(T const *p, size_t Num = 1) { return write((const uint8_t *)p,sizeof(T)*Num); }
     static bool write(char const *str) { return write((const uint8_t *)str, ::strlen(str)); } // no ending 0
     template<typename T> static bool write(T d) { return write(&d,sizeof(T)); }
     static bool write(int8_t d) { return write((uint8_t)d); }
-  }; // UART
+  }; // BufferedPort
 
-  #define BP_ALIAS BufferedPort<HW_UART_,Log2_TX_Buf_size,Log2_TX_BlockBufSize,Log2_RX_Buf_Size, tSize>
-  #define BP_TEMPLATE template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_TX_BlockBufSize, uint8_t Log2_RX_Buf_Size, typename tSize>
-  
+#define BP_ALIAS BufferedPort<HW_UART_,Log2_TX_Buf_size,Log2_TX_BlockBufSize,Log2_RX_Buf_Size, tSize>
+#define BP_TEMPLATE template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_TX_BlockBufSize, uint8_t Log2_RX_Buf_Size, typename tSize>
+
   BP_TEMPLATE const uint8_t *BP_ALIAS::pCurByteInBlock = nullptr;
   BP_TEMPLATE CircBuffer<uint8_t, tSize, Log2_TX_Buf_size> BP_ALIAS::BufferTX;
   BP_TEMPLATE CircBuffer<struct BP_ALIAS::PointedBlock, tSize, Log2_TX_BlockBufSize> BP_ALIAS::BlockBufTX;
