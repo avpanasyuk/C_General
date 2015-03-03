@@ -144,8 +144,8 @@ Fail:
 
    public:
 
-    static void Init(uint32_t baud, const char* ID) {
-      strncpy(BeaconID.Str, ID, sizeof(BeaconID.Str));
+    static void Init(uint32_t baud, const char* BeaconStr) {
+      strncpy(BeaconID.Str, BeaconStr, sizeof(BeaconID.Str));
       Port::Init(baud);
     } // Init
 

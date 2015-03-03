@@ -152,6 +152,7 @@ namespace avp {
     static bool write(int8_t d) { return write((uint8_t)d); }
   }; // BufferedPort
 
+// following defines are just to make code readable, no use
 #define BP_ALIAS BufferedPort<HW_UART_,Log2_TX_Buf_size,Log2_TX_BlockBufSize,Log2_RX_Buf_Size, tSize>
 #define BP_TEMPLATE template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_TX_BlockBufSize, uint8_t Log2_RX_Buf_Size, typename tSize>
 
@@ -159,6 +160,8 @@ namespace avp {
   BP_TEMPLATE CircBuffer<uint8_t, tSize, Log2_TX_Buf_size> BP_ALIAS::BufferTX;
   BP_TEMPLATE CircBuffer<struct BP_ALIAS::PointedBlock, tSize, Log2_TX_BlockBufSize> BP_ALIAS::BlockBufTX;
   BP_TEMPLATE CircBuffer<uint8_t, tSize, Log2_RX_Buf_Size> BP_ALIAS::BufferRX;
+  BP_TEMPLATE constexpr uint8_t BP_ALIAS::ESC_code; // this is special byte code placed in BufferTX to indicate that we
+
 }; // avp
 
 
