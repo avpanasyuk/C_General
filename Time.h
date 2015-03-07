@@ -10,7 +10,7 @@
 
 namespace avp {
   //! @tparam T should be unsigned!
-  template<uint32_t (*pTickFunction)(), typename T=uint32_t> 
+  template<uint32_t (*pTickFunction)(), typename T=uint32_t>
   class TimePeriod {
     T NextTime;
     const T Period;
@@ -23,11 +23,18 @@ namespace avp {
       static_assert(T(0) < T(-1),"T should be unsigned!");
       Reset();
     }
+    /// just checks whether TimePeriod had passed, does not do reset
+    /// if there is no Reset for too long the counter may wrap over
+    bool Passed_() { return (T((*pTickFunction)()) - NextTime) < ((~T(0))/2); }
+
+    /// if TimePeriod had passed does reset to start a new TimePeriod
     bool Passed() {
-      bool Out = (T((*pTickFunction)()) - NextTime) < ((~T(0))/2);
+      bool Out = Passed_();
       if(Out) Reset();
       return Out;
-    }
+    } // Passed
+
+    /// Pause with an internal loop
     static void Pause(T Delay) {
       TimePeriod Timer(Delay);
       while(!Timer.Passed());
