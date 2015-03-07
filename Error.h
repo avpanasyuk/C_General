@@ -12,6 +12,7 @@
 
 namespace avp {
   extern int AssertError;
+  extern volatile uint8_t FailReason;
 
   /**
   * foreground error output function

@@ -1,6 +1,7 @@
 /**
-  * @file
+  * @file AVP_LIBS\General\Time.h
   * @author Alexander Panasyuk
+  * 
   */
 
 #ifndef TIME_H_INCLUDED
@@ -49,7 +50,8 @@ namespace avp {
     operator bool() { return TimePeriod<TickFunction,T>::Passed();  }
   }; // TimeOut
 
-  template<uint32_t (*TickFunction)(), void (*Func)(), uint32_t Period>
+  /// RunPeriodically may be static class because Func and Period make all of them different
+ template<uint32_t (*TickFunction)(), void (*Func)(), uint32_t Period>
   class RunPeriodically {
     static TimePeriod<TickFunction, uint32_t> TP;
   public:
