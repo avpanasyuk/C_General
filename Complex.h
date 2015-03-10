@@ -9,6 +9,8 @@
 #ifndef AVP_COMPLEX_H_
 #define AVP_COMPLEX_H_
 
+#include <math.h>
+
 namespace avp {
   template<typename T = float>
   struct Complex {
@@ -67,6 +69,9 @@ inline friend Complex operator op (const Complex &x1, const Complex &x2) \
 
     inline friend bool operator==(Complex const &v1, Complex const &v2) { return v1.Real == v2.Real && v1.Imag == v2.Imag; }
     inline friend bool operator!=(Complex const &v1, Complex const &v2) { return !(v1 == v2); }
+
+    bool IsNormal() { return isnormal(Real) && isnormal(Imag); }
+    // isnormal is defined as macro, so no overloading
   }; // Complex
 } // namespace avp
 
