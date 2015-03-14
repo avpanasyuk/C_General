@@ -27,6 +27,8 @@
   */
 template <typename T, typename tSize=uint8_t, uint8_t sizeLog2 = sizeof(tSize)*8>
 struct CircBuffer {
+  static_assert(sizeof(tSize)*8 >= sizeLog2,"CircBuffer:Size variable is too small to hold size!");
+
   // *********** General functions
   CircBuffer() { Clear(); }
   void Clear()  {  BeingWritten = BeingRead; LastReadSize = 0;}
