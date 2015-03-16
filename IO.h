@@ -52,8 +52,8 @@ namespace avp {
   template<bool (*put_byte)(uint8_t)>
   struct Out {
     static bool write(const uint8_t *p, size_t sz) { for(; sz--;) if(!put_byte(*(p++))) return false; return true; }
-    static bool write(const char *str) { return  write((const uint8_t *)str,strlen(str)); }
     template<typename T> static bool write(T &obj) { return write((const uint8_t *)&obj,sizeof(obj)); }
+    static bool write(const char *str) { return  write((const uint8_t *)str,strlen(str)); }
     static bool printf(char const *format, ...) {
       va_list ap;
       va_start(ap,format);

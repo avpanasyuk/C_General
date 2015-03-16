@@ -5,16 +5,16 @@
     Protocol description.
     GUI->FW command: 4 bytes ASCII command name, 1 byte its checksum, serial_protocol::Command::NumParamBytes of
     ParamBytes, 1 byte of total checksum,
-    FW-GUI command return: 
-    1) uint8_t status. 
-    2) If status is 0 then command is successful and next uint16_t Size is size of data being transmitted and uint8_t data csum. 
-    3) If status is not 0, then status is an error code and next uint8_t is the size of error message, then error message and 
+    FW-GUI command return:
+    1) uint8_t status.
+    2) If status is 0 then command is successful and next uint16_t Size is size of data being transmitted and uint8_t data csum.
+    3) If status is not 0, then status is an error code and next uint8_t is the size of error message, then error message and
        then its uint8_t csum
     FW-GUI messages: 8-bit size and then text and them text's csum
-    
+
     Initial handshaking looks like following:
     Before connection is established FW sends out BeaconStr (specified in Init) every 0.5 sec. Receiver checking all ports one by one
-    until it finds the port sending BeaconStr. Receiver sends NOOP command in response. When FW gets the first byte in port it stops 
+    until it finds the port sending BeaconStr. Receiver sends NOOP command in response. When FW gets the first byte in port it stops
     transmitting BeaconStr and consider connection established.
   * @endverbatim
   */
@@ -22,7 +22,7 @@
 #ifndef COMMAND_PROTOCOL_HPP_INCLUDED
 #define COMMAND_PROTOCOL_HPP_INCLUDED
 
-TODO("Restart transmitting BeaconStr when connection breaks. It is tough to determine when in happens, though.");
+// TODO("Restart transmitting BeaconStr when connection breaks. It is tough to determine when in happens, though.");
 
 #include <string.h>
 #include <stdint.h>
@@ -33,10 +33,11 @@ TODO("Restart transmitting BeaconStr when connection breaks. It is tough to dete
 #include "Port.h"
 
 namespace avp {
-  template<class Port> class Protocol {
+  /// @tparam Port static class defined by template in AVP_LIBS/General/Port.h
+  /// @tparam millis global system function returning milliseconds
+  template<class Port, uint32_t (*millis)()>
+  class Protocol {
    protected:
-    // typedef void (* tReleaseFunc)(void *);
-
     static bool PortConnected;
     static union FLW { uint32_t Number; char Str[]; } BeaconID;
 
@@ -60,7 +61,7 @@ namespace avp {
       } // Command
 
       bool IsIt(uint32_t ID_) const { return ID_ == ID.Number; }
-      void Execute(const uint8_t *Params) { (*pFunc)(Params); } 
+      void Execute(const uint8_t *Params) { (*pFunc)(Params); }
     } *pLast, *pCurrent; // class Command
 
     static struct InputBytes_ {
@@ -76,7 +77,7 @@ namespace avp {
     // max message length is 256, if message is longer 255 chars are output and last char is '>'
     static bool vprintf(char const *format, va_list ap) {
       int Size = vsnprintf(NULL,0,format,ap);
-      if(Size < 0) return vprintf("vprintf can not convert!\n",ap); // ap here is just for right number of parameters
+      if(Size < 0) return vprintf("vprintf can not convert!\n",ap); // ap here is just for the right number of parameters
 
       bool TooLong = false;
       if(Size > UINT8_MAX) { Size = UINT8_MAX; TooLong = true; }
@@ -104,7 +105,7 @@ namespace avp {
         Port::write(code);
         Port::write(uint16_t(0)); // message length and csum
         return true;
-      }        
+      }
     } // ReturnBad
 
     /** each time we find a command we put it in the beginning of the chain
@@ -162,19 +163,28 @@ Fail:
     } // Command::Parse;
 
     //! if port is disconnected run beacon, which allows GUI to find our serial port
-    static void SendBeacon() { if(!PortConnected) Port::write(BeaconID); }
+    static void SendBeacon() { if(!PortConnected) Port::write_unbuffered(BeaconID); }
     static void NOOP(const uint8_t[]) { ReturnOK(); }
 
    public:
 
-    static void Init(uint32_t baud, const char* BeaconStr) {
+    /// @defgroup InitFunc two init functions, only one of them sg=hould be called depending on port capabilities
+    /// @{
+    static void Init(const char* BeaconStr) {
       strncpy(BeaconID.Str, BeaconStr, sizeof(BeaconID));
-      Port::Init(baud);
+      Port::Init();
       AddCommand("NOOP",NOOP,0); // we need this command for initial handshaking
     } // Init
 
+    static void InitBlock(const char* BeaconStr) {
+      strncpy(BeaconID.Str, BeaconStr, sizeof(BeaconID));
+      Port::InitBlock();
+      AddCommand("NOOP",NOOP,0); // we need this command for initial handshaking
+    } // InitBlock
+    /// @}
+
     static void cycle() {
-      static RunPeriodically<millis,SendBeacon,100> BeaconTicker;
+      static RunPeriodically<millis,SendBeacon,500> BeaconTicker;
 
       BeaconTicker.cycle();
 
@@ -195,10 +205,13 @@ Fail:
     static void ReturnBytesUnbuffered(const uint8_t *src, uint16_t size, typename Port::tReleaseFunc pFunc = nullptr)  {
       AVP_ASSERT(Port::write(uint8_t(0))); // status
       AVP_ASSERT(Port::write(size));
-      AVP_ASSERT(Port::write_pointed(src, size, pFunc));
+      AVP_ASSERT(Port::write_unbuffered(src, size, pFunc));
       AVP_ASSERT(Port::write(avp::sum<uint8_t>((const uint8_t *)src,size)));
     } // Protocol::ReturnBytesUnbuffered;
 
+    template<typename T> static void ReturnBuffered(const T *pT, uint16_t size = 1) {
+      ReturnBytesBuffered((const uint8_t *)pT,sizeof(T)*size);
+    } // ReturnUnbuffered
     template<typename T> static void ReturnUnbuffered(const T *pT, uint16_t size = 1, typename Port::tReleaseFunc pFunc = nullptr) {
       ReturnBytesUnbuffered((const uint8_t *)pT,sizeof(T)*size,pFunc);
     } // ReturnUnbuffered
@@ -208,12 +221,16 @@ Fail:
     static void ReturnOK() { AVP_ASSERT(Port::write(uint32_t(0))); } // 1 byte status, 2 - size and 1 - checksum
   }; //class Protocol
 
-  template<class Port> bool Protocol<Port>::PortConnected = false;
-  template<class Port> typename Protocol<Port>::FLW Protocol<Port>::BeaconID;
-  template<class Port> typename Protocol<Port>::InputBytes_ Protocol<Port>::InputBytes;
-  template<class Port> uint8_t *Protocol<Port>::pInputByte = Protocol<Port>::InputBytes.Start; //!< this pointer traces position of the input stream in InputBytes
-  template<class Port> typename Protocol<Port>::Command *Protocol<Port>::pLast = nullptr;
-  template<class Port> typename Protocol<Port>::Command *Protocol<Port>::pCurrent;
+  // following defines are just for code clearnest, do not use elsewhere
+  #define TEMPLATE template<class Port, uint32_t (*millis)()>
+  #define PROTOCOL Protocol<Port, millis>
+
+  TEMPLATE bool PROTOCOL::PortConnected = false;
+  TEMPLATE typename PROTOCOL::FLW PROTOCOL::BeaconID;
+  TEMPLATE typename PROTOCOL::InputBytes_ PROTOCOL::InputBytes;
+  TEMPLATE uint8_t *PROTOCOL::pInputByte = PROTOCOL::InputBytes.Start; //!< this pointer traces position of the input stream in InputBytes
+  TEMPLATE typename PROTOCOL::Command *PROTOCOL::pLast = nullptr;
+  TEMPLATE typename PROTOCOL::Command *PROTOCOL::pCurrent;
 } // namespace avp
 
 
