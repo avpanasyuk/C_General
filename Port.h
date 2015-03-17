@@ -10,7 +10,7 @@
 *    HW_UART_::Init(baud,StoreReceivedByte,GetBlockToSend), depending on class capability
 *    (whether it can send by blocks, via, e.g. DMA), where
 *     - bool StoreReceivedByte(uint8_t b)
-*     - bool GetByteToSend(volatile uint8_t *p)
+*     - bool GetByteToSend(uint8_t *p)
 *     - bool GetBlockToSend(uint8_t **p, size_t *pSz)
 * -# HW_UART_::TryToSend(); - this class calls it to let HW_UART_ know that there are
 *    new data in buffer to transmit
@@ -35,7 +35,13 @@ namespace avp {
   template<class HW_UART_, uint8_t Log2_TX_Buf_size=7, uint8_t Log2_TX_BlockBufSize=4, uint8_t Log2_RX_Buf_Size=7,
            typename tSize=uint8_t>
   struct  Port {
-    typedef void (* tReleaseFunc)(void *p);
+    struct BlockInfo;
+    typedef void (* tReleaseFunc)(const BlockInfo *p);
+    struct BlockInfo {
+      const uint8_t *Ptr;
+      size_t Size;
+      tReleaseFunc pReleaseFunc; // data pointed by Ptr should not get corrupted until this function is called
+    }; // BlockInfo
 protected:
     // there are two transmit buffers - one for bytes which buffers data  and one for blocks which buffers only pointyers,
     // data are unbuffered!
@@ -49,12 +55,6 @@ protected:
     static CircBuffer<uint8_t, tSize, Log2_TX_Buf_size> BufferTX; // byte transmit buffer
 
     // ***************  data for unbuffered block transmit buffer
-    struct BlockInfo;
-    struct BlockInfo {
-      const uint8_t *Ptr;
-      size_t Size;
-      tReleaseFunc pReleaseFunc; // data pointed by Ptr should not get corrupted until this function is called
-    }; // BlockInfo
     static CircBuffer<BlockInfo, tSize, Log2_TX_BlockBufSize> BlockInfoBufTX; // Block transmit buffer
     static constexpr uint8_t ESC_code = 224; // this is special byte code placed in BufferTX to indicate that we
     // should transmit block here. If next byte is ESC_code we have to transmit block. If it is 0 we transmit just ECS_code
@@ -74,13 +74,13 @@ protected:
     /// @{
     /// this function is called from HW_UART interrupt handler to get byte from Circular buffer to send
     /// WRITING TO *p immediately send byte, so do it ONLY ONCE !
-    static bool GetByteToSend(volatile uint8_t *p) {
+    static bool GetByteToSend(uint8_t *p) {
       // check whether we are reading from block currently
       if(pCurByteInBlock != nullptr) {
         const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead();
 
         if(++pCurByteInBlock == pCurBlock->Ptr + pCurBlock->Size) { // we are done with this block
-          if(pCurBlock->pReleaseFunc != nullptr) (*pCurBlock->pReleaseFunc)((void *)pCurBlock->Ptr);
+          if(pCurBlock->pReleaseFunc != nullptr) (*pCurBlock->pReleaseFunc)(pCurBlock);
           BlockInfoBufTX.FinishedReading();
           pCurByteInBlock = nullptr;
         } else {
@@ -106,25 +106,28 @@ protected:
     } //  GetByteToSend
 
     /// If HW_UART is capable to send data by blocks (say via DMA) we can use this function
-    /// this function is called from HW_UART interrupt handler to get data block to send
+    /// !!!!! this function may be  called from HW_UART interrupt handler to get data block to send !!!!!
+    /// This function uses static variables - care should be taken to avoid this function being reentered!!!!!
     /// This is the only function reading BlockInfoBufTX and BufferTX
     /// @param[out] p - pointer to pointer from where to send data.
     /// @param[out] pSz - to return block size.
-    static bool GetBlockToSend(const uint8_t **p, size_t *pSz) {
+    static bool GetBlockToSend(const uint8_t **pp, size_t *pSz) {
       static bool LastSentIsBlock = false;  // if we got a block to send last time we've got to
       // do FinishedReading
 
       if(LastSentIsBlock) { // finish with previous block
+        const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead();
+        if(pCurBlock->pReleaseFunc != nullptr) (*pCurBlock->pReleaseFunc)(pCurBlock);
         BlockInfoBufTX.FinishedReading();
         LastSentIsBlock = false;
       }
 
       if(!BufferTX.LeftToRead()) return false;
       else {
-        static uint8_t b;
+        static uint8_t b; // pointer to this variable is sent outside of this function, make sure it does not disappear
         b = BufferTX.Read_();
-        *p = &b; *pSz = 1; // by default it is just a byte to send
-        if(b == ESC_code) {
+        *pp = &b; *pSz = 1; // by default it is just a byte to send
+        if(b == ESC_code) { // except when it is a special code
           // dealing with a special case here, either block or byte with ESC_Code value
           // in either case there should be BlockInfo allocated in the BlockInfoBufTX
           AVP_ASSERT(BlockInfoBufTX.LeftToRead());
@@ -133,7 +136,7 @@ protected:
             // so we are done with this BlockInfo
             BlockInfoBufTX.FinishedReading();
           } else { //  and here is really a block
-            *p = BlockInfoBufTX.GetSlotToRead()->Ptr; // start sending block
+            *pp = BlockInfoBufTX.GetSlotToRead()->Ptr; // start sending block
             *pSz = BlockInfoBufTX.GetSlotToRead()->Size;
             LastSentIsBlock = true;
           }
@@ -154,7 +157,7 @@ protected:
         pCurBlock->pReleaseFunc = pReleaseFunc;
       }
       BlockInfoBufTX.FinishedWriting();
-      BufferTX.Write_(ESC_code); // do this afterwards, so transmit callback does not find ESC_code without block
+      BufferTX.Write_(ESC_code); // do this afterwards, so transmit callback does not find ESC_code without block being in place
       return true;
     } // write_unbuffered_
 
@@ -199,6 +202,8 @@ public:
       return Res;
     } // write
 
+    /// @defgroup WriteTemplates templates to write different types
+    /// @{
     template<typename T> static bool write(T const *p, size_t Num = 1) { return Num != 0?write((const uint8_t *)p,sizeof(T)*Num):true; }
     static bool write(char const *str) { return write((const uint8_t *)str, ::strlen(str)); } // no ending 0
     template<typename T> static bool write(T d) { return write((const uint8_t *)&d,sizeof(T)); }
@@ -207,6 +212,14 @@ public:
     static bool write_unbuffered(T d, tReleaseFunc pReleaseFunc = nullptr) {
       return write_unbuffered((const uint8_t *)&d,sizeof(T),pReleaseFunc);
     }
+    template<typename T>
+    static bool write_unbuffered(T const *p, size_t Num = 1, tReleaseFunc pReleaseFunc = nullptr) {
+      return write_unbuffered((const uint8_t *)p,sizeof(T)*Num,pReleaseFunc);
+    }
+    static bool write_unbuffered(const char *str, tReleaseFunc pReleaseFunc = nullptr) {
+      return write_unbuffered((const uint8_t *)str, ::strlen(str), pReleaseFunc);
+    }
+    /// @}
 
     // ********************************** RECEPTION *********************
     //! stores character by pointer pd, returns true if there is really a character to read
