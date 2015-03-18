@@ -8,15 +8,21 @@
 #include <stdio.h>
 #include "General.h"
 #include "Error.h"
+#include "IO.h"
 
 namespace avp {
   int AssertError = 0;
   volatile uint8_t FailReason = 0;
 
 
-  __weak bool debug_write(const uint8_t *Ptr, size_t Size) {
-    return fwrite((const void *)Ptr, 1, Size, stdout) == Size;
-  }
+  __weak bool debug_printf(const char *format, ...) {
+    va_list ap;
+    va_start(ap,format);
+    bool Out =  ::vprintf(format,ap) >= 0;
+    va_end(ap);
+    return Out;
+  } // debug_printf
+
   __weak void hang_cpu() { while(1); }
   __weak void major_fail(uint8_t reason) {
     FailReason = reason;

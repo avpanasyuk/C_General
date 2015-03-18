@@ -24,8 +24,8 @@ namespace avp {
 #ifdef DEBUG
 
 #define AVP_ERROR(format, ...) do{ \
- avp::printf<avp::vprintf<avp::debug_write> >("Error in file %s, line %d: " format, \
-             __FILE__, __LINE__, ##__VA_ARGS__); avp::major_fail(); }while(0)
+  avp::debug_printf("Error in file %s, line %d: " format, \
+  __FILE__, __LINE__, ##__VA_ARGS__); avp::major_fail(); }while(0)
 // POLICY: AVP_ASSERT is used just before a deadly operation, like assigning zero
 // pointer, and not preliminary
 #define AVP_ASSERT_(exp,err_form,...) do{ if((avp::AssertError = !(exp))) \
