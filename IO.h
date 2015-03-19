@@ -65,7 +65,7 @@ namespace avp {
 
   // ********************************* DEBUG MESSAGES **************************************
   /// @brief default __weak__ version sends data ::vprintf
-  bool debug_printf(const char *format, ...); // defined week, should be replaced if stderr is not good enough
+  bool debug_vprintf(const char *format, va_list ap); // defined week, should be replaced if stderr is not good enough
 
   // ************ BUFFERED BACKGROUND MESSAGES *********************************************
   /// this is a service class, we need it here only to be able to provide "put_byte" function for
