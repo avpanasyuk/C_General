@@ -3,19 +3,29 @@
   * @author Alexander Panasyuk
   * @verbatim
     Protocol description.
-    GUI->FW command: 4 bytes ASCII command name, 1 byte its checksum, serial_protocol::Command::NumParamBytes of
-    ParamBytes, 1 byte of total checksum,
-    FW-GUI command return:
-    1) uint8_t status.
-    2) If status is 0 then command is successful and next uint16_t Size is size of data being transmitted and uint8_t data csum.
-    3) If status is not 0, then status is an error code and next uint8_t is the size of error message, then error message and
-       then its uint8_t csum
-    FW-GUI messages: 8-bit size and then text and them text's csum
-
-    Initial handshaking looks like following:
-    Before connection is established FW sends out BeaconStr (specified in Init) every 0.5 sec. Receiver checking all ports one by one
-    until it finds the port sending BeaconStr. Receiver sends NOOP command in response. When FW gets the first byte in port it stops
-    transmitting BeaconStr and consider connection established.
+    - all GUI->FW messages are commands:
+      - 4 bytes ASCII command name
+      - 1 byte its checksum,
+      - serial_protocol::Command::NumParamBytes bytes of parameters
+      - 1 byte of total checksum,
+    - FW-GUI messages are differentiated  based on the first int8_t CODE
+        - command return:
+          - If CODE is 0 the following is successful latest command return:
+            - uint16_t Size is size of data being transmitted.
+            - data
+            - 1 uint8_t data checksum
+          - If CODE is < 0, then it is last command failure error message size, followed by
+            - error message text without trailing 0
+            - 1 uint8_t error message text checksum
+            .
+        Every command has to be responded with either successful return or error message, and only
+        one of them.
+        - If CODE is > 0, then it is an info message size, followed by
+          - info message text without trailing 0
+          - 1 uint8_t info message text checksum
+          .
+        Info messages may come at any time
+      If error or info message do not fit into 127 bytes remaining text is formatted into consequtive  info message(s) is
   * @endverbatim
   */
 
@@ -33,80 +43,84 @@
 #include "Port.h"
 
 namespace avp {
-  /// @tparam Port static class defined by template in AVP_LIBS/General/Port.h
-  /// @tparam millis global system function returning milliseconds
-  template<class Port, uint32_t (*millis)()>
-  class Protocol {
-   protected:
+/// @tparam Port static class defined by template in AVP_LIBS/General/Port.h
+/// @tparam millis global system function returning milliseconds
+template<class Port, uint32_t (*millis)()>
+class Protocol {
+  protected:
     static bool PortConnected;
-    static union FLW { uint32_t Number; char Str[]; } BeaconID;
+    static union FLW {
+      uint32_t Number;
+      char Str[];
+    } BeaconID;
 
     static struct Command {
-      typedef void (* tCallBackFunc)(const uint8_t Params[]);
-     protected:
-      union FLW ID; //!< command ID is just its ASCII name converted to uint32_t
-      const tCallBackFunc pFunc;
+        typedef void (* tCallBackFunc)(const uint8_t Params[]);
+      protected:
+        union FLW ID; //!< command ID is just its ASCII name converted to uint32_t
+        const tCallBackFunc pFunc;
 
-     public:
-      static constexpr uint8_t NameLength = sizeof(uint32_t);
-      static constexpr uint8_t MaxParamBytes = 100;
-      const uint8_t NumParamBytes;
-      Command *pPrev;
+      public:
+        static constexpr uint8_t NameLength = sizeof(uint32_t);
+        static constexpr uint8_t MaxParamBytes = 100;
+        const uint8_t NumParamBytes;
+        Command *pPrev;
 
-      // member functions
-      Command(uint32_t ID_, tCallBackFunc pFunc_, uint8_t NumParamBytes_):
-        pFunc(pFunc_), NumParamBytes(NumParamBytes_) {
-        ID.Number = ID_;
-        AVP_ASSERT(NumParamBytes_ < MaxParamBytes);
-      } // Command
+        // member functions
+        Command(uint32_t ID_, tCallBackFunc pFunc_, uint8_t NumParamBytes_):
+          pFunc(pFunc_), NumParamBytes(NumParamBytes_) {
+          ID.Number = ID_;
+          AVP_ASSERT(NumParamBytes_ < MaxParamBytes);
+        } // Command
 
-      bool IsIt(uint32_t ID_) const { return ID_ == ID.Number; }
-      void Execute(const uint8_t *Params) { (*pFunc)(Params); }
+        bool IsIt(uint32_t ID_) const {
+          return ID_ == ID.Number;
+        }
+        void Execute(const uint8_t *Params) {
+          (*pFunc)(Params);
+        }
     } *pLast, *pCurrent; // class Command
 
     static struct InputBytes_ {
-      union { uint32_t ID; uint8_t Start[]; };
+      union {
+        uint32_t ID;
+        uint8_t Start[];
+      };
       uint8_t ID_CSum;
       uint8_t Params[Command::MaxParamBytes+1]; //!< Total checksum is in Params[pCur->NumParamBytes]
     } __attribute__((packed)) InputBytes;
     static uint8_t *pInputByte; //!< this pointer traces position of the input stream in InputBytes
 
     // ************** service commands
-   protected:
-   //! @brief form a whole message, including first size byte and ending csum
-    // max message length is 256, if message is longer 255 chars are output and last char is '>'
-    static bool vprintf(char const *format, va_list ap) {
-      int Size = vsnprintf(NULL,0,format,ap);
-      if(Size < 0) return vprintf("vprintf can not convert!\n",ap); // ap here is just for the right number of parameters
-
-      bool TooLong = false;
-      if(Size > UINT8_MAX) { Size = UINT8_MAX; TooLong = true; }
-
-      uint8_t Buffer[1+Size+1]; // Size does not include tailing 0, but vsprintf prints it anyway
-      // we transmit size as a first byte and csum as the last
-      Buffer[0] = Size;
-      vsnprintf((char *)Buffer+1,Size,format,ap);
-      if(TooLong) Buffer[Size] = '>'; // indicator that message is truncated
-      Buffer[Size+1] = avp::sum<uint8_t>(Buffer+1,Size); // replace trailing 0 by checksum
-      Port::write(Buffer,1+Size+1);
-      return true;
-    } // vprintf
-
-   public:
-    static bool ReturnBad(uint8_t code, char const *format = nullptr, ...) {
-      AVP_ASSERT(code != 0);
-      if(format != nullptr) {
-        va_list ap;
-        va_start(ap,format);
-        bool Out =  vprintf(format,ap);
-        va_end(ap);
-        return Out;
-      } else {
-        Port::write(code);
-        Port::write(uint16_t(0)); // message length and csum
-        return true;
+  protected:
+    /// base private message which writes bot info and error messages
+    /// There are no Size == 0 messages, it would interfere with command data return
+    static inline void message_(const uint8_t *Src, int8_t Size) {
+      if(Size) {
+        AVP_ASSERT(Port::write(Size));
+        AVP_ASSERT(Port::write(Src,Abs(Size)));
+        AVP_ASSERT(Port::write(sum<uint8_t>(Src,Abs(Size))));
       }
-    } // ReturnBad
+    } // message_
+
+  public:
+    static void info_message(const uint8_t *Src, size_t Size) {
+      while(Size > INT8_MAX)  {
+        message_(Src,INT8_MAX);
+        Src += INT8_MAX;
+        Size -= INT8_MAX;
+      }
+      message_(Src,Size);
+    } // info_message
+
+    static void return_failed(const uint8_t *Src, size_t Size) {
+      int8_t FirstSize = min<size_t>(Size,INT8_MAX);
+      message_(Src,-FirstSize); // message with negative Size indicates error return
+      info_message(Src + FirstSize, Size - FirstSize);
+    } // return_failed
+
+#define RETURN_FAILED(format,...) printf<make_true<return_failed> >(format,##__VA_ARGS__)
+#define INFO_MESSAGE(format,...) printf<make_true<info_message> >(format,##__VA_ARGS__)
 
     /** each time we find a command we put it in the beginning of the chain
     * so if a single command gets issued over and over we do not spend time searching for it
@@ -140,20 +154,23 @@ namespace avp {
       *(pInputByte++) = b;
 
       if(pInputByte == InputBytes.Params) { // just got a new command name and its checksum
-        if(avp::sum<uint8_t>(InputBytes.Start,Command::NameLength) == InputBytes.ID_CSum) {
+        if(sum<uint8_t>(InputBytes.Start,Command::NameLength) == InputBytes.ID_CSum) {
           if((pCurrent = FindCommandByID(InputBytes.ID)) == nullptr) {
-            AVP_ASSERT(ReturnBad(8,"Command not found!")); goto Fail;
+            AVP_ASSERT(RETURN_FAILED("Command not found!"));
+            goto Fail;
           }
         } else {
-          AVP_ASSERT(ReturnBad(6,"Command name checksum is wrong!")); goto Fail;
+          AVP_ASSERT(RETURN_FAILED("Command name checksum is wrong!"));
+          goto Fail;
         }
       } else if(pInputByte == &InputBytes.Params[pCurrent->NumParamBytes + 1])  { // got everything: command,parameters and checksum
-        if(avp::sum<uint8_t>(InputBytes.Start,Command::NameLength + pCurrent->NumParamBytes + 1) == InputBytes.Params[pCurrent->NumParamBytes]) {
+        if(sum<uint8_t>(InputBytes.Start,Command::NameLength + pCurrent->NumParamBytes + 1) == InputBytes.Params[pCurrent->NumParamBytes]) {
           pCurrent->Execute(InputBytes.Params); // executing command
           // command is supposed to do all the Returning, because only it knows what receiver is expecting
           pInputByte = InputBytes.Start; // start again
         } else {
-          AVP_ASSERT(ReturnBad(7,"Command checksum is wrong!")); goto Fail;
+          AVP_ASSERT(RETURN_FAILED("Command checksum is wrong!"));
+          goto Fail;
         }
       }
       return; // success
@@ -163,10 +180,12 @@ Fail:
     } // Command::Parse;
 
     //! if port is disconnected run beacon, which allows GUI to find our serial port
-    static void SendBeacon() { if(!PortConnected) Port::write_unbuffered(BeaconID); }
+    static void SendBeacon() {
+      if(!PortConnected) Port::write_unbuffered(&BeaconID);
+    }
     static void NOOP(const uint8_t[]) { ReturnOK(); }
 
-   public:
+  public:
 
     /// @defgroup InitFunc two init functions, only one of them sg=hould be called depending on port capabilities
     /// @{
@@ -194,19 +213,17 @@ Fail:
       }
     } //  cycle
 
-    /** @brief we have to redefine from avp::vprintf those because VPRINTF now has to send size byte first and csum byte last
-    */
     static void ReturnBytesBuffered(const uint8_t *src, uint16_t size) {
       AVP_ASSERT(Port::write(uint8_t(0))); // status
       AVP_ASSERT(Port::write(size));
       AVP_ASSERT(Port::write(src, size));
-      AVP_ASSERT(Port::write(avp::sum<uint8_t>((const uint8_t *)src,size)));
+      AVP_ASSERT(Port::write(sum<uint8_t>((const uint8_t *)src,size)));
     } // Protocol::ReturnBytesBuffered
     static void ReturnBytesUnbuffered(const uint8_t *src, uint16_t size, typename Port::tReleaseFunc pFunc = nullptr)  {
       AVP_ASSERT(Port::write(uint8_t(0))); // status
       AVP_ASSERT(Port::write(size));
       AVP_ASSERT(Port::write_unbuffered(src, size, pFunc));
-      AVP_ASSERT(Port::write(avp::sum<uint8_t>((const uint8_t *)src,size)));
+      AVP_ASSERT(Port::write(sum<uint8_t>((const uint8_t *)src,size)));
     } // Protocol::ReturnBytesUnbuffered;
 
     template<typename T> static void ReturnBuffered(const T *pT, uint16_t size = 1) {
@@ -218,19 +235,21 @@ Fail:
     template<typename T> static void Return(T x) {
       ReturnBytesBuffered((const uint8_t *)&x,sizeof(T));
     } // Return
-    static void ReturnOK() { AVP_ASSERT(Port::write(uint32_t(0))); } // 1 byte status, 2 - size and 1 - checksum
-  }; //class Protocol
+    static void ReturnOK() {
+      AVP_ASSERT(Port::write(uint32_t(0)));  // 1 byte status, 2 - size and 1 - checksum
+    }
+}; //class Protocol
 
-  // following defines are just for code clearnest, do not use elsewhere
-  #define TEMPLATE template<class Port, uint32_t (*millis)()>
-  #define PROTOCOL Protocol<Port, millis>
+// following defines are just for code clearnest, do not use elsewhere
+#define TEMPLATE template<class Port, uint32_t (*millis)()>
+#define PROTOCOL Protocol<Port, millis>
 
-  TEMPLATE bool PROTOCOL::PortConnected = false;
-  TEMPLATE typename PROTOCOL::FLW PROTOCOL::BeaconID;
-  TEMPLATE typename PROTOCOL::InputBytes_ PROTOCOL::InputBytes;
-  TEMPLATE uint8_t *PROTOCOL::pInputByte = PROTOCOL::InputBytes.Start; //!< this pointer traces position of the input stream in InputBytes
-  TEMPLATE typename PROTOCOL::Command *PROTOCOL::pLast = nullptr;
-  TEMPLATE typename PROTOCOL::Command *PROTOCOL::pCurrent;
+TEMPLATE bool PROTOCOL::PortConnected = false;
+TEMPLATE typename PROTOCOL::FLW PROTOCOL::BeaconID;
+TEMPLATE typename PROTOCOL::InputBytes_ PROTOCOL::InputBytes;
+TEMPLATE uint8_t *PROTOCOL::pInputByte = PROTOCOL::InputBytes.Start; //!< this pointer traces position of the input stream in InputBytes
+TEMPLATE typename PROTOCOL::Command *PROTOCOL::pLast = nullptr;
+TEMPLATE typename PROTOCOL::Command *PROTOCOL::pCurrent;
 } // namespace avp
 
 

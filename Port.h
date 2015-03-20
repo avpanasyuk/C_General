@@ -32,7 +32,7 @@
 
 namespace avp {
   //! @tparam tSize - type of CircBuffer counter, should be big enough to fit all buffer sizes.
-  template<class HW_UART_, uint8_t Log2_TX_Buf_size=7, uint8_t Log2_TX_BlockBufSize=4, uint8_t Log2_RX_Buf_Size=7,
+  template<class HW_UART_, uint32_t baud, uint8_t Log2_TX_Buf_size=7, uint8_t Log2_TX_BlockBufSize=4, uint8_t Log2_RX_Buf_Size=7,
            typename tSize=uint8_t>
   struct  Port {
     struct BlockInfo;
@@ -73,8 +73,8 @@ protected:
     /// @defgroup GetSomethingToSend selection of sending callback functions for HW UART
     /// @{
     /// this function is called from HW_UART interrupt handler to get byte from Circular buffer to send
-    /// WRITING TO *p immediately send byte, so do it ONLY ONCE !
-    static bool GetByteToSend(uint8_t *p) {
+    /// !!!!!! WRITING TO *p immediately send byte, so do it ONLY ONCE !
+    static bool GetByteToSend(volatile uint8_t *p) {
       // check whether we are reading from block currently
       if(pCurByteInBlock != nullptr) {
         const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead();
@@ -170,8 +170,8 @@ protected:
 
 public:
     //!!!!! USE ONLY ONE OF THE INIT FUNCTIONS DEPENDING ON HW_UART  CAPABILITIES
-    static void Init() { HW_UART_::Init(StoreReceivedByte,GetByteToSend); } //  Init
-    static void InitBlock() { HW_UART_::Init(StoreReceivedByte,GetBlockToSend); } //  InitBlock
+    static void Init() { HW_UART_::Init(baud,StoreReceivedByte,GetByteToSend); } //  Init
+    static void InitBlock() { HW_UART_::Init(baud,StoreReceivedByte,GetBlockToSend); } //  InitBlock
 
     // ******************************** TRANSMISSION ******************
     // ALL write function return false if buffer is overrun and true if OK
@@ -206,12 +206,13 @@ public:
     /// @{
     template<typename T> static bool write(T const *p, size_t Num = 1) { return Num != 0?write((const uint8_t *)p,sizeof(T)*Num):true; }
     static bool write(char const *str) { return write((const uint8_t *)str, ::strlen(str)); } // no ending 0
-    template<typename T> static bool write(T d) { return write((const uint8_t *)&d,sizeof(T)); }
+    template<typename T> static bool write(const T &d) { return write((const uint8_t *)&d,sizeof(T)); }
     static bool write(int8_t d) { return write((uint8_t)d); }
-    template<typename T>
-    static bool write_unbuffered(T d, tReleaseFunc pReleaseFunc = nullptr) {
-      return write_unbuffered((const uint8_t *)&d,sizeof(T),pReleaseFunc);
-    }
+//!!!!!! DO NOT USE FOLLOWING TEMPLATE - IT IS EXTREMELY EASY TO PASS TEMPORARY OBJECT TO IT
+//    template<typename T>
+//    static bool write_unbuffered(const T &d, tReleaseFunc pReleaseFunc = nullptr) {
+//      return write_unbuffered((const uint8_t *)&d,sizeof(T),pReleaseFunc);
+//    }
     template<typename T>
     static bool write_unbuffered(T const *p, size_t Num = 1, tReleaseFunc pReleaseFunc = nullptr) {
       return write_unbuffered((const uint8_t *)p,sizeof(T)*Num,pReleaseFunc);
@@ -231,8 +232,8 @@ public:
   }; // BufferedPort
 
 // following defines are just to make static variables initiation code readable, no point in using them elsewhere
-#define BP_ALIAS Port<HW_UART_,Log2_TX_Buf_size,Log2_TX_BlockBufSize,Log2_RX_Buf_Size, tSize>
-#define BP_TEMPLATE template<class HW_UART_, uint8_t Log2_TX_Buf_size, uint8_t Log2_TX_BlockBufSize, uint8_t Log2_RX_Buf_Size, typename tSize>
+#define BP_ALIAS Port<HW_UART_,baud,Log2_TX_Buf_size,Log2_TX_BlockBufSize,Log2_RX_Buf_Size, tSize>
+#define BP_TEMPLATE template<class HW_UART_, uint32_t baud, uint8_t Log2_TX_Buf_size, uint8_t Log2_TX_BlockBufSize, uint8_t Log2_RX_Buf_Size, typename tSize>
 
   BP_TEMPLATE const uint8_t *BP_ALIAS::pCurByteInBlock = nullptr;
   BP_TEMPLATE CircBuffer<uint8_t, tSize, Log2_TX_Buf_size> BP_ALIAS::BufferTX;

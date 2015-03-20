@@ -19,7 +19,8 @@ namespace avp {
   // returns only after data pointed by Ptr are used. Or it should make a copy.
   // following functions use general "write" function of type bool write(const void *Ptr, uint16_t Size) to do formatted output;
   // NOTE both functions do not write string-ending 0 !!!!!
-  template<bool (*pwrite)(const uint8_t *Ptr, size_t Size)> bool vprintf(char const *format, va_list ap) {
+  template<bool (*pwrite)(const uint8_t *Ptr, size_t Size)> 
+  bool vprintf(char const *format, va_list ap) {
     int Size = vsnprintf(NULL,0,format,ap);
     if(Size < 0) return false;
     uint8_t Buffer[Size+1]; // +1 to include ending zero byte
@@ -27,7 +28,8 @@ namespace avp {
     return (*pwrite)((const uint8_t *)Buffer,Size); // we do not write ending 0 byte
   } // vprintf
 
-  template<bool (*vprintf)(char const *format, va_list ap)> bool printf(char const *format, ...) {
+  template<bool (*vprintf)(char const *format, va_list ap)> 
+  bool printf(char const *format, ...) {
     va_list ap;
     va_start(ap,format);
     bool Out =  vprintf(format,ap);
@@ -35,7 +37,8 @@ namespace avp {
     return Out;
   } // printf
 
-  template<bool (*pwrite)(const uint8_t *Ptr, size_t Size)> bool printf(char const *format, ...) {
+  template<bool (*pwrite)(const uint8_t *Ptr, size_t Size)> 
+  bool printf(char const *format, ...) {
     va_list ap;
     va_start(ap,format);
     bool Out =  vprintf<pwrite>(format,ap);
@@ -85,7 +88,7 @@ namespace avp {
         const char *msg = "Error in bg_message::foreground_sendout!\n";
         if(p == nullptr) debug_write((const uint8_t *)msg,strlen(msg));
         else debug_write(p,Sz);
-        Buffer.FinishedReading();
+        Buffer.FinishedReading(); 
       }
     } // foreground_sendout
   }; // bg_messager_private
@@ -103,6 +106,11 @@ namespace avp {
 
   template<uint8_t BufferSizeLog2, typename TypeOfSize>
   CircBuffer<uint8_t,TypeOfSize,BufferSizeLog2> bg_messager_private<BufferSizeLog2,TypeOfSize>::Buffer;
+
+  /// in some of my classes "write" function handles errors itself and returns void, but "printf" and "vprintf"
+  /// need function returning bool, so there is a wrapper
+  template<void (*write)(const uint8_t *Src, size_t Size)> 
+  bool make_true(const uint8_t *Src, size_t Size) { write(Src,Size); return true; }
 } // namespace avp
 
 #endif /* IO_H_INCLUDED */

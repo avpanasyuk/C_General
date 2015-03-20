@@ -11,7 +11,10 @@
 namespace avp {
   template<typename T> inline constexpr T max(T const& a, T const& b) { return a>b?a:b; }
   template<typename T> inline constexpr T min(T const& a, T const& b) { return a<b?a:b; }
-  template<typename T> inline constexpr T Abs(T const& a) { return a<0?-a:a; }
+  template<typename T> inline constexpr T Abs(T const& a) { 
+    static_assert(T(-1) < 0,"Type got to be signed, otherwise operator- screws things up!"); 
+    return a<0?-a:a; 
+  }
   template<typename T> inline constexpr T CeilRatio(T const& num, T const& denom)
   { return (num + denom - 1)/denom; }
   template<typename T, typename T1> inline constexpr T RoundRatio(T const& num, T1 const& denom)
