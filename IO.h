@@ -13,13 +13,21 @@
 #include <stdint.h>
 #include "CircBuffer.h"
 
+/// creates printf-type function out of vprintf
+/// usage: bool printf VA_LIST_WRAPPER(vprintf)
+#define VA_LIST_WRAPPER(func) (char const *format, ...) \
+     { va_list ap; va_start(ap,format); \
+    bool Out =  func(format,ap); va_end(ap); \
+    return Out; }
+
+
 namespace avp {
   // ************************** FORMATTED OUTPUT ***********************************
   // Note about following two functions - they should be used with BLOCKED pwrite which
   // returns only after data pointed by Ptr are used. Or it should make a copy.
   // following functions use general "write" function of type bool write(const void *Ptr, uint16_t Size) to do formatted output;
   // NOTE both functions do not write string-ending 0 !!!!!
-  template<bool (*pwrite)(const uint8_t *Ptr, size_t Size)> 
+  template<bool (*pwrite)(const uint8_t *Ptr, size_t Size)>
   bool vprintf(char const *format, va_list ap) {
     int Size = vsnprintf(NULL,0,format,ap);
     if(Size < 0) return false;
@@ -28,23 +36,11 @@ namespace avp {
     return (*pwrite)((const uint8_t *)Buffer,Size); // we do not write ending 0 byte
   } // vprintf
 
-  template<bool (*vprintf)(char const *format, va_list ap)> 
-  bool printf(char const *format, ...) {
-    va_list ap;
-    va_start(ap,format);
-    bool Out =  vprintf(format,ap);
-    va_end(ap);
-    return Out;
-  } // printf
+  template<bool (*vprintf)(char const *format, va_list ap)>
+  bool printf VA_LIST_WRAPPER(vprintf)
 
-  template<bool (*pwrite)(const uint8_t *Ptr, size_t Size)> 
-  bool printf(char const *format, ...) {
-    va_list ap;
-    va_start(ap,format);
-    bool Out =  vprintf<pwrite>(format,ap);
-    va_end(ap);
-    return Out;
-  } // printf
+  template<bool (*pwrite)(const uint8_t *Ptr, size_t Size)>
+  bool printf VA_LIST_WRAPPER(vprintf<pwrite>)
 
   // ****************************** UNFORMATTED OUTPUT ******************************
   /**
@@ -57,18 +53,12 @@ namespace avp {
     static bool write(const uint8_t *p, size_t sz) { for(; sz--;) if(!put_byte(*(p++))) return false; return true; }
     template<typename T> static bool write(T &obj) { return write((const uint8_t *)&obj,sizeof(obj)); }
     static bool write(const char *str) { return  write((const uint8_t *)str,strlen(str)); }
-    static bool printf(char const *format, ...) {
-      va_list ap;
-      va_start(ap,format);
-      bool Out =  vprintf<write>(format,ap);
-      va_end(ap);
-      return Out;
-    } // printf
+    static bool printf VA_LIST_WRAPPER(vprintf<write>)
   }; // class Out
 
   // ********************************* DEBUG MESSAGES **************************************
-  /// @brief default __weak__ version sends data ::vprintf
-  bool debug_vprintf(const char *format, va_list ap); // defined week, should be replaced if stderr is not good enough
+  /// @brief default __weak__ version sends data to::printf
+  bool debug_printf(const char *format, ...);
 
   // ************ BUFFERED BACKGROUND MESSAGES *********************************************
   /// this is a service class, we need it here only to be able to provide "put_byte" function for
@@ -87,7 +77,7 @@ namespace avp {
         const char *msg = "Error in bg_message::foreground_sendout!\n";
         if(p == nullptr) write((const uint8_t *)msg,strlen(msg));
         else write(p,Sz);
-        Buffer.FinishedReading(); 
+        Buffer.FinishedReading();
       }
     } // foreground_sendout
   }; // bg_messager_private
@@ -108,7 +98,7 @@ namespace avp {
 
   /// in some of my classes "write" function handles errors itself and returns void, but "printf" and "vprintf"
   /// need function returning bool, so there is a wrapper
-  template<void (*write)(const uint8_t *Src, size_t Size)> 
+  template<void (*write)(const uint8_t *Src, size_t Size)>
   bool make_true(const uint8_t *Src, size_t Size) { write(Src,Size); return true; }
 } // namespace avp
 

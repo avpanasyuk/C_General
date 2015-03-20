@@ -13,9 +13,7 @@
 namespace avp {
   volatile uint8_t FailReason = 0;
 
-
-  //! @brief defualt debug print sends things to stdout
-  __weak bool debug_vprintf(const char *format, va_list ap) { return ::vprintf(format,ap) >= 0; }
+  __weak bool debug_printf VA_LIST_WRAPPER(::vprintf)
   __weak void hang_cpu() { while(1); }
   __weak void major_fail(uint8_t reason) {
     FailReason = reason;

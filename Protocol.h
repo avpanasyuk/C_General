@@ -113,14 +113,15 @@ class Protocol {
       message_(Src,Size);
     } // info_message
 
+    static bool info_message  VA_LIST_WRAPPER(vprintf<make_true<info_message>>)
+
     static void return_failed(const uint8_t *Src, size_t Size) {
       int8_t FirstSize = min<size_t>(Size,INT8_MAX);
       message_(Src,-FirstSize); // message with negative Size indicates error return
       info_message(Src + FirstSize, Size - FirstSize);
     } // return_failed
 
-#define RETURN_FAILED(format,...) printf<make_true<return_failed> >(format,##__VA_ARGS__)
-#define INFO_MESSAGE(format,...) printf<make_true<info_message> >(format,##__VA_ARGS__)
+    static bool return_failed  VA_LIST_WRAPPER(vprintf<make_true<return_failed>>)
 
     /** each time we find a command we put it in the beginning of the chain
     * so if a single command gets issued over and over we do not spend time searching for it
@@ -152,15 +153,16 @@ class Protocol {
     //! unidirectional chain, and pLast is where it starts
     static void ParseByte(uint8_t b) {
       *(pInputByte++) = b;
+      debug_printf("%c",b);
 
       if(pInputByte == InputBytes.Params) { // just got a new command name and its checksum
         if(sum<uint8_t>(InputBytes.Start,Command::NameLength) == InputBytes.ID_CSum) {
           if((pCurrent = FindCommandByID(InputBytes.ID)) == nullptr) {
-            AVP_ASSERT(RETURN_FAILED("Command not found!"));
+            AVP_ASSERT(return_failed("Command not found!"));
             goto Fail;
           }
         } else {
-          AVP_ASSERT(RETURN_FAILED("Command name checksum is wrong!"));
+          AVP_ASSERT(return_failed("Command name checksum is wrong!"));
           goto Fail;
         }
       } else if(pInputByte == &InputBytes.Params[pCurrent->NumParamBytes + 1])  { // got everything: command,parameters and checksum
@@ -169,7 +171,7 @@ class Protocol {
           // command is supposed to do all the Returning, because only it knows what receiver is expecting
           pInputByte = InputBytes.Start; // start again
         } else {
-          AVP_ASSERT(RETURN_FAILED("Command checksum is wrong!"));
+          AVP_ASSERT(return_failed("Command checksum is wrong!"));
           goto Fail;
         }
       }

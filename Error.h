@@ -12,17 +12,16 @@
 
 namespace avp {
   extern volatile uint8_t FailReason;
-
-  /**
-  * foreground error output function
-  */
+  /// defined in General library as weak, sending stuff to ::vprinf
+  /// may be redefined
+  bool debug_printf(const char *format, ...);
   void major_fail(uint8_t reason = 0);
   void hang_cpu();
 }; //avp
 
 #ifdef DEBUG
 # define AVP_ERROR_WITH_CODE(code,format, ...) do{ \
-    avp::printf<avp::debug_vprintf>("Error in file %s, line %d: " format, \
+    avp::debug_printf("Error in file %s, line %d: " format, \
     __FILE__, __LINE__, ##__VA_ARGS__); avp::major_fail(code); }while(0)
 /// assert with additional explanation
 /// @code - numeric code, optional
