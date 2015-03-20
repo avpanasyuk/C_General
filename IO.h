@@ -67,27 +67,26 @@ namespace avp {
   }; // class Out
 
   // ********************************* DEBUG MESSAGES **************************************
-  /// @brief default __weak__ version sends data to stderr.
-  bool debug_write(const uint8_t *Src, size_t Size); // defined week, should be replaced if stderr is not good enough
-  // template<uint8_t BufferSizeLog2, typename TypeOfSize> bool bg_message<BufferSizeLog2,TypeOfSize>::put(uint8_t b);
+  /// @brief default __weak__ version sends data ::vprintf
+  bool debug_vprintf(const char *format, va_list ap); // defined week, should be replaced if stderr is not good enough
 
   // ************ BUFFERED BACKGROUND MESSAGES *********************************************
   /// this is a service class, we need it here only to be able to provide "put_byte" function for
   /// bg_messenger superclass "Out". Nothing from this class should be called by the user.
   /// we can not put it inside bg_messager class definition as we need function put in the very
   /// beginning of this definition
-  template<uint8_t BufferSizeLog2 = 8, typename TypeOfSize=uint8_t>
+  template<bool (*write)(const uint8_t *Src, size_t Size), uint8_t BufferSizeLog2 = 8, typename TypeOfSize=uint8_t>
   struct bg_messager_private {
     static CircBuffer<uint8_t,TypeOfSize,BufferSizeLog2> Buffer;
 
     static bool put(uint8_t b) { return Buffer.Write(b); }
     static void foreground_sendout() {
-      if(Buffer.LeftToRead()) {
+      while(Buffer.LeftToRead()) {
         uint8_t Sz;
         const uint8_t *p = Buffer.GetContinousBlockToRead(&Sz);
         const char *msg = "Error in bg_message::foreground_sendout!\n";
-        if(p == nullptr) debug_write((const uint8_t *)msg,strlen(msg));
-        else debug_write(p,Sz);
+        if(p == nullptr) write((const uint8_t *)msg,strlen(msg));
+        else write(p,Sz);
         Buffer.FinishedReading(); 
       }
     } // foreground_sendout
@@ -98,14 +97,14 @@ namespace avp {
   /// all functions inherited from Out class ("printf" etc) store messages into a buffer and
   /// they are sent out when foreground_sendout is called.
   /// foreground_sendout should be called periodically, e.g. in main loop.
-  template<uint8_t BufferSizeLog2 = 8, typename TypeOfSize=uint8_t>
+  template<bool (*write)(const uint8_t *Src, size_t Size), uint8_t BufferSizeLog2 = 8, typename TypeOfSize=uint8_t>
   struct bg_messager:
-    public Out<bg_messager_private<BufferSizeLog2,TypeOfSize>::put>,
-    public bg_messager_private<BufferSizeLog2,TypeOfSize>
+    public Out<bg_messager_private<write,BufferSizeLog2,TypeOfSize>::put>,
+    public bg_messager_private<write,BufferSizeLog2,TypeOfSize>
   {}; // bg_messager
 
-  template<uint8_t BufferSizeLog2, typename TypeOfSize>
-  CircBuffer<uint8_t,TypeOfSize,BufferSizeLog2> bg_messager_private<BufferSizeLog2,TypeOfSize>::Buffer;
+  template<bool (*write)(const uint8_t *Src, size_t Size), uint8_t BufferSizeLog2, typename TypeOfSize>
+  CircBuffer<uint8_t,TypeOfSize,BufferSizeLog2> bg_messager_private<write,BufferSizeLog2,TypeOfSize>::Buffer;
 
   /// in some of my classes "write" function handles errors itself and returns void, but "printf" and "vprintf"
   /// need function returning bool, so there is a wrapper

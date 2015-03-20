@@ -11,7 +11,6 @@
 #include "IO.h"
 
 namespace avp {
-  extern int AssertError;
   extern volatile uint8_t FailReason;
 
   /**
@@ -22,30 +21,24 @@ namespace avp {
 }; //avp
 
 #ifdef DEBUG
-
-#define AVP_ERROR(format, ...) do{ \
- avp::printf<avp::vprintf<avp::debug_write> >("Error in file %s, line %d: " format, \
-             __FILE__, __LINE__, ##__VA_ARGS__); avp::major_fail(); }while(0)
-// POLICY: AVP_ASSERT is used just before a deadly operation, like assigning zero
-// pointer, and not preliminary
-#define AVP_ASSERT_(exp,err_form,...) do{ if((avp::AssertError = !(exp))) \
-{ AVP_ERROR("Expression (%s) is false in %s on line %d" err_form "!\n", \
-            #exp, __FILE__, __LINE__,##__VA_ARGS__); }}while(0)
-#define ASSERT_BEING_0(exp) do{ if(avp::AssertError = (exp)) \
-  { AVP_ERROR("Expression (%s) equals %d != 0 in %s on line %d!\n", \
-            #exp, avp::AssertError, __FILE__, __LINE__); }}while(0)
+# define AVP_ERROR_WITH_CODE(code,format, ...) do{ \
+    avp::printf<avp::debug_vprintf>("Error in file %s, line %d: " format, \
+    __FILE__, __LINE__, ##__VA_ARGS__); avp::major_fail(code); }while(0)
+/// assert with additional explanation
+/// @code - numeric code, optional
+/// @param ext_format - additional format string, followed by parameters
+# define AVP_ASSERT_WITH_EXPL(exp,code,ext_format,...) do{ if(!(exp)) \
+    { AVP_ERROR_WITH_CODE(code+0,"Expression (%s) is false: " ext_format "!\n", \
+    #exp, ##__VA_ARGS__); }}while(0)
 
 #else // RELEASE
-
-#define AVP_ERROR(format,...) avp::major_fail()
-
-
-#define AVP_ASSERT_(exp,...) do{ [] (...) {} (exp,##__VA_ARGS__); }while(0)
-
-#define ASSERT_BEING_0(exp,...) AVP_ASSERT(exp)
+# define AVP_ERROR_WITH_CODE(code,...) avp::major_fail(code)
+# define AVP_ASSERT_WITH_EXPL(exp,...) do{ [] (...) { ((exp),##_VA_ARGS__); } }while(0) // we gotta execute exp and args
 #endif // DEBUG
 
-#define AVP_ASSERT(exp) AVP_ASSERT_(exp,"")
-#define AVP_ASSERT_ERRNUM(exp, ERRNUM) AVP_ASSERT_(exp,", error #%d", ERRNUM)
+#define AVP_ASSERT_WITH_CODE(exp,code) AVP_ASSERT_WITH_EXPL(exp,code,)
+#define AVP_ASSERT(exp) AVP_ASSERT_WITH_CODE(exp,)
+#define AVP_ERROR(...) AVP_ERROR_WITH_CODE(0,##__VA_ARGS__)
+#define ASSERT_BEING_0(exp) AVP_ASSERT((exp) == 0)
 
 #endif /* ERROR_H_INCLUDED */
