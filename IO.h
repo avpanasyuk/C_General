@@ -58,7 +58,7 @@ namespace avp {
 
   // ********************************* DEBUG MESSAGES **************************************
   /// @brief default __weak__ version sends data to::printf
-  bool debug_printf(const char *format, ...);
+  bool debug_vprintf(const char *format, va_list a);
 
   // ************ BUFFERED BACKGROUND MESSAGES *********************************************
   /// this is a service class, we need it here only to be able to provide "put_byte" function for

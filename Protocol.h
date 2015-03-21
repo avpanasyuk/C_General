@@ -153,12 +153,11 @@ class Protocol {
     //! unidirectional chain, and pLast is where it starts
     static void ParseByte(uint8_t b) {
       *(pInputByte++) = b;
-      debug_printf("%c",b);
 
       if(pInputByte == InputBytes.Params) { // just got a new command name and its checksum
         if(sum<uint8_t>(InputBytes.Start,Command::NameLength) == InputBytes.ID_CSum) {
           if((pCurrent = FindCommandByID(InputBytes.ID)) == nullptr) {
-            AVP_ASSERT(return_failed("Command not found!"));
+            AVP_ASSERT(return_failed("Command <%.*s> not found!", Command::NameLength, InputBytes.Start));
             goto Fail;
           }
         } else {
@@ -249,7 +248,7 @@ Fail:
 TEMPLATE bool PROTOCOL::PortConnected = false;
 TEMPLATE typename PROTOCOL::FLW PROTOCOL::BeaconID;
 TEMPLATE typename PROTOCOL::InputBytes_ PROTOCOL::InputBytes;
-TEMPLATE uint8_t *PROTOCOL::pInputByte = PROTOCOL::InputBytes.Start; //!< this pointer traces position of the input stream in InputBytes
+TEMPLATE uint8_t *PROTOCOL::pInputByte = PROTOCOL::InputBytes.Start;
 TEMPLATE typename PROTOCOL::Command *PROTOCOL::pLast = nullptr;
 TEMPLATE typename PROTOCOL::Command *PROTOCOL::pCurrent;
 } // namespace avp
