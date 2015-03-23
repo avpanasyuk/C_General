@@ -108,10 +108,13 @@ namespace avp {
     } // message_
 
     static void FlushRX() {
+      // read the rest is something is transmitted
       uint8_t b;
       do {
-        uint32_t Until = millis() + 2;
-        while(Until - millis() < UINT32_MAX/2); // 10 millis delay
+        Port::FlushRX();
+        // wait if something appears
+        uint32_t WaitUntil = millis() + 3;
+        while(WaitUntil - millis() > UINT32_MAX/2); // 10 millis delay
       } while(Port::read(&b));
     } // FlushRX
 

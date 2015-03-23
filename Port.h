@@ -229,7 +229,7 @@ public:
     static bool GotSomething() { return BufferRX.LeftToRead() != 0; }
     static uint8_t GetByte() { uint8_t out; read(&out); return out; }
     static bool IsOverrun() { return HW_UART_::IsOverrun(); }
-    // static void FlushRX() { HW_UART_::FlushRX();  BufferRX.Clear(); }
+    static void FlushRX() { HW_UART_::FlushRX();  BufferRX.Clear(); }
   }; // BufferedPort
 
 // following defines are just to make static variables initiation code readable, no point in using them elsewhere
