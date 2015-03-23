@@ -14,10 +14,12 @@
             - uint16_t Size is size of data being transmitted.
             - data
             - 1 uint8_t data checksum
-          - If CODE is < 0, then it is last command failure error message size, followed by
-            - error message text without trailing 0
-            - 1 uint8_t error message text checksum
-            .
+          - If CODE is < 0, then it is the last command failure return message:
+            - CODE > -NUM_SPEC_CODES, @see enum SpecErrorCodes
+           - if CODE <= -NUM_SPEC_CODES it is the error message size, followed by
+              - error message text without trailing 0
+              - 1 uint8_t error message text checksum
+              .
         Every command has to be responded with either successful return or error message, and only
         one of them.
         - If CODE is > 0, then it is an info message size, followed by
@@ -32,6 +34,8 @@
 #ifndef COMMAND_PROTOCOL_HPP_INCLUDED
 #define COMMAND_PROTOCOL_HPP_INCLUDED
 
+/// special error codes
+enum SpecErrorCodes { CMD_NAME_CS=1, CMD_MESSAGE_CS, UART_OVERRUN, NUM_SPEC_CODES };
 // TODO("Restart transmitting BeaconStr when connection breaks. It is tough to determine when in happens, though.");
 
 #include <string.h>
@@ -45,8 +49,8 @@
 namespace avp {
 /// @tparam Port static class defined by template in AVP_LIBS/General/Port.h
 /// @tparam millis global system function returning milliseconds
-template<class Port, uint32_t (*millis)()>
-class Protocol {
+  template<class Port, uint32_t (*millis)()>
+  class Protocol {
   protected:
     static bool PortConnected;
     static union FLW {
@@ -55,30 +59,30 @@ class Protocol {
     } BeaconID;
 
     static struct Command {
-        typedef void (* tCallBackFunc)(const uint8_t Params[]);
-      protected:
-        union FLW ID; //!< command ID is just its ASCII name converted to uint32_t
-        const tCallBackFunc pFunc;
+      typedef void (* tCallBackFunc)(const uint8_t Params[]);
+    protected:
+      union FLW ID; //!< command ID is just its ASCII name converted to uint32_t
+      const tCallBackFunc pFunc;
 
-      public:
-        static constexpr uint8_t NameLength = sizeof(uint32_t);
-        static constexpr uint8_t MaxParamBytes = 100;
-        const uint8_t NumParamBytes;
-        Command *pPrev;
+    public:
+      static constexpr uint8_t NameLength = sizeof(uint32_t);
+      static constexpr uint8_t MaxParamBytes = 100;
+      const uint8_t NumParamBytes;
+      Command *pPrev;
 
-        // member functions
-        Command(uint32_t ID_, tCallBackFunc pFunc_, uint8_t NumParamBytes_):
-          pFunc(pFunc_), NumParamBytes(NumParamBytes_) {
-          ID.Number = ID_;
-          AVP_ASSERT(NumParamBytes_ < MaxParamBytes);
-        } // Command
+      // member functions
+      Command(uint32_t ID_, tCallBackFunc pFunc_, uint8_t NumParamBytes_):
+        pFunc(pFunc_), NumParamBytes(NumParamBytes_) {
+        ID.Number = ID_;
+        AVP_ASSERT(NumParamBytes_ < MaxParamBytes);
+      } // Command
 
-        bool IsIt(uint32_t ID_) const {
-          return ID_ == ID.Number;
-        }
-        void Execute(const uint8_t *Params) {
-          (*pFunc)(Params);
-        }
+      bool IsIt(uint32_t ID_) const {
+        return ID_ == ID.Number;
+      }
+      void Execute(const uint8_t *Params) {
+        (*pFunc)(Params);
+      }
     } *pLast, *pCurrent; // class Command
 
     static struct InputBytes_ {
@@ -103,6 +107,14 @@ class Protocol {
       }
     } // message_
 
+    static void FlushRX() {
+      uint8_t b;
+      do {
+        uint32_t Until = millis() + 2;
+        while(Until - millis() < UINT32_MAX/2); // 10 millis delay
+      } while(Port::read(&b));
+    } // FlushRX
+
   public:
     static void info_message(const uint8_t *Src, size_t Size) {
       while(Size > INT8_MAX)  {
@@ -113,15 +125,16 @@ class Protocol {
       message_(Src,Size);
     } // info_message
 
-    static bool info_message  VA_LIST_WRAPPER(vprintf<make_true<info_message>>)
+    static bool info_message  PRINTF_WRAPPER(vprintf<make_true<info_message>>)
 
     static void return_failed(const uint8_t *Src, size_t Size) {
+      AVP_ASSERT(Size >= NUM_SPEC_CODES);
       int8_t FirstSize = min<size_t>(Size,INT8_MAX);
       message_(Src,-FirstSize); // message with negative Size indicates error return
       info_message(Src + FirstSize, Size - FirstSize);
     } // return_failed
 
-    static bool return_failed  VA_LIST_WRAPPER(vprintf<make_true<return_failed>>)
+    static bool return_failed  PRINTF_WRAPPER(vprintf<make_true<return_failed>>)
 
     /** each time we find a command we put it in the beginning of the chain
     * so if a single command gets issued over and over we do not spend time searching for it
@@ -161,7 +174,7 @@ class Protocol {
             goto Fail;
           }
         } else {
-          AVP_ASSERT(return_failed("Command name checksum is wrong!"));
+          AVP_ASSERT(Port::write(-int8_t(CMD_NAME_CS))); // "Command name checksum is wrong" code
           goto Fail;
         }
       } else if(pInputByte == &InputBytes.Params[pCurrent->NumParamBytes + 1])  { // got everything: command,parameters and checksum
@@ -170,13 +183,13 @@ class Protocol {
           // command is supposed to do all the Returning, because only it knows what receiver is expecting
           pInputByte = InputBytes.Start; // start again
         } else {
-          AVP_ASSERT(return_failed("Command checksum is wrong!"));
+          AVP_ASSERT(Port::write(-int8_t(CMD_MESSAGE_CS))); // "Whole command message checksum is wrong!" code
           goto Fail;
         }
       }
       return; // success
 Fail:
-      while(Port::read(&b));  // flashing input buffer, b is used just not to introduce new variable
+      FlushRX();
       pInputByte = InputBytes.Start;
     } // Command::Parse;
 
@@ -190,13 +203,13 @@ Fail:
 
     /// @defgroup InitFunc two init functions, only one of them sg=hould be called depending on port capabilities
     /// @{
-    static void Init(const char* BeaconStr) {
+    static void Init(const char *BeaconStr) {
       strncpy(BeaconID.Str, BeaconStr, sizeof(BeaconID));
       Port::Init();
       AddCommand("NOOP",NOOP,0); // we need this command for initial handshaking
     } // Init
 
-    static void InitBlock(const char* BeaconStr) {
+    static void InitBlock(const char *BeaconStr) {
       strncpy(BeaconID.Str, BeaconStr, sizeof(BeaconID));
       Port::InitBlock();
       AddCommand("NOOP",NOOP,0); // we need this command for initial handshaking
@@ -211,6 +224,12 @@ Fail:
       if(Port::GotSomething()) {
         PortConnected = true;
         ParseByte(Port::GetByte());
+      }
+
+      if(Port::IsOverrun()) {
+        FlushRX();
+        AVP_ASSERT(Port::write(-int8_t(UART_OVERRUN)));
+        pInputByte = InputBytes.Start;
       }
     } //  cycle
 
@@ -239,18 +258,18 @@ Fail:
     static void ReturnOK() {
       AVP_ASSERT(Port::write(uint32_t(0)));  // 1 byte status, 2 - size and 1 - checksum
     }
-}; //class Protocol
+  }; //class Protocol
 
 // following defines are just for code clearnest, do not use elsewhere
 #define TEMPLATE template<class Port, uint32_t (*millis)()>
 #define PROTOCOL Protocol<Port, millis>
 
-TEMPLATE bool PROTOCOL::PortConnected = false;
-TEMPLATE typename PROTOCOL::FLW PROTOCOL::BeaconID;
-TEMPLATE typename PROTOCOL::InputBytes_ PROTOCOL::InputBytes;
-TEMPLATE uint8_t *PROTOCOL::pInputByte = PROTOCOL::InputBytes.Start;
-TEMPLATE typename PROTOCOL::Command *PROTOCOL::pLast = nullptr;
-TEMPLATE typename PROTOCOL::Command *PROTOCOL::pCurrent;
+  TEMPLATE bool PROTOCOL::PortConnected = false;
+  TEMPLATE typename PROTOCOL::FLW PROTOCOL::BeaconID;
+  TEMPLATE typename PROTOCOL::InputBytes_ PROTOCOL::InputBytes;
+  TEMPLATE uint8_t *PROTOCOL::pInputByte = PROTOCOL::InputBytes.Start;
+  TEMPLATE typename PROTOCOL::Command *PROTOCOL::pLast = nullptr;
+  TEMPLATE typename PROTOCOL::Command *PROTOCOL::pCurrent;
 } // namespace avp
 
 

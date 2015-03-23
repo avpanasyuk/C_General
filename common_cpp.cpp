@@ -21,4 +21,4 @@ namespace avp {
   }
 } // namespace avp
 
-extern "C" int debug_printf VA_LIST_WRAPPER(avp::debug_vprintf)
+extern "C" int debug_printf PRINTF_WRAPPER(avp::debug_vprintf)

@@ -176,7 +176,7 @@ public:
     // ******************************** TRANSMISSION ******************
     // ALL write function return false if buffer is overrun and true if OK
 
-    //! safe write
+    //! safe writeBufferRX.
     static bool write(uint8_t d) {
       if(!BufferTX.LeftToWrite()) return false;
       bool Res = write_(d);
@@ -228,7 +228,8 @@ public:
     static uint8_t GetStatusRX() { return HW_UART_::GetStatusRX(); }
     static bool GotSomething() { return BufferRX.LeftToRead() != 0; }
     static uint8_t GetByte() { uint8_t out; read(&out); return out; }
-
+    static bool IsOverrun() { return HW_UART_::IsOverrun(); }
+    // static void FlushRX() { HW_UART_::FlushRX();  BufferRX.Clear(); }
   }; // BufferedPort
 
 // following defines are just to make static variables initiation code readable, no point in using them elsewhere

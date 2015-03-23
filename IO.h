@@ -14,8 +14,8 @@
 #include "CircBuffer.h"
 
 /// creates printf-type function out of vprintf
-/// usage: bool printf VA_LIST_WRAPPER(vprintf)
-#define VA_LIST_WRAPPER(func) (char const *format, ...) \
+/// usage: bool printf PRINTF_WRAPPER(vprintf)
+#define PRINTF_WRAPPER(func) (char const *format, ...) \
      { va_list ap; va_start(ap,format); \
     bool Out =  func(format,ap); va_end(ap); \
     return Out; }
@@ -37,10 +37,10 @@ namespace avp {
   } // vprintf
 
   template<bool (*vprintf)(char const *format, va_list ap)>
-  bool printf VA_LIST_WRAPPER(vprintf)
+  bool printf PRINTF_WRAPPER(vprintf)
 
   template<bool (*pwrite)(const uint8_t *Ptr, size_t Size)>
-  bool printf VA_LIST_WRAPPER(vprintf<pwrite>)
+  bool printf PRINTF_WRAPPER(vprintf<pwrite>)
 
   // ****************************** UNFORMATTED OUTPUT ******************************
   /**
@@ -53,7 +53,7 @@ namespace avp {
     static bool write(const uint8_t *p, size_t sz) { for(; sz--;) if(!put_byte(*(p++))) return false; return true; }
     template<typename T> static bool write(T &obj) { return write((const uint8_t *)&obj,sizeof(obj)); }
     static bool write(const char *str) { return  write((const uint8_t *)str,strlen(str)); }
-    static bool printf VA_LIST_WRAPPER(vprintf<write>)
+    static bool printf PRINTF_WRAPPER(vprintf<write>)
   }; // class Out
 
   // ********************************* DEBUG MESSAGES **************************************
