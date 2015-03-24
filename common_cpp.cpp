@@ -15,7 +15,7 @@ namespace avp {
 
   /// crap, ::vprintf does not work with semihosting
   ///__weak bool debug_vprintf(const char *format, va_list a) { return vprintf<write< ::printf>>(format,a); }
-  __weak bool debug_vprintf(const char *format, va_list a) { return ::vprintf(format,a); }
+  __weak bool debug_vprintf(const char *format, va_list a) { return ::vprintf(format,a) >= 0; }
   __weak void hang_cpu() { while(1); }
   __weak void major_fail(uint8_t reason) {
     FailReason = reason;
