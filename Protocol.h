@@ -81,6 +81,7 @@ namespace avp {
         return ID_ == ID.Number;
       }
       void Execute(const uint8_t *Params) {
+        // debug_printf("Got command <%.4s>\n", pCurrent->ID.Str);
         (*pFunc)(Params);
       }
     } *pLast, *pCurrent; // class Command
@@ -169,6 +170,7 @@ namespace avp {
     //! unidirectional chain, and pLast is where it starts
     static void ParseByte(uint8_t b) {
       *(pInputByte++) = b;
+      // debug_printf("<%X> ",b);
 
       if(pInputByte == InputBytes.Params) { // just got a new command name and its checksum
         if(sum<uint8_t>(InputBytes.Start,Command::NameLength) == InputBytes.ID_CSum) {
