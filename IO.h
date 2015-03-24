@@ -100,6 +100,11 @@ namespace avp {
   /// need function returning bool, so there is a wrapper
   template<void (*write)(const uint8_t *Src, size_t Size)>
   bool make_true(const uint8_t *Src, size_t Size) { write(Src,Size); return true; }
+
+  /// following is a terrible kludge to use "printf" for "write".
+  /// Useful sometimes...
+  template<int (*printf)( const char * format, ... )>
+  bool write(const uint8_t *Src, size_t Size) { return printf("%.*s",Size,Src) >= 0; }
 } // namespace avp
 
 #endif /* IO_H_INCLUDED */
