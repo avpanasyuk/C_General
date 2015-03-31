@@ -1,7 +1,7 @@
 /**
   * @file AVP_LIBS\General\Time.h
   * @author Alexander Panasyuk
-  * 
+  *
   */
 
 #ifndef TIME_H_INCLUDED
@@ -26,11 +26,11 @@ namespace avp {
     }
     /// just checks whether TimePeriod had passed, does not do reset
     /// if there is no Reset for too long the counter may wrap over
-    bool Passed_() { return (T((*pTickFunction)()) - NextTime) < ((~T(0))/2); }
+    bool JustCheck() { return (T((*pTickFunction)()) - NextTime) < ((~T(0))/2); }
 
     /// if TimePeriod had passed does reset to start a new TimePeriod
-    bool Passed() {
-      bool Out = Passed_();
+    bool Expired() {
+      bool Out = JustCheck();
       if(Out) Reset();
       return Out;
     } // Passed
@@ -38,7 +38,7 @@ namespace avp {
     /// Pause with an internal loop
     static void Pause(T Delay) {
       TimePeriod Timer(Delay);
-      while(!Timer.Passed());
+      while(!Timer.Expired());
     } // Pause
   }; // TimePeriod
 
@@ -47,7 +47,7 @@ namespace avp {
   class TimeOut: public TimePeriod<TickFunction,T> {
   public:
     TimeOut(T Timeout):TimePeriod<TickFunction,T>(Timeout)  {}
-    operator bool() { return TimePeriod<TickFunction,T>::Passed();  }
+    operator bool() { return TimePeriod<TickFunction,T>::Expired();  }
   }; // TimeOut
 
   /// RunPeriodically may be static class because Func and Period make all of them different
@@ -55,7 +55,7 @@ namespace avp {
   class RunPeriodically {
     static TimePeriod<TickFunction, uint32_t> TP;
   public:
-    static void cycle() { if(TP.Passed()) (*Func)(); } // cycle
+    static void cycle() { if(TP.Expired()) (*Func)(); } // cycle
     static void Reset() { TP.Reset(); }
   }; // RunPeriodically
 
