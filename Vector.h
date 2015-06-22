@@ -1,7 +1,7 @@
 #ifndef VECTOR_H_
 #define VECTOR_H_
 
-#include <stdlib.h>
+#include <stdint.h>
 #include "General.h"
 #include "Error.h"
 

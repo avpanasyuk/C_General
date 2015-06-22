@@ -9,7 +9,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-
 #ifdef __cplusplus
 extern "C" int debug_printf(const char *format, ...);
 
@@ -24,12 +23,16 @@ namespace avp {
   void hang_cpu();
 }; //avp
 
+// ************************* ASSERT/ERROR macros **********************
+// ERROR halts program even in RELEASE
+// ASSERT works only in DEBUG
 
 #ifdef DEBUG
 # define AVP_ERROR_WITH_CODE(code,format, ...) do{ \
     debug_printf("Error in file %s, line %d: " format, \
     __FILE__, __LINE__, ##__VA_ARGS__); avp::major_fail(code); }while(0)
-/// assert with additional explanation
+
+/// AVP_ASSERT_WITH_EXPL = AVP_ASSERT_WITH_CODE with additional explanation
 /// @code - numeric code, optional
 /// @param ext_format - additional format string, followed by parameters
 # define AVP_ASSERT_WITH_EXPL(exp,code,ext_format,...) do{ if(!(exp)) \
@@ -37,12 +40,13 @@ namespace avp {
     #exp, ##__VA_ARGS__); }}while(0)
 
 #else // RELEASE
-# define AVP_ERROR_WITH_CODE(code,...) avp::major_fail(code)
-# define AVP_ASSERT_WITH_EXPL(exp,...) do{ [] (...) { ((exp),##_VA_ARGS__); } }while(0) // we gotta execute exp and args
+# define AVP_ERROR_WITH_CODE(code,format,...) avp::major_fail(code)
+# define AVP_ASSERT_WITH_EXPL(exp,code,ext_format,...) do{ ((exp),##__VA_ARGS__); }while(0)
+// we gotta execute exp and args but do nothing else
 #endif // DEBUG
 
-#define AVP_ASSERT_WITH_CODE(exp,code) AVP_ASSERT_WITH_EXPL(exp,code,)
-#define AVP_ASSERT(exp) AVP_ASSERT_WITH_CODE(exp,)
+#define AVP_ASSERT_WITH_CODE(exp,code) AVP_ASSERT_WITH_EXPL(exp,code,"")
+#define AVP_ASSERT(exp) AVP_ASSERT_WITH_CODE(exp,0)
 #define AVP_ERROR(...) AVP_ERROR_WITH_CODE(0,##__VA_ARGS__)
 #define ASSERT_BEING_0(exp) AVP_ASSERT((exp) == 0)
 
