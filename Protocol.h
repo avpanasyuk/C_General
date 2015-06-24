@@ -35,7 +35,8 @@
 #define COMMAND_PROTOCOL_HPP_INCLUDED
 
 /// special error codes
-enum SpecErrorCodes { CMD_NAME_CS=1, CMD_MESSAGE_CS, UART_OVERRUN, NUM_SPEC_CODES };
+enum SpecErrorCodes { CMD_NAME_CS=1, CMD_MESSAGE_CS, UART_OVERRUN, NUM_SPEC_CODES = 3}; //!< corresponds to
+// SpecErrorCodes field AVP_LIB/+AVP/serial_protocol.m class
 // TODO("Restart transmitting BeaconStr when connection breaks. It is tough to determine when in happens, though.");
 
 #include <string.h>
