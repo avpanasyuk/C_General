@@ -49,17 +49,40 @@ struct CircBuffer {
     Write_(d);
     return true;
   }
-  // It is risky function because BeingRead may change in between. We have to disable interrupts across it
+
+  // It is risky function because it modifies BeingRead index, so interferes with reading function. E.g
+  // if read is in progress and this function is called from the interrupt (rr vise versa) things may get screwed up.
+  // The function never fails
   T *ForceSlotToWrite()  {
-    if(!LeftToWrite()) FinishedReading();
+    if(!LeftToWrite()) {
+      if(LastReadSize == 0) LastReadSize = 1; // when no read is on progress we still have to move pointer
+      FinishedReading();
+    }
     return GetSlotToWrite();
   } // ForceSlotToWrite
 
+  // It is marginally safer function because it moves BeingRead index only when no read is in progress. Interrupts may still screw things up
+  // if racing condition occurs. Fails and returns NULL is reading is in progress
+  T *SaferForceSlotToWrite()  {
+    if(!LeftToWrite()) { // we will try to free some space
+      if(LastReadSize == 0) {  // OK, no read is in progress
+        LastReadSize = 1; // when no read is on progress we still have to move pointer
+        FinishedReading();
+      } else return nullptr; // will not free space if read is in progress
+    }
+    return GetSlotToWrite();
+  } // ForceSlotToWrite
+
+
+
+
   //************* Reader functions, "BeingWritten" is  here
   tSize LeftToRead() const  { return (BeingWritten - BeingRead) & Mask; }
-  //! @brief returns the same slot if called several times in a row. Omly FinishReading moves pointer
+  //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
   T const *GetSlotToRead() { LastReadSize = 1; return &Buffer[BeingRead]; }
+
   void FinishedReading() { BeingRead = (BeingRead + LastReadSize) & Mask; LastReadSize = 0; }
+
   T Read_() {
     T temp = *GetSlotToRead();
     FinishedReading();
@@ -73,18 +96,15 @@ struct CircBuffer {
   }
 
   // ************* Continous block reading functions
-  /** instead of a single entry marks for reading a continous block
-  *   release block after reading with FinishedReading()
-  *   We can not make two calls to this without FinishReading in between
+  /** instead of a single entry marks for reading a continuous block
   *   @param[out] pSz - pointer to variable to return size in
   */
-  T const *GetContinousBlockToRead(tSize *pSz = nullptr) {
-    if(LastReadSize != 0) return nullptr; // should be interleaved with FinishReading
+  T const *GetContinousBlockToRead(tSize *pSz) {
     if(BeingRead > BeingWritten) { // reading is wrapped, continuous blocks goes just to the end of the buffer
       LastReadSize = GetCapacity() + 1 - BeingRead;
     } else  LastReadSize = LeftToRead();
 
-    if(pSz != nullptr) *pSz = LastReadSize;
+    *pSz = LastReadSize;
 
     return &Buffer[BeingRead];
   } // GetContinousBlockToRead
@@ -92,7 +112,8 @@ protected:
   T Buffer[size_t(GetCapacity())+1];
   static constexpr tSize Mask = GetCapacity(); //!< marks used bits in index variables
   // we do not care what happens in upper bits
-  tSize BeingRead, BeingWritten, LastReadSize; //!< indexes of buffer currently being ....
+  tSize BeingRead, BeingWritten; //!< indexes of buffer currently being ....
+  tSize LastReadSize; //! 0 if no read is in progress, size of the last read otherwise
 }; // CircBuffer
 
 #endif /* CIRCBUFFER_H_ */
