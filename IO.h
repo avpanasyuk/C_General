@@ -72,11 +72,10 @@ namespace avp {
     static bool put(uint8_t b) { return Buffer.Write(b); }
     static void foreground_sendout() {
       while(Buffer.LeftToRead()) {
-        uint8_t Sz;
-        const uint8_t *p = Buffer.GetContinousBlockToRead(&Sz);
+        const uint8_t *p = Buffer.GetContinousBlockToRead();
         const char *msg = "Error in bg_message::foreground_sendout!\n";
         if(p == nullptr) write((const uint8_t *)msg,strlen(msg));
-        else write(p,Sz);
+        else write(p,Buffer.GetSizeToRead());
         Buffer.FinishedReading();
       }
     } // foreground_sendout

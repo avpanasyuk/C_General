@@ -91,7 +91,8 @@ protected:
 
       if(!BufferTX.LeftToRead()) return false;
       else {
-        uint8_t b = BufferTX.Read_(); // can not write to *p here, it will be transmitted at once
+        uint8_t b = BufferTX.Read_(); // can not write to *p here, it will be transmitted at once, but
+        // we gotta check for escape code first
         if(b != ESC_code) *p = b;
         else {
           // dealing with a special case here, either block or byte with ESC_Code value
