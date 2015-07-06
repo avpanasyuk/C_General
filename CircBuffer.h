@@ -52,7 +52,7 @@ struct CircBuffer {
   // if read is in progress and this function is called from the interrupt (or vise versa) things may get screwed up.
   // The function never fails
   T *ForceSlotToWrite()  {
-    if(!LeftToWrite()) { // we will free some space
+    if(LeftToWrite() == 0) { // we will free some space
       if(LastReadSize == 0) LastReadSize = 1; // when no read is on progress we still have to move pointer
       FinishedReading();
     }
@@ -62,10 +62,11 @@ struct CircBuffer {
   // It is marginally safer function because it moves BeingRead index only when no read is in progress. Interrupts may still screw things up
   // if racing condition occurs. Fails and returns NULL is reading is in progress
   T *SaferForceSlotToWrite()  {
-    if(!LeftToWrite()) { // we will try to free some space
+    if(LeftToWrite() == 0) { // we will try to free some space
       if(LastReadSize == 0) BeingRead = (BeingRead + 1) & Mask; // move read pointer if no read is in progress
       else return nullptr; // will fail but not overwrite data being read
     }
+    // debug_printf("%hu/%hu ",BeingRead, BeingWritten);
     return GetSlotToWrite();
   } // ForceSlotToWrite
 
@@ -97,6 +98,11 @@ struct CircBuffer {
   } // GetContinousBlockToRead
 
   tSize GetSizeToRead() { return LastReadSize; }
+
+  // for debugging purposes
+  void GetInternals(tSize *WriteI, tSize *ReadI, tSize *ReadSize) {
+    *WriteI = BeingWritten; *ReadI = BeingRead; *ReadSize = LastReadSize;
+  } // GetInternals
 protected:
   T Buffer[size_t(GetCapacity())+1]; //!< buffer size is 2^sizeLog2
   static constexpr tSize Mask = GetCapacity(); //!< marks used bits in index variables

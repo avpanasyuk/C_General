@@ -15,9 +15,10 @@ namespace avp {
     safe_ptr &operator=(T *p_) { p = p_; return *this; }
     T &operator*() const { AVP_ASSERT(p != nullptr); return *p; }
     T *operator-> () const { return &(this->operator*()); }
+    T &operator[] (size_t index) { AVP_ASSERT(p != nullptr); return p[index]; }
     // T *operator->() const { AVP_ASSERT(p != nullptr); return p; }
     T *get() const { return p; }
-    operator T *() const { return p; }
+    operator T *() const { return p; } // we can return pointer value if it is nullptr, just not dereference it.
     bool operator==(T *p_) const { return p==p_; }
     bool operator==(decltype(nullptr) p_) const { return p==p_; }
   protected:
