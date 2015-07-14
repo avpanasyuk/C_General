@@ -5,8 +5,8 @@
 *  Author: panasyuk
 */
 
-#ifndef CIRCBUFFER_H_
-#define CIRCBUFFER_H_
+#ifndef CIRCBUFFERWITHCONT_H_
+#define CIRCBUFFERWITHCONT_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -111,4 +111,4 @@ protected:
   tSize LastReadSize; //! 0 if no read is in progress, size of the read being in progress otherwise
 }; // CircBuffer
 
-#endif /* CIRCBUFFER_H_ */
+#endif /* CIRCBUFFERWITHCONT_H_ */
