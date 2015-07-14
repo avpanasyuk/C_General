@@ -11,13 +11,13 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
-#include "CircBuffer.h"
+#include "CircBufferWithCont.h"
 
 /// creates printf-type function out of vprintf
 /// usage: bool printf PRINTF_WRAPPER(vprintf)
-#define PRINTF_WRAPPER(func) (char const *format, ...) \
+#define PRINTF_WRAPPER(vprintf_func) (char const *format, ...) \
      { va_list ap; va_start(ap,format); \
-    bool Out =  func(format,ap); va_end(ap); \
+    bool Out =  vprintf_func(format,ap); va_end(ap); \
     return Out; }
 
 
@@ -60,6 +60,8 @@ namespace avp {
   /// @brief default __weak__ version sends data to::printf
   bool debug_vprintf(const char *format, va_list a);
 
+
+
   // ************ BUFFERED BACKGROUND MESSAGES *********************************************
   /// this is a service class, we need it here only to be able to provide "put_byte" function for
   /// bg_messenger superclass "Out". Nothing from this class should be called by the user.
@@ -67,7 +69,7 @@ namespace avp {
   /// beginning of this definition
   template<bool (*write)(const uint8_t *Src, size_t Size), uint8_t BufferSizeLog2 = 8, typename TypeOfSize=uint8_t>
   struct bg_messager_private {
-    static CircBuffer<uint8_t,TypeOfSize,BufferSizeLog2> Buffer;
+    static CircBufferWithCont<uint8_t,TypeOfSize,BufferSizeLog2> Buffer;
 
     static bool put(uint8_t b) { return Buffer.Write(b); }
     static void foreground_sendout() {
@@ -93,7 +95,7 @@ namespace avp {
   {}; // bg_messager
 
   template<bool (*write)(const uint8_t *Src, size_t Size), uint8_t BufferSizeLog2, typename TypeOfSize>
-  CircBuffer<uint8_t,TypeOfSize,BufferSizeLog2> bg_messager_private<write,BufferSizeLog2,TypeOfSize>::Buffer;
+  CircBufferWithCont<uint8_t,TypeOfSize,BufferSizeLog2> bg_messager_private<write,BufferSizeLog2,TypeOfSize>::Buffer;
 
   /// in some of my classes "write" function handles errors itself and returns void, but "printf" and "vprintf"
   /// need function returning bool, so there is a wrapper
