@@ -1,22 +1,23 @@
 /*!
 * @file Port.h
-* @brief this class is one level of abstraction up from HW_UART. MCU-independent.
+* @brief this class is one level of abstraction up from HW communication protocols, like
+* Serial, SPI or I2C. MCU-independent.
 * sending stuff by bytes and blocks, receiving by bytes. It is buffered for both
 * transmission and reception
 *
-* Requirements for HW_UART class:
+* Requirements for HW_COMM class:
 * -# should be static
-* -# member functions:HW_UART_::Init(baud,StoreReceivedByte,GetByteToSend), or
-*    HW_UART_::Init(baud,StoreReceivedByte,GetBlockToSend), depending on class capability
+* -# member functions:HW_COMM_::Init(StoreReceivedByte,GetByteToSend), or
+*    HW_COMM_::Init(StoreReceivedByte,GetBlockToSend), depending on class capability
 *    (whether it can send by blocks, via, e.g. DMA), where
 *     - bool StoreReceivedByte(uint8_t b)
 *     - bool GetByteToSend(uint8_t *p)
 *     - bool GetBlockToSend(uint8_t **p, size_t *pSz)
-* -# HW_UART_::TryToSend(); - this class calls it to let HW_UART_ know that there are
+* -# HW_COMM_::TryToSend(); - this class calls it to let HW_COMM_ know that there are
 *    new data in buffer to transmit
-* -# HW_UART_::GetStatusRX(); - this class just out's this function
-* -# HW_UART_ should call StoreReceivedByte supplied to it by Init call when it received a byte
-* -# HW_UART_ should call GetBlockToSend or GetByteToSend when it is ready to send new data
+* -# HW_COMM_::GetStatusRX(); - this class just out's this function
+* -# HW_COMM_ should call StoreReceivedByte supplied to it by Init call when it received a byte
+* -# HW_COMM_ should call GetBlockToSend or GetByteToSend when it is ready to send new data
 *
 * Created: 7/29/2013 2:37:48 PM
 *  Author: panasyuk
@@ -32,7 +33,7 @@
 
 namespace avp {
   //! @tparam tSize - type of CircBuffer counter, should be big enough to fit all buffer sizes.
-  template<class HW_UART_, uint32_t baud, uint8_t Log2_TX_Buf_size=7, uint8_t Log2_TX_BlockBufSize=4, uint8_t Log2_RX_Buf_Size=7,
+  template<class HW_COMM_, uint8_t Log2_TX_Buf_size=7, uint8_t Log2_TX_BlockBufSize=4, uint8_t Log2_RX_Buf_Size=7,
            typename tSize=uint8_t>
   struct  Port {
     struct BlockInfo;
@@ -63,7 +64,7 @@ protected:
     static CircBuffer<uint8_t, tSize, Log2_RX_Buf_Size> BufferRX; //  receive buffer ( we receive by byte only )
     static const uint8_t *pCurByteInBlock;
 
-    //! this function is called from HW_UART interrupt handler to store received byte in the RX Circular buffer
+    //! this function is called from HW_COMM interrupt handler to store received byte in the RX Circular buffer
     static bool StoreReceivedByte(uint8_t b) {
       if(!BufferRX.LeftToWrite()) return false;
       BufferRX.Write(b);
@@ -72,7 +73,7 @@ protected:
 
     /// @defgroup GetSomethingToSend selection of sending callback functions for HW UART
     /// @{
-    /// this function is called from HW_UART interrupt handler to get byte from Circular buffer to send
+    /// this function is called from HW_COMM interrupt handler to get byte from Circular buffer to send
     /// !!!!!! WRITING TO *p immediately send byte, so do it ONLY ONCE !
     static bool GetByteToSend(volatile uint8_t *p) {
       // check whether we are reading from block currently
@@ -106,8 +107,8 @@ protected:
       return true;
     } //  GetByteToSend
 
-    /// If HW_UART is capable to send data by blocks (say via DMA) we can use this function
-    /// !!!!! this function may be  called from HW_UART interrupt handler to get data block to send !!!!!
+    /// If HW_COMM is capable to send data by blocks (say via DMA) we can use this function
+    /// !!!!! this function may be  called from HW_COMM interrupt handler to get data block to send !!!!!
     /// This function uses static variables - care should be taken to avoid this function being reentered!!!!!
     /// This is the only function reading BlockInfoBufTX and BufferTX
     /// @param[out] p - pointer to pointer from where to send data.
@@ -170,9 +171,9 @@ protected:
     } // write_
 
 public:
-    //!!!!! USE ONLY ONE OF THE INIT FUNCTIONS DEPENDING ON HW_UART  CAPABILITIES
-    static void Init() { HW_UART_::Init(baud,StoreReceivedByte,GetByteToSend); } //  Init
-    static void InitBlock() { HW_UART_::Init(baud,StoreReceivedByte,GetBlockToSend); } //  InitBlock
+    //!!!!! USE ONLY ONE OF THE INIT FUNCTIONS DEPENDING ON HW_COMM  CAPABILITIES
+    static void Init() { HW_COMM_::Init(StoreReceivedByte,GetByteToSend); } //  Init
+    static void InitBlock() { HW_COMM_::Init(StoreReceivedByte,GetBlockToSend); } //  InitBlock
 
     // ******************************** TRANSMISSION ******************
     // ALL write function return false if buffer is overrun and true if OK
@@ -181,7 +182,7 @@ public:
     static bool write(uint8_t d) {
       if(!BufferTX.LeftToWrite()) return false;
       bool Res = write_(d);
-      HW_UART_::TryToSend(); // got something to transmit, reenable interrupt
+      HW_COMM_::TryToSend(); // got something to transmit, reenable interrupt
       return Res;
     } // write
 
@@ -190,7 +191,7 @@ public:
       if(Size == 0) return true; // that was easy
       if(Size > BufferTX.LeftToWrite()) return false;
       while(Size--) if(!write_(*(Ptr++))) return false;
-      HW_UART_::TryToSend(); // got something to transmit, reenable interrupt
+      HW_COMM_::TryToSend(); // got something to transmit, reenable interrupt
       return true;
     }  // write
 
@@ -199,7 +200,7 @@ public:
       if(Size == 0) return true;
       if(!BufferTX.LeftToWrite()) return false;
       bool Res = write_unbuffered_(Ptr,Size,pReleaseFunc);
-      HW_UART_::TryToSend();
+      HW_COMM_::TryToSend();
       return Res;
     } // write
 
@@ -226,16 +227,16 @@ public:
     // ********************************** RECEPTION *********************
     //! stores character by pointer pd, returns true if there is really a character to read
     static bool read(uint8_t *pd) { return BufferRX.Read(pd); }
-    static uint8_t GetStatusRX() { return HW_UART_::GetStatusRX(); }
+    static uint8_t GetStatusRX() { return HW_COMM_::GetStatusRX(); }
     static bool GotSomething() { return BufferRX.LeftToRead() != 0; }
     static uint8_t GetByte() { uint8_t out; read(&out); return out; }
-    static bool IsOverrun() { return HW_UART_::IsOverrun(); }
-    static void FlushRX() { HW_UART_::FlushRX();  BufferRX.Clear(); }
+    static bool IsOverrun() { return HW_COMM_::IsOverrun(); }
+    static void FlushRX() { HW_COMM_::FlushRX();  BufferRX.Clear(); }
   }; // BufferedPort
 
 // following defines are just to make static variables initiation code readable, no point in using them elsewhere
-#define BP_ALIAS Port<HW_UART_,baud,Log2_TX_Buf_size,Log2_TX_BlockBufSize,Log2_RX_Buf_Size, tSize>
-#define BP_TEMPLATE template<class HW_UART_, uint32_t baud, uint8_t Log2_TX_Buf_size, uint8_t Log2_TX_BlockBufSize, uint8_t Log2_RX_Buf_Size, typename tSize>
+#define BP_ALIAS Port<HW_COMM_,Log2_TX_Buf_size,Log2_TX_BlockBufSize,Log2_RX_Buf_Size, tSize>
+#define BP_TEMPLATE template<class HW_COMM_, uint8_t Log2_TX_Buf_size, uint8_t Log2_TX_BlockBufSize, uint8_t Log2_RX_Buf_Size, typename tSize>
 
   BP_TEMPLATE const uint8_t *BP_ALIAS::pCurByteInBlock = nullptr;
   BP_TEMPLATE CircBuffer<uint8_t, tSize, Log2_TX_Buf_size> BP_ALIAS::BufferTX;
