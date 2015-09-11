@@ -7,8 +7,8 @@
 *
 * Requirements for HW_COMM class:
 * -# should be static
-* -# member functions:HW_COMM_::Init(StoreReceivedByte,GetByteToSend), or
-*    HW_COMM_::Init(StoreReceivedByte,GetBlockToSend), depending on class capability
+* -# member functions:HW_COMM_::SetCallBacks(StoreReceivedByte,GetByteToSend), or
+*    HW_COMM_::SetCallBacks(StoreReceivedByte,GetBlockToSend), depending on class capability
 *    (whether it can send by blocks, via, e.g. DMA), where
 *     - bool StoreReceivedByte(uint8_t b)
 *     - bool GetByteToSend(uint8_t *p)
@@ -43,7 +43,7 @@ namespace avp {
       size_t Size;
       tReleaseFunc pReleaseFunc; // data pointed by Ptr should not get corrupted until this function is called
     }; // BlockInfo
-protected:
+  protected:
     // there are two transmit buffers - one for bytes which buffers data  and one for blocks which buffers only pointyers,
     // data are unbuffered!
     // blocks are not buffered, they provide ReleaseFunc function and are supposed to be intact all the time until
@@ -170,10 +170,10 @@ protected:
       return true;
     } // write_
 
-public:
+  public:
     //!!!!! USE ONLY ONE OF THE INIT FUNCTIONS DEPENDING ON HW_COMM  CAPABILITIES
-    static void Init() { HW_COMM_::Init(StoreReceivedByte,GetByteToSend); } //  Init
-    static void InitBlock() { HW_COMM_::Init(StoreReceivedByte,GetBlockToSend); } //  InitBlock
+    static void Init() { HW_COMM_::SetCallBacks(StoreReceivedByte,GetByteToSend); } //  Init
+    static void InitBlock() { HW_COMM_::SetCallBacks(StoreReceivedByte,GetBlockToSend); } //  InitBlock
 
     // ******************************** TRANSMISSION ******************
     // ALL write function return false if buffer is overrun and true if OK
