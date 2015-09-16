@@ -22,10 +22,10 @@ template<typename T> inline T operator-(const T &x) { return 0 - x; } // unitary
 // USE TEMPLATE CLASS FRIEND FUNCTIONS - THEY ARE SYMMETRIC AND COMPILER TRIES
 // IMPLICIT CONVERSIONS
 // LIKE THIS: for template<typename type> class T:
-
+// beginning of examble
 #define CLASS xxxxx
 #define BINARY_OP_FROM_SELF(op) \
-inline friend CLASS operator op (const CLASS &x1, const CLASS &x2) { return CLASS(x1) op##= x2; }
+  inline friend CLASS operator op (const CLASS &x1, const CLASS &x2) { return CLASS(x1) op##= x2; }
 
 BINARY_OP_FROM_SELF(-)
 BINARY_OP_FROM_SELF(+)
@@ -38,7 +38,7 @@ BINARY_OP_FROM_SELF(|)
 inline friend bool operator==(CLASS const &v1, CLASS const &v2) { return equal(v1,v2); }
 inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 == v2); }
 
-#endif
+#endif  // end of example
 
 #if  defined ( __GNUC__ )
 #ifndef __weak

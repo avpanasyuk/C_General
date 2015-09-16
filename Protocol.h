@@ -266,7 +266,7 @@ Fail:
     }
   }; //class Protocol
 
-// following defines are just for code clearnest, do not use elsewhere
+// following defines are just for code clearness, do not use elsewhere
 #define TEMPLATE template<class Port, uint32_t (*millis)()>
 #define PROTOCOL Protocol<Port, millis>
 
