@@ -44,9 +44,14 @@ inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 ==
 #ifndef __weak
 #define __weak   __attribute__((weak))
 #endif /* __weak */
-#ifndef __packed
-#define __packed __attribute__((__packed__))
-#endif /* __packed */
 #endif /* __GNUC__ */
+
+
+namespace avp {
+// to suppress unused-variable or unused-value
+// volatile auto x = (unused-value-expression);
+// avp::unused(x)
+  template<typename T> void unused(T const &) {}
+} // avp
 
 #endif /* GENERAL_H_ */

@@ -94,7 +94,7 @@ namespace avp {
       };
       uint8_t ID_CSum;
       uint8_t Params[Command::MaxParamBytes+1]; //!< Total checksum is in Params[pCur->NumParamBytes]
-    } __attribute__((packed)) InputBytes;
+    } InputBytes;
     static uint8_t *pInputByte; //!< this pointer traces position of the input stream in InputBytes
 
     // ************** service commands
