@@ -1,5 +1,6 @@
 **/Release*/*
 **/Debug*/*
 
-*.bak
 *.save
+/*.i
+*.bak

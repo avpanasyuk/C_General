@@ -5,8 +5,8 @@
 *  Author: panasyuk
 */
 
-#ifndef CIRCBUFFER_H_
-#define CIRCBUFFER_H_
+#ifndef CIRCBUFFERWITHCONT_H_
+#define CIRCBUFFERWITHCONT_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -26,12 +26,12 @@ extern "C" int debug_printf(const char *format, ...);
   * @tparam sizeLog2 - Log2 of desired size in bytes. Capacity of this buffer is 2^sizeLog2 - 1
   */
 template <typename T, typename tSize=uint8_t, uint8_t sizeLog2 = sizeof(tSize)*8>
-struct CircBuffer {
+struct CircBufferWithCont {
   static_assert(sizeof(tSize)*8 >= sizeLog2,"CircBuffer:Size variable is too small to hold size!");
 
   // *********** General functions
-  CircBuffer() { BeingWritten = 0; Clear(); }
-  void Clear()  {  BeingRead = BeingWritten; }
+  CircBufferWithCont() { BeingWritten = 0; Clear(); }
+  void Clear()  {  BeingRead = BeingWritten; LastReadSize = 0;}
   static constexpr tSize GetCapacity() { return (1UL << sizeLog2) - 1; };
 
   //************* Writer functions *************************************************
@@ -52,17 +52,32 @@ struct CircBuffer {
   // if read is in progress and this function is called from the interrupt (or vise versa) things may get screwed up.
   // The function never fails
   T *ForceSlotToWrite()  {
-    if(LeftToWrite() == 0) FinishedReading();
+    if(LeftToWrite() == 0) { // we will free some space
+      if(LastReadSize == 0) LastReadSize = 1; // when no read is on progress we still have to move pointer
+      FinishedReading();
+    }
     return GetSlotToWrite();
   } // ForceSlotToWrite
+
+  // It is marginally safer function because it moves BeingRead index only when no read is in progress. Interrupts may still screw things up
+  // if racing condition occurs. Fails and returns NULL is reading is in progress
+  T *SaferForceSlotToWrite()  {
+    if(LeftToWrite() == 0) { // we will try to free some space
+      if(LastReadSize == 0) BeingRead = (BeingRead + 1) & Mask; // move read pointer if no read is in progress
+      else return nullptr; // will fail but not overwrite data being read
+    }
+    // debug_printf("%hu/%hu ",BeingRead, BeingWritten);
+    return GetSlotToWrite();
+  } // ForceSlotToWrite
+
 
   //************* Reader functions ***************************************
   tSize LeftToRead() const  { return (BeingWritten - BeingRead) & Mask; }
 
   //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
-  T const *GetSlotToRead() { return &Buffer[BeingRead]; }
+  T const *GetSlotToRead() { LastReadSize = 1; return &Buffer[BeingRead]; }
 
-  void FinishedReading() { BeingRead = (BeingRead + 1) & Mask; }
+  void FinishedReading() { BeingRead = (BeingRead + LastReadSize) & Mask; LastReadSize = 0; }
 
   T Read_() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
 
@@ -71,11 +86,29 @@ struct CircBuffer {
     else { *Dst = Read_(); return true; }
   } // safer Read
 
+  // ************* Continous block reading functions
+  /** instead of a single entry marks for reading a continuous block.
+  * Use GetSizeToRead to determine size of the block to read
+  */
+  T const *GetContinousBlockToRead() {
+    if(BeingRead > BeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
+      LastReadSize = GetCapacity() + 1 - BeingRead; // BeingRead is at least 1 here
+    } else  LastReadSize = LeftToRead();
+    return &Buffer[BeingRead];
+  } // GetContinousBlockToRead
+
+  tSize GetSizeToRead() { return LastReadSize; }
+
+  // for debugging purposes
+  void GetInternals(tSize *WriteI, tSize *ReadI, tSize *ReadSize) {
+    *WriteI = BeingWritten; *ReadI = BeingRead; *ReadSize = LastReadSize;
+  } // GetInternals
 protected:
   T Buffer[size_t(GetCapacity())+1]; //!< buffer size is 2^sizeLog2
   static constexpr tSize Mask = GetCapacity(); //!< marks used bits in index variables
   // we do not care what happens in upper bits
   tSize BeingRead, BeingWritten; //!< indexes of buffer currently being ....
+  tSize LastReadSize; //! 0 if no read is in progress, size of the read being in progress otherwise
 }; // CircBuffer
 
-#endif /* CIRCBUFFER_H_ */
+#endif /* CIRCBUFFERWITHCONT_H_ */
