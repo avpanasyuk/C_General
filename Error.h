@@ -17,11 +17,13 @@ extern "C" int debug_printf(const char *format, ...);
 
 namespace avp {
   extern volatile uint8_t FailReason;
+  typedef void (*failfunc_type)(uint8_t reason) __attribute__((noreturn));
+
   /// defined in General library as weak, sending stuff to ::vprintf
   /// may be redefined
   bool debug_vprintf(const char *format, va_list a);
-  void major_fail(uint8_t reason = 0);
-  void hang_cpu();
+  void major_fail(uint8_t reason = 0) __attribute__((noreturn));
+  void hang_cpu() __attribute__((noreturn));
 }; //avp
 
 // ************************* ASSERT/ERROR macros **********************

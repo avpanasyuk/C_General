@@ -5,7 +5,8 @@
 * sending stuff by bytes and blocks, receiving by bytes. It is buffered for both
 * transmission and reception
 *
-* Requirements for HW_COMM class:
+* There are two types of HW_COMM class - one can transmit only by bytes, another by block (via DMA, e.g)
+*
 * -# should be static
 * -# member functions:HW_COMM_::SetCallBacks(StoreReceivedByte,GetByteToSend), or
 *    HW_COMM_::SetCallBacks(StoreReceivedByte,GetBlockToSend), depending on class capability
@@ -15,7 +16,6 @@
 *     - bool GetBlockToSend(uint8_t **p, size_t *pSz)
 * -# HW_COMM_::TryToSend(); - this class calls it to let HW_COMM_ know that there are
 *    new data in buffer to transmit
-* -# HW_COMM_::GetStatusRX(); - this class just out's this function
 * -# HW_COMM_ should call StoreReceivedByte supplied to it by Init call when it received a byte
 * -# HW_COMM_ should call GetBlockToSend or GetByteToSend when it is ready to send new data
 *
@@ -49,9 +49,13 @@ namespace avp {
   //! @tparam ESC_code - this is special byte code placed in BufferTX to indicate that we
   //! should transmit block here. If next byte is ESC_code we have to transmit block. If it is 0 we transmit just ECS_code
   //! the value is random, selected so it is not ASCII and there is nothing special about it
-  template<class HW_COMM_, uint8_t Log2_TX_Buf_size=7, uint8_t Log2_TX_BlockBufSize=4, uint8_t Log2_RX_Buf_Size=7,
-           typename tSize=uint8_t, uint8_t ESC_code = 224 /* random value */>
-  struct  Port {
+#define _TEMPLATE_DECL_ template<class HW_COMM_, uint8_t Log2_TX_Buf_size=7, uint8_t Log2_TX_BlockBufSize=4, uint8_t Log2_RX_Buf_Size=7,
+  typename tSize=uint8_t, uint8_t ESC_code = 224 /* random value */>
+
+                 /*! @note this template should not be instatiated - use either PortByteTX or PortBlockTX
+                  *!
+                  */
+  _TEMPLATE_DECL_ struct  Port: public HW_COMM_ {
       struct BlockInfo;
       typedef void (* tReleaseFunc)(const BlockInfo *p);
       struct BlockInfo {
@@ -75,8 +79,84 @@ namespace avp {
         return true;
       } // StoreReceivedByte
 
-      /// @defgroup GetSomethingToSend selection of sending callback functions for HW UART
-      /// @{
+      //! unbuffered unsafe write - no BufferTX check, no interrupt reenable
+      //! @param Size - block size. Size == 0 is a special case, we create a fake BlockInfo entry,
+      //! it just mean that we have to transmit ESC_code-valued byte
+      static bool write_unbuffered_(const uint8_t *Ptr, size_t Size, tReleaseFunc pReleaseFunc = nullptr) {
+        if(!BlockInfoBufTX.LeftToWrite()) return false;
+        BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToWrite();
+        if((pCurBlock->Size = Size) != 0) { // BlockInfo is real, not fake
+          pCurBlock->Ptr = Ptr;
+          pCurBlock->pReleaseFunc = pReleaseFunc;
+        }
+        BlockInfoBufTX.FinishedWriting();
+        BufferTX.Write_(ESC_code); // do this afterwards, so transmit callback does not find ESC_code without block being in place
+        return true;
+      } // write_unbuffered_
+
+      //! unsafe write - no BufferTX check, no interrupt reenable
+      static bool write_byte_(uint8_t d) {
+        if(d == ESC_code) return write_unbuffered_(nullptr,0);
+        BufferTX.Write_(d);
+        return true;
+      } // write_byte_
+
+    public:
+      // *************** TRANSMISSION FUNCTIONS ********************
+      // ALL write function return false if buffer is overrun and true if OK
+      //! safe writeBufferRX.
+      static bool write_byte(uint8_t d) {
+        if(!BufferTX.LeftToWrite()) return false;
+        bool Res = write_byte_(d);
+        HW_COMM_::TryToSend(); // got something to transmit, reenable interrupt
+        return Res;
+      } // write_byte
+
+      static bool write_char(int8_t d) { return write_byte((uint8_t)d); }
+
+      //! buffered safe write
+      static bool write(const uint8_t *Ptr, size_t Size) {
+        if(Size == 0) return true; // that was easy
+        if(Size > BufferTX.LeftToWrite()) return false;
+        while(Size--) if(!write_byte_(*(Ptr++))) return false;
+        HW_COMM_::TryToSend(); // got something to transmit, reenable interrupt
+        return true;
+      }  // write_buffered
+
+      // unbuffered safe write. Content of Ptr should be preserved until pReleaseFunc is called
+      static bool write_unbuffered(const uint8_t *Ptr, size_t Size, tReleaseFunc pReleaseFunc = nullptr) {
+        if(Size == 0) return true;
+        if(!BufferTX.LeftToWrite()) return false;
+        bool Res = write_unbuffered_(Ptr,Size,pReleaseFunc);
+        HW_COMM_::TryToSend();
+        return Res;
+      } // write_unbuffered
+
+      // ********************************** RECEPTION *********************
+      //! stores character by pointer pd, returns true if there is really a character to read
+      static void FlushRX() { HW_COMM_::FlushRX();  BufferRX.Clear(); }
+      static bool SomethingToTX() { return BufferTX.LeftToRead() != 0; }
+
+// *************** RECEPTION FUNCTIONS **************************
+      static bool read(uint8_t *pd) { return BufferRX.Read(pd); }
+      static bool SomethingToRX() { return BufferRX.LeftToRead() != 0; }
+      static uint8_t GetByte() { uint8_t out; read(&out); return out; }
+  }; // Port
+
+// following defines are just to make static variables initiation code readable, no point in using them elsewhere
+#define _TEMPLATE_SPEC_ Port<HW_COMM_, Log2_TX_Buf_size,Log2_TX_BlockBufSize,Log2_RX_Buf_Size, tSize, ESC_code>
+
+  _TEMPLATE_DECL_ const uint8_t *_TEMPLATE_SPEC_::pCurByteInBlock = nullptr;
+  _TEMPLATE_DECL_ CircBuffer<uint8_t, tSize, Log2_TX_Buf_size> _TEMPLATE_SPEC_::BufferTX;
+  _TEMPLATE_DECL_ CircBuffer<struct _TEMPLATE_SPEC_::BlockInfo, tSize, Log2_TX_BlockBufSize> _TEMPLATE_SPEC_::BlockInfoBufTX;
+  _TEMPLATE_DECL_ CircBuffer<uint8_t, tSize, Log2_RX_Buf_Size> _TEMPLATE_SPEC_::BufferRX;
+
+  /*! Port template for HW_COMM which transmits by byte
+   *!
+   */
+  _TEMPLATE_DECL_ struct  PortByteTX: public _TEMPLATE_SPEC_ {
+      static void Init() { HW_COMM_::SetCallBacks(StoreReceivedByte,GetByteToSend); } //  Init
+    protected:
       /// this function is called from HW_COMM interrupt handler to get byte from Circular buffer to send
       /// !!!!!! WRITING TO *p may immediately send byte, so do it ONLY ONCE !
       /// because this function may read both from byte buffer and block buffer it is
@@ -111,7 +191,14 @@ namespace avp {
         }
         return true;
       } //  GetByteToSend
+  }; //  PortByteTX
 
+  /*! Port template for HW_COMM which transmits by block
+   *!
+   */
+  _TEMPLATE_DECL_ struct  PortBlockTX: public _TEMPLATE_SPEC_ {
+      static void Init() { HW_COMM_::SetCallBacks(StoreReceivedByte,GetBlockToSend); } //  Init
+    protected:
       /// If HW_COMM is capable to send data by blocks (say via DMA) we can use this function
       /// !!!!! this function may be  called from HW_COMM interrupt handler to get data block to send !!!!!
       /// This function uses static variables - care should be taken to avoid this function being reentered!!!!!
@@ -151,105 +238,13 @@ namespace avp {
         }
         return true;
       } //  GetBlockToSend
-      /// @}
+  }; //  PortBlockTX
 
-      //! unbuffered unsafe write - no BufferTX check, no interrupt reenable
-      //! @param Size - block size. Size == 0 is a special case, we create a fake BlockInfo entry,
-      //! it just mean that we have to transmit ESC_code-valued byte
-      static bool write_unbuffered_(const uint8_t *Ptr, size_t Size, tReleaseFunc pReleaseFunc = nullptr) {
-        if(!BlockInfoBufTX.LeftToWrite()) return false;
-        BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToWrite();
-        if((pCurBlock->Size = Size) != 0) { // BlockInfo is real, not fake
-          pCurBlock->Ptr = Ptr;
-          pCurBlock->pReleaseFunc = pReleaseFunc;
-        }
-        BlockInfoBufTX.FinishedWriting();
-        BufferTX.Write_(ESC_code); // do this afterwards, so transmit callback does not find ESC_code without block being in place
-        return true;
-      } // write_unbuffered_
 
-      //! unsafe write - no BufferTX check, no interrupt reenable
-      static bool write_byte_(uint8_t d) {
-        if(d == ESC_code) return write_unbuffered_(nullptr,0);
-        BufferTX.Write_(d);
-        return true;
-      } // write_byte_
+#undef _TEMPLATE_DECL_
+#undef _TEMPLATE_SPEC_
 
-    public:
-      //!!!!! USE ONLY ONE OF THE INIT FUNCTIONS DEPENDING ON HW_COMM  CAPABILITIES
-      static void Init() { HW_COMM_::SetCallBacks(StoreReceivedByte,GetByteToSend); } //  Init
-      static void InitBlock() { HW_COMM_::SetCallBacks(StoreReceivedByte,GetBlockToSend); } //  InitBlock
-
-      // ******************************** TRANSMISSION ******************
-      // ALL write function return false if buffer is overrun and true if OK
-
-      //! safe writeBufferRX.
-      static bool write_byte(uint8_t d) {
-        if(!BufferTX.LeftToWrite()) return false;
-        bool Res = write_byte_(d);
-        HW_COMM_::TryToSend(); // got something to transmit, reenable interrupt
-        return Res;
-      } // write
-
-      //! buffered safe write
-      static bool write(const uint8_t *Ptr, size_t Size) {
-        if(Size == 0) return true; // that was easy
-        if(Size > BufferTX.LeftToWrite()) return false;
-        while(Size--) if(!write_byte_(*(Ptr++))) return false;
-        HW_COMM_::TryToSend(); // got something to transmit, reenable interrupt
-        return true;
-      }  // write
-
-      // unbuffered safe write
-      static bool write_unbuffered(const uint8_t *Ptr, size_t Size, tReleaseFunc pReleaseFunc = nullptr) {
-        if(Size == 0) return true;
-        if(!BufferTX.LeftToWrite()) return false;
-        bool Res = write_unbuffered_(Ptr,Size,pReleaseFunc);
-        HW_COMM_::TryToSend();
-        return Res;
-      } // write
-
-      /// @defgroup WriteTemplates templates to write different types
-      /// @{
-      template<typename T> static bool write_array(T const *p, size_t Num = 1) { return Num != 0?write((const uint8_t *)p,sizeof(T)*Num):true; }
-      static bool write_str(char const *str) { return write((const uint8_t *)str, ::strlen(str)); } // no ending 0
-      template<typename T> static bool write_single(const T &d) { return write((const uint8_t *)&d,sizeof(T)); }
-      static bool write_char(int8_t d) { return write((uint8_t)d); }
-//!!!!!! DO NOT USE FOLLOWING TEMPLATE - IT IS EXTREMELY EASY TO PASS TEMPORARY OBJECT TO IT
-//    template<typename T>
-//    static bool write_unbuffered(const T &d, tReleaseFunc pReleaseFunc = nullptr) {
-//      return write_unbuffered((const uint8_t *)&d,sizeof(T),pReleaseFunc);
-//    }
-      template<typename T>
-      static bool write_array_unbuffered(T const *p, size_t Num = 1, tReleaseFunc pReleaseFunc = nullptr) {
-        return write_unbuffered((const uint8_t *)p,sizeof(T)*Num,pReleaseFunc);
-      }
-      static bool write_str_unbuffered(const char *str, tReleaseFunc pReleaseFunc = nullptr) {
-        return write_unbuffered((const uint8_t *)str, ::strlen(str), pReleaseFunc);
-      }
-      /// @}
-
-      // ********************************** RECEPTION *********************
-      //! stores character by pointer pd, returns true if there is really a character to read
-      static bool read(uint8_t *pd) { return BufferRX.Read(pd); }
-      static uint8_t GetStatusRX() { return HW_COMM_::GetStatusRX(); }
-      static bool GotSomething() { return BufferRX.LeftToRead() != 0; }
-      static uint8_t GetByte() { uint8_t out; read(&out); return out; }
-      static bool IsOverrun() { return HW_COMM_::IsOverrun(); }
-      static void FlushRX() { HW_COMM_::FlushRX();  BufferRX.Clear(); }
-      static tSize InTransmitBuffer() { return BufferTX.LeftToRead(); }
-  }; // BufferedPort
-
-// following defines are just to make static variables initiation code readable, no point in using them elsewhere
-#define BP_ALIAS Port<HW_COMM_,Log2_TX_Buf_size,Log2_TX_BlockBufSize,Log2_RX_Buf_Size, tSize>
-#define BP_TEMPLATE template<class HW_COMM_, uint8_t Log2_TX_Buf_size, uint8_t Log2_TX_BlockBufSize, uint8_t Log2_RX_Buf_Size, typename tSize>
-
-  BP_TEMPLATE const uint8_t *BP_ALIAS::pCurByteInBlock = nullptr;
-  BP_TEMPLATE CircBuffer<uint8_t, tSize, Log2_TX_Buf_size> BP_ALIAS::BufferTX;
-  BP_TEMPLATE CircBuffer<struct BP_ALIAS::BlockInfo, tSize, Log2_TX_BlockBufSize> BP_ALIAS::BlockInfoBufTX;
-  BP_TEMPLATE CircBuffer<uint8_t, tSize, Log2_RX_Buf_Size> BP_ALIAS::BufferRX;
-}; // avp
-
+} // avp
 
 #endif /* AVP_PORT_H_ */
 

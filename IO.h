@@ -4,137 +4,91 @@
 /**
   * @file AVP_LIBS/General/IO.h
   * @author Alexander Panasyuk
-  * Generic functions for output. Templates using user supplied "write" or "put_byte" functions.
+  * Generic functions for output.
+  * @brief templates of write_byte->write->vprintf->printf hierarhy
   */
 
 #include <string.h>
 #include <stdarg.h>
-#include <stdio.h>
+// #include <stdio.h>
 #include <stdint.h>
-#include "CircBufferWithCont.h"
+#include "Error.h"
 #include "Time.h"
+
+//! @note ALL IO FUNCTIONS HAVE atomic output - either they write or not,
+//! return corresponding value
+typedef bool (*write_byte_func)(uint8_t); ///< writes byte
+typedef bool (*write_type_func)(const uint8_t *Ptr, size_t Size); ///< writes byte array
+typedef bool (*vprintf_type_func)(char const *format, va_list ap);
+typedef bool (*printf_type_func)(char const *format, ...);
 
 /// creates printf-type function named "func_name" out of vprintf-type function named "vprinf_func"
 /// usage: PRINTF_WRAPPER_BOOL(printf,vprintf)
 #define PRINTF_WRAPPER(func_name, vprintf_func) \
-  int func_name(char const *format, ...) \
+  bool func_name(char const *format, ...) \
   { va_list ap; va_start(ap,format); \
-    int Out =  vprintf_func(format,ap); va_end(ap); \
+    bool Out =  vprintf_func(format,ap); va_end(ap); \
     return Out; }
 
 namespace avp {
-  // ************************** FORMATTED OUTPUT ***********************************
-  // ************************* TEMPLATE VPRINTF-TYPE FUNCTION FROM WRITE
-  // Note about following two functions - they should be used with BLOCKED pwrite which
-  // returns only after data pointed by Ptr are used. Or it should make a copy.
-  // following functions use general "write" function of type bool write(const void *Ptr, uint16_t Size) to do formatted output;
-  // NOTE both functions do not write string-ending 0 !!!!!
-  template<int (*pwrite)(const uint8_t *Ptr, int Size)>
-  int vprintf(char const *format, va_list ap) {
-    int Size = vsnprintf(NULL,0,format,ap);
-    if(Size < 0) return false;
-    uint8_t Buffer[Size+1]; // +1 to include ending zero byte
-    vsprintf((char *)Buffer,format,ap);
-    return (*pwrite)((const uint8_t *)Buffer,Size); // we do not write ending 0 byte
-  } // vprintf
+  enum IO_ERROR_CODES {FORMAT=1,TIMEOUT};
 
-  template<void (*pwrite)(const uint8_t *Ptr, size_t Size)>
-  void vprintf(char const *format, va_list ap) {
-    int Size = vsnprintf(NULL,0,format,ap);
-    if(Size < 0) {
-      const char *Msg = "Bad message format!";
-      (*pwrite)((const uint8_t *)Msg,strlen(Msg));
-    } else {
+  /** @note about following  functions - they should be used with BLOCKED write which
+  * returns only after data pointed by Ptr are used. Or it should make a copy.
+  * @note functions do not write string-ending 0 !!!!!
+  */
+
+  template<write_byte_func write_byte, size_t (*space_left)() = nullptr>
+  bool write(const uint8_t *p, size_t sz) {
+    if(space_left != nullptr && sz < space_left) return false;
+    for(; sz--;) if(!write_byte(*(p++))) return false; // it makes for non-atomic situation, but it should not happen
+    return true;
+  } // write
+
+  template<write_type_func write, uint32_t Timeout = 1000, uint32_t (*TickFunction)() = millis,
+           void (*loop_func)() = nullptr, fail_func_type fail_func = nullptr>
+  bool write_with_timeout(const uint8_t *Ptr, size_t Size)  {
+    TimeOut<TickFunction> T(Timeout); \
+    while(!write_func(Ptr,Size)) {
+      if(loop_func != nullptr) loop_func();
+      if(T) {
+        if(fail_func != nullptr) fail_func(TIMEOUT);
+        return false;
+      }
+    };
+    return true;
+  } // write_with_timeout
+
+  /*! object to create misc output functions - very convenient to use with typedef which we can not do
+   *! with function templates
+   */
+
+  template<write_type_func write>
+  struct write_ {
+    template<typename T> static bool object(const T &obj) { return write((const uint8_t *)&obj,sizeof(obj)); }
+    template<typename *P> static bool array(P p, size_t Size=1) { return write((const uint8_t *)p,sizeof(p[0])*Size); }
+    static bool string(const char *str) { return  write((const uint8_t *)str,strlen(str)); }
+
+    static bool vprintf(char const *format, va_list ap) {
+      int Size = vsnprintf(NULL,0,format,ap);
+      AVP_ASSERT_WITH_EXPL(Size >= 0,FORMAT,"vprintf: Format %s is bad!",format);
       uint8_t Buffer[Size+1]; // +1 to include ending zero byte
       vsprintf((char *)Buffer,format,ap);
-      (*pwrite)((const uint8_t *)Buffer,Size); // we do not write ending 0 byte
-    }
-  } // vprintf
-  // ************************  TEMPLATE PRINTF-TYPE FUNCTION
-  template<int (*vprintf)(char const *format, va_list ap)>
-  PRINTF_WRAPPER(printf,vprintf)
+      return write((const uint8_t *)Buffer,Size); // we do not write ending 0 byte
+    } // vprintf
 
-  template<bool (* vprintf_func)(char const *format, va_list ap)>
-  PRINTF_WRAPPER_BOOL(printf_bool,vprintf_func)
-  template<void (* vprintf_func)(char const *format, va_list ap)>
-  PRINTF_WRAPPER(printf,vprintf_func)
-  template<bool (*pwrite)(const uint8_t *Ptr, size_t Size)>
-  PRINTF_WRAPPER_BOOL(printf_bool,avp::vprintf_bool<pwrite>)
-  template<void (*pwrite)(const uint8_t *Ptr, size_t Size)>
-  PRINTF_WRAPPER(printf,avp::vprintf<pwrite>)
-
-
-  #if 0
-  // ****************************** UNFORMATTED OUTPUT ******************************
-  /**
-  * given a function to output a single byte this template class creates function to output arbitrary things
-  * so we can create funny functions: printf<vprintf<Out<put_byte>::write> >
-  * can be used as a superclass for thing which need to expand put_byte function
-  */
-  template<bool (*put_byte)(uint8_t)>
-  struct Out {
-    static bool write(const uint8_t *p, size_t sz) { for(; sz--;) if(!put_byte(*(p++))) return false; return true; }
-    template<typename T> static bool write(T &obj) { return write((const uint8_t *)&obj,sizeof(obj)); }
-    static bool write(const char *str) { return  write((const uint8_t *)str,strlen(str)); }
-    static bool printf PRINTF_WRAPPER(vprintf<write>)
+    static PRINTF_WRAPPER(printf,vprintf)
   }; // class Out
 
-  // ********************************* DEBUG MESSAGES **************************************
-  /// @brief default __weak__ version sends data to::printf
-  bool debug_vprintf(const char *format, va_list a);
-
-  // ************ BUFFERED BACKGROUND MESSAGES *********************************************
-  /// this is a service class, we need it here only to be able to provide "put_byte" function for
-  /// bg_messenger superclass "Out". Nothing from this class should be called by the user.
-  /// we can not put it inside bg_messager class definition as we need function put in the very
-  /// beginning of this definition
-  template<bool (*write)(const uint8_t *Src, size_t Size), uint8_t BufferSizeLog2 = 8, typename TypeOfSize=uint8_t>
-  struct bg_messager_private {
-    static CircBufferWithCont<uint8_t,TypeOfSize,BufferSizeLog2> Buffer;
-
-    static bool put(uint8_t b) { return Buffer.Write(b); }
-    static void foreground_sendout() {
-      while(Buffer.LeftToRead()) {
-        write(Buffer.GetContinousBlockToRead(),Buffer.GetSizeToRead());
-        Buffer.FinishedReading();
-      }
-    } // foreground_sendout
-  }; // bg_messager_private
-
-  /// this is user interface class for buffered background messages.
-  /// it is using debug_write function for output, which can be redefined.
-  /// all functions inherited from Out class ("printf" etc) store messages into a buffer and
-  /// they are sent out when foreground_sendout is called.
-  /// foreground_sendout should be called periodically, e.g. in main loop.
-  template<bool (*write)(const uint8_t *Src, size_t Size), uint8_t BufferSizeLog2 = 8, typename TypeOfSize=uint8_t>
-  struct bg_messager:
-      public Out<bg_messager_private<write,BufferSizeLog2,TypeOfSize>::put>,
-      public bg_messager_private<write,BufferSizeLog2,TypeOfSize>
-  {}; // bg_messager
-
-  template<bool (*write)(const uint8_t *Src, size_t Size), uint8_t BufferSizeLog2, typename TypeOfSize>
-  CircBufferWithCont<uint8_t,TypeOfSize,BufferSizeLog2> bg_messager_private<write,BufferSizeLog2,TypeOfSize>::Buffer;
-
-
-  /// following is a terrible kludge to use "printf" for "write".
-  /// Useful sometimes...
-  template<int (*printf)( const char * format, ... )>
-  bool write(const uint8_t *Src, size_t Size) { return printf("%.*s",Size,Src) >= 0; }
-  #endif
-
-  /// in some of my classes "write" function handles errors itself and returns void, but "printf" and "vprintf"
-  /// need function returning bool, so there is a wrapper (and vise versa)
-  template<void (*write)(const uint8_t *Src, size_t Size)>
-  bool make_true(const uint8_t *Src, size_t Size) { write(Src,Size); return true; }
-  template<bool (*write)(const uint8_t *Src, size_t Size)>
-  void ignore_bool(const uint8_t *Src, size_t Size) { (void)write(Src,Size); }
-
-  template<bool (*write_func)(const uint8_t *Ptr, size_t Size),
-           void (*loop_func)(), void (*fail_func)(), uint32_t Timeout = 1000, uint32_t (*TickFunction)() = millis>
-  void write_with_timeout(const uint8_t *Ptr, size_t Size)  {
-    TimeOut<TickFunction> T(Timeout); \
-    while(!write_func(Ptr,Size)) { loop_func(); if(T) fail_func(); };
-  } // write_with_timeout
+  // ******************** FUNCTION TEMPLATES, I DO NOT KNOW HOW USEFUL THEY ARE
+  template<write_type_func write>
+  inline bool vprintf(char const *format, va_list ap) { return write_<write>::vprintf(format,ap); }
+  template<write_byte_func write_byte, size_t (*space_left)() = nullptr>
+  bool vprintf(char const *format, va_list ap) { return vprintf<write<write_byte,space_left>>(format, ap); }
+  template<vprintf_type_func vprintf> PRINTF_WRAPPER(printf,vprintf)
+  template<write_type_func write> PRINTF_WRAPPER(printf,vprintf<write>)
+  template<write_byte_func write_byte, size_t (*space_left)() = nullptr>
+  PRINTF_WRAPPER(printf,vprintf<write_byte,space_left>)
 } // namespace avp
 
 #endif /* IO_H_INCLUDED */

@@ -22,8 +22,9 @@
 #include "IO.h"
 
 namespace avp {
-  template<void (*write_func)(const uint8_t *Ptr, size_t Size), size_t BufferSize, char OverrunIndicator = '~'>
-  class BG_message { //
+#define _TEMPLATE_DECL_  template<write_type_func write_func, size_t BufferSize, char OverrunIndicator = '~'>
+
+  _TEMPLATE_DECL_ class BG_message { //
       static uint8_t CurBuffer; //!< toggles between two buffers indexed 0 and 1
       static class Buffer_ {
         protected:
@@ -40,7 +41,8 @@ namespace avp {
               int Size = vsnprintf(Chars+FilledBytes,Space,format,ap);
               // gcc vsnprintf always return full size as if string was not truncated. This size is without 0, but 0 is
               // always written
-              if(Size >= Space || Size == -1) Chars[(FilledBytes = BufferSize)-1] = OverrunIndicator;
+              AVP_ASSERT_WITH_EXPL(Size >= 0,FORMAT,"BG_message::Buffer::vAppend: Format %s is bad!",format);
+              if(Size >= Space) Chars[(FilledBytes = BufferSize)-1] = OverrunIndicator;
               // we store ~ as a last character to indicate that there was more, but it did not fit
               else FilledBytes += Size;
             }
@@ -60,11 +62,13 @@ namespace avp {
       void WriteOut() { Buffer[1 - (CurBuffer = 1 - CurBuffer)].WriteOut(); } // switches buffers as well
   }; // class BG_message
 
-#define _TEMPLATE_DECL_  template<void (*write_func)(const uint8_t *Ptr, size_t Size), size_t BufferSize, char OverrunIndicator = '~'>
 #define _TEMPLATE_SPEC_  BG_message<write_func, BufferSize, OverrunIndicator>
 
   _TEMPLATE_DECL_ uint8_t _TEMPLATE_SPEC_::CurBuffer = 0;
   _TEMPLATE_DECL_ class _TEMPLATE_SPEC_::Buffer_ _TEMPLATE_SPEC_::Buffer[2];
+
+#undef _TEMPLATE_DECL_
+#undef _TEMPLATE_SPEC_
 } // avp
 
 #endif /* BGMESSAGE_H_ */

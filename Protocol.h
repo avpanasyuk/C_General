@@ -31,6 +31,8 @@
       If error or info message do not fit into 127 bytes remaining text is formatted into consecutive  info message(s) is
   * @endverbatim
   * @date 9/21/15 instead of dynamically creating commands let's create a static table
+  * Protocol::Command_ Protocol::CommandTable = {{Func,NumParamBytes},{Func,NumParamBytes},...}
+  * should be defined elsewhere
   */
 
 #ifndef COMMAND_PROTOCOL_HPP_INCLUDED
@@ -44,30 +46,32 @@
 #include "Time.h"
 #include "Port.h"
 #include "Vector.h"
+#include "IO.h"
 
 /// special error codes
 // SpecErrorCodes field AVP_LIB/+AVP/serial_protocol.m class
 // TODO("Restart transmitting BeaconStr when connection breaks. It is tough to determine when in happens, though.");
 
-extern uint32_t millis(); // function providing milliseconds r
-
 namespace avp {
+  struct ProtocolCommand_ {
+    void (* CallBackFunc)(const uint8_t Params[]);
+    uint8_t NumParamBytes;
+  };
+
 /// @tparam Port static class defined by template in AVP_LIBS/General/Port.h. We should call
 ///   proper Port::Init??? function
 /// @tparam millis global system function returning milliseconds
 /// @tparam MaxSpecCode - return codes < 0 > -MaxSpecCode are considered special error
 ///   codes. The class itself is using only two codes - CS_ERROR and UART_OVERRUN
-  template<class Port, const char *BeaconStr, uint8_t MaxSpecCode=2>
-  class Protocol: public Port {
+/// @tparam  CommandTable - pointer to command table
+/// @tparam TableSize - size of command table
+#define  _TEMPLATE_DECL_ template<class Port, const char *BeaconStr, ProtocolCommand_ *CommandTable, uint8_t TableSize, uint8_t MaxSpecCode=2>
+
+  _TEMPLATE_DECL_ class Protocol: public Port {
     protected:
       enum SpecErrorCodes {CS_ERROR=1,UART_OVERRUN};
       static_assert(MaxSpecCode >= 2);
       static bool PortConnected;
-
-      static struct Command_ {
-        void (* CallBackFunc)(const uint8_t Params[]);
-        uint8_t NumParamBytes;
-      } CommandTable[];
 
       static constexpr uint8_t MaxNumParamBytes = 100;
 
@@ -83,10 +87,11 @@ namespace avp {
       static uint8_t InputI; //!< this pointer traces position of the input stream in InputBytes
 
       /// base private message which writes both info and error messages
-      static inline void info_message_(const uint8_t *Src, int8_t Size) {
+      static inline bool info_message_(const uint8_t *Src, int8_t Size) {
         AVP_ASSERT(Port::write_char(Size));
         AVP_ASSERT(Port::write(Src,Size));
         AVP_ASSERT(Port::write_byte(sum<uint8_t>(Src,Size)));
+        return true;
       } // info_message_
 
       /// sends error message, checking whether we need padding
@@ -101,7 +106,7 @@ namespace avp {
         AVP_ASSERT(Port::write_byte(sum<uint8_t>(Src,Size)));
         if(PadSize) {
           avp::Vector<uint8_t,PadSize> Pad; Pad = 0;
-          AVP_ASSERT(Port::write(Pad.get_ptr(),PadSize));
+          AVP_ASSERT(write_<Port::write>::array(Pad.get_ptr(),PadSize));
         }
       } // error_message
 
@@ -127,13 +132,14 @@ namespace avp {
         info_message_(Src,Size);
       } // info_message
 
-      static PRINTF_WRAPPER(info_printf, vprintf<into_message>)
+      static PRINTF_WRAPPER(info_printf, vprintf<info_message>)
 
-      static void return_error_message(const uint8_t *Src, size_t Size) {
+      static bool return_error_message(const uint8_t *Src, size_t Size) {
         if(Size > INT8_MAX) {
           error_message_(Src,INT8_MAX);
           into_message(Src+INT8_MAX,Size-INT8_MAX);
         } else error_message_(Src,Size);
+        return true;
       } // return_error_message
 
       static PRINTF_WRAPPER(return_error_printf, vprintf<return_error_message>)
@@ -150,7 +156,7 @@ namespace avp {
 
         if(InputI == 1) { // b == CurCommand.ID
           if(b) { // it is not a NOOP command
-            if(b >= N_ELEMENTS(CommandTable) ||
+            if(b >= TableSize ||
                 CommandTable[b].CallBackFunc == nullptr ) {
               return_error_printf("No such command!");
               FlushRX();
@@ -189,13 +195,13 @@ namespace avp {
 
       static void ReturnBytesBuffered(const uint8_t *src, uint16_t size) {
         AVP_ASSERT(Port::write_byte(0)); // status
-        AVP_ASSERT(Port::write_single(size));
+        AVP_ASSERT(write_<Port::write>::object(size));
         AVP_ASSERT(Port::write(src, size));
         AVP_ASSERT(Port::write_byte(sum<uint8_t>((const uint8_t *)src,size)));
       } // Protocol::ReturnBytesBuffered
       static void ReturnBytesUnbuffered(const uint8_t *src, uint16_t size, typename Port::tReleaseFunc pFunc = nullptr)  {
         AVP_ASSERT(Port::write(0)); // status
-        AVP_ASSERT(Port::write_single(size));
+        AVP_ASSERT(write_<Port::write>::object(size));
         AVP_ASSERT(Port::write_unbuffered(src, size, pFunc));
         AVP_ASSERT(Port::write_byte(sum<uint8_t>((const uint8_t *)src,size)));
       } // Protocol::ReturnBytesUnbuffered;
@@ -210,18 +216,20 @@ namespace avp {
         ReturnBytesBuffered((const uint8_t *)&x,sizeof(T));
       } // Return
       static void ReturnOK() {
-        AVP_ASSERT(Port::write_single(uint32_t(0)));  // 1 byte status, 2 - size and 1 - checksum
+        AVP_ASSERT(write_<Port::write>::object(uint32_t(0)));  // 1 byte status, 2 - size and 1 - checksum
       }
   }; //class Protocol
 
 // following defines are just for code clearness, do not use elsewhere
-#define TEMPLATE template<class Port, uint8_t MaxSpecCode>
-#define PROTOCOL Protocol<Port, MaxSpecCode>
+#define _TEMPLATE_SPEC_ Protocol<Port, BeaconStr, CommandTable, TableSize, MaxSpecCode>
 
-  TEMPLATE bool PROTOCOL::PortConnected = false;
+  _TEMPLATE_DECL_ bool _TEMPLATE_SPEC_::PortConnected = false;
   /// @note CommandTable should be specified elsewhere
-  TEMPLATE typename PROTOCOL::CurCommand_ PROTOCOL::CurCommand;
-  TEMPLATE uint8_t PROTOCOL::InputI = 0;
+  _TEMPLATE_DECL_ typename _TEMPLATE_SPEC_::CurCommand_ _TEMPLATE_SPEC_::CurCommand;
+  _TEMPLATE_DECL_ uint8_t _TEMPLATE_SPEC_::InputI = 0;
+
+#undef _TEMPLATE_DECL_
+#undef _TEMPLATE_SPEC_
 } // namespace avp
 
 #endif /* SERIAL_PROTOCOL_HPP_INCLUDED */
