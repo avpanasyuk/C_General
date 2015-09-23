@@ -1,8 +1,11 @@
 /*
-* CircBuffer.h
+* CircBufferWithCont.h
 *
 * Created: 7/27/2013 8:03:10 PM
 *  Author: panasyuk
+*
+*  @brief Circular buffer with continuos read. Writes element by element, but can read a
+*  continous sequence of the elements at once.
 */
 
 #ifndef CIRCBUFFERWITHCONT_H_
