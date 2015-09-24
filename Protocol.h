@@ -65,6 +65,7 @@ namespace avp {
 /// @tparam MaxSpecCode - return codes < 0 > -MaxSpecCode are considered special error
 ///   codes. The class itself is using only two codes - CS_ERROR and UART_OVERRUN
 /// @tparam  CommandTable - pointer to command table. COMMAND ID is THE INDEX IN THIS TABLE + 1, COMMAND ID 0 corresponds to NOOP
+/// NOOP command is hardcoded, it has id == 0 and respondes with 4 0 bytes
 /// @tparam TableSize - size of command table
   template<class Port, uint8_t MaxSpecCode=2>
   class Protocol: public Port {
@@ -164,18 +165,21 @@ namespace avp {
         if(InputI == 1) { // b == CurCommand.ID
           if(b) { // it is not a NOOP command
             if(b >= NumCommands ||
-                CommandTable[b].CallBackFunc == nullptr ) {
+                CommandTable[b-1].CallBackFunc == nullptr ) {
               return_error_printf("No such command!");
               FlushRX();
               InputI = 0;
             }
-          } else  InputI = 0; // 0 is NOOP command
-        } else if(InputI == CommandTable[Input.Cmd.ID].NumParamBytes + 2) { // we've got all parameter bytes
+          } else { // 0 is NOOP command, no checksum
+            ReturnOK();
+            InputI = 0;
+          }
+        } else if(InputI == CommandTable[Input.Cmd.ID-1].NumParamBytes + 2) { // we've got all parameter bytes
           // and a checksum
           if(sum<uint8_t>(Input.Bytes,InputI - 1) != b) {
             return_error_code(CS_ERROR);
             FlushRX();
-          } else CommandTable[Input.Cmd.ID].CallBackFunc(Input.Cmd.Params); // callback function should do return itself
+          } else CommandTable[Input.Cmd.ID-1].CallBackFunc(Input.Cmd.Params); // callback function should do return itself
           InputI = 0;
         }
       } // ParseByte
