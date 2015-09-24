@@ -12,6 +12,8 @@
 
 #define N_ELEMENTS(array) (sizeof(array)/sizeof(array[0]))
 
+#define SINGLE_ARG(...) __VA_ARGS__ // in case there a commas in arguments to a macro
+
 // things to suppress warning for a bit
 // how it really works
 //         #pragma GCC diagnostic push
@@ -109,18 +111,18 @@ macros from becoming painted blue. We will just need to apply more scans to the 
 #define SPLIT_1(a, ...) __VA_ARGS__
 
 #define IS_VARIADIC(...) \
-    SPLIT(0, CAT(IS_VARIADIC_R_, IS_VARIADIC_C __VA_ARGS__)) \
-    /**/
+  SPLIT(0, CAT(IS_VARIADIC_R_, IS_VARIADIC_C __VA_ARGS__)) \
+  /**/
 #define IS_VARIADIC_C(...) 1
 #define IS_VARIADIC_R_1 1,
 #define IS_VARIADIC_R_IS_VARIADIC_C 0,
 
 #define IS_EMPTY_NON_FUNCTION(...) \
-    IIF(IS_VARIADIC(__VA_ARGS__))( \
-        0, \
-        IS_VARIADIC(IS_EMPTY_NON_FUNCTION_C __VA_ARGS__ ()) \
-    ) \
-    /**/
+  IIF(IS_VARIADIC(__VA_ARGS__))( \
+                                 0, \
+                                 IS_VARIADIC(IS_EMPTY_NON_FUNCTION_C __VA_ARGS__ ()) \
+                               ) \
+  /**/
 #define IS_EMPTY_NON_FUNCTION_C() ()
 
 #define IS_EMPTY(x) IIF(BOOL(PRIMITIVE_CAT(CHECK_AFTER_,x)))

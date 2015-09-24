@@ -8,12 +8,10 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdarg.h>
 #include "Macros.h"
 
-#ifdef __cplusplus
-extern "C" int debug_printf(const char *format, ...);
-
-#include "IO.h"
+bool debug_printf(const char *format, ...);
 
 namespace avp {
   extern volatile uint8_t FailReason;
@@ -52,10 +50,5 @@ namespace avp {
 #define AVP_ASSERT(exp) AVP_ASSERT_WITH_CODE(exp,0)
 #define AVP_ERROR(...) AVP_ERROR_WITH_CODE(0,##__VA_ARGS__)
 #define ASSERT_BEING_0(exp) AVP_ASSERT((exp) == 0)
-
-#else
-extern int debug_printf(const char *format, ...);
-#endif
-
 
 #endif /* ERROR_H_INCLUDED */

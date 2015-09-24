@@ -62,9 +62,10 @@ namespace avp {
   template<uint32_t (*TickFunction)(), void (*Func)(), uint32_t Period>
   TimePeriod<TickFunction, uint32_t> RunPeriodically<TickFunction,Func,Period>::TP(Period);
 
-  // following functions should be defined elsewhere are return microseconds and milliseconds
-  extern uint32_t millis();
-  extern uint32_t micros();
 }; // namespace avp
+
+// following functions should be defined elsewhere and return microseconds and milliseconds
+extern uint32_t millis();
+extern uint32_t micros();
 
 #endif /* TIME_H_INCLUDED */

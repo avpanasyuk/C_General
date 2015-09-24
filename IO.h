@@ -10,17 +10,11 @@
 
 #include <string.h>
 #include <stdarg.h>
-// #include <stdio.h>
+#include <stdio.h>
 #include <stdint.h>
 #include "Error.h"
 #include "Time.h"
 
-//! @note ALL IO FUNCTIONS HAVE atomic output - either they write or not,
-//! return corresponding value
-typedef bool (*write_byte_func)(uint8_t); ///< writes byte
-typedef bool (*write_type_func)(const uint8_t *Ptr, size_t Size); ///< writes byte array
-typedef bool (*vprintf_type_func)(char const *format, va_list ap);
-typedef bool (*printf_type_func)(char const *format, ...);
 
 /// creates printf-type function named "func_name" out of vprintf-type function named "vprinf_func"
 /// usage: PRINTF_WRAPPER_BOOL(printf,vprintf)
@@ -31,6 +25,13 @@ typedef bool (*printf_type_func)(char const *format, ...);
     return Out; }
 
 namespace avp {
+//! @note ALL IO FUNCTIONS HAVE atomic output - either they write or not,
+//! return corresponding value
+  typedef bool (*write_byte_func)(uint8_t); ///< writes byte
+  typedef bool (*write_type_func)(const uint8_t *Ptr, size_t Size); ///< writes byte array
+  typedef bool (*vprintf_type_func)(char const *format, va_list ap);
+  typedef bool (*printf_type_func)(char const *format, ...);
+
   enum IO_ERROR_CODES {FORMAT=1,TIMEOUT};
 
   /** @note about following  functions - they should be used with BLOCKED write which
@@ -40,13 +41,13 @@ namespace avp {
 
   template<write_byte_func write_byte, size_t (*space_left)() = nullptr>
   bool write(const uint8_t *p, size_t sz) {
-    if(space_left != nullptr && sz < space_left) return false;
+    if(space_left != nullptr && sz < space_left()) return false;
     for(; sz--;) if(!write_byte(*(p++))) return false; // it makes for non-atomic situation, but it should not happen
     return true;
   } // write
 
-  template<write_type_func write, uint32_t Timeout = 1000, uint32_t (*TickFunction)() = millis,
-           void (*loop_func)() = nullptr, fail_func_type fail_func = nullptr>
+  template<write_type_func write_func, uint32_t Timeout = 1000, uint32_t (*TickFunction)() = millis,
+           void (*loop_func)() = nullptr, failfunc_type fail_func = nullptr>
   bool write_with_timeout(const uint8_t *Ptr, size_t Size)  {
     TimeOut<TickFunction> T(Timeout); \
     while(!write_func(Ptr,Size)) {
@@ -66,7 +67,7 @@ namespace avp {
   template<write_type_func write>
   struct write_ {
     template<typename T> static bool object(const T &obj) { return write((const uint8_t *)&obj,sizeof(obj)); }
-    template<typename *P> static bool array(P p, size_t Size=1) { return write((const uint8_t *)p,sizeof(p[0])*Size); }
+    template<typename T> static bool array(T *p, size_t Size=1) { return write((const uint8_t *)p,sizeof(p[0])*Size); }
     static bool string(const char *str) { return  write((const uint8_t *)str,strlen(str)); }
 
     static bool vprintf(char const *format, va_list ap) {
@@ -88,7 +89,7 @@ namespace avp {
   template<vprintf_type_func vprintf> PRINTF_WRAPPER(printf,vprintf)
   template<write_type_func write> PRINTF_WRAPPER(printf,vprintf<write>)
   template<write_byte_func write_byte, size_t (*space_left)() = nullptr>
-  PRINTF_WRAPPER(printf,vprintf<write_byte,space_left>)
+  PRINTF_WRAPPER(printf,SINGLE_ARG(vprintf<write_byte,space_left>))
 } // namespace avp
 
 #endif /* IO_H_INCLUDED */

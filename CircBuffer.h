@@ -10,7 +10,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-extern "C" int debug_printf(const char *format, ...);
+// #include "Error.h"
 
 /** Circular Buffer of elements of class T. One reader and one writer may work in parallel. Reader is using
   * only BeingRead index, and writer only BeingWritten, so index can be screwed-up ONLY when cross-used,
@@ -27,55 +27,55 @@ extern "C" int debug_printf(const char *format, ...);
   */
 template <typename T, typename tSize=uint8_t, uint8_t sizeLog2 = sizeof(tSize)*8>
 struct CircBuffer {
-  static_assert(sizeof(tSize)*8 >= sizeLog2,"CircBuffer:Size variable is too small to hold size!");
+    static_assert(sizeof(tSize)*8 >= sizeLog2,"CircBuffer:Size variable is too small to hold size!");
 
-  // *********** General functions
-  CircBuffer() { BeingWritten = 0; Clear(); }
-  void Clear()  {  BeingRead = BeingWritten; }
-  static constexpr tSize GetCapacity() { return (1UL << sizeLog2) - 1; };
+    // *********** General functions
+    CircBuffer() { BeingWritten = 0; Clear(); }
+    void Clear()  {  BeingRead = BeingWritten; }
+    static constexpr tSize GetCapacity() { return (1UL << sizeLog2) - 1; };
 
-  //************* Writer functions *************************************************
-  tSize LeftToWrite() const  { return (BeingRead - 1 - BeingWritten) & Mask; }
+    //************* Writer functions *************************************************
+    tSize LeftToWrite() const  { return (BeingRead - 1 - BeingWritten) & Mask; }
 
-  T *GetSlotToWrite() { return &Buffer[BeingWritten]; }
+    T *GetSlotToWrite() { return &Buffer[BeingWritten]; }
 
-  void FinishedWriting() { BeingWritten = (BeingWritten + 1) & Mask; }
+    void FinishedWriting() { BeingWritten = (BeingWritten + 1) & Mask; }
 
-  void Write_(T const &d) { *GetSlotToWrite() = d; FinishedWriting(); }
+    void Write_(T const &d) { *GetSlotToWrite() = d; FinishedWriting(); }
 
-  bool Write(T const &d) {
-    if(LeftToWrite() == 0) return false;
-    else { Write_(d); return true; }
-  } // safe Write
+    bool Write(T const &d) {
+      if(LeftToWrite() == 0) return false;
+      else { Write_(d); return true; }
+    } // safe Write
 
-  // It is risky function because if there is no place to write it modifies BeingRead index, so interferes with reading function. E.g
-  // if read is in progress and this function is called from the interrupt (or vise versa) things may get screwed up.
-  // The function never fails
-  T *ForceSlotToWrite()  {
-    if(LeftToWrite() == 0) FinishedReading();
-    return GetSlotToWrite();
-  } // ForceSlotToWrite
+    // It is risky function because if there is no place to write it modifies BeingRead index, so interferes with reading function. E.g
+    // if read is in progress and this function is called from the interrupt (or vise versa) things may get screwed up.
+    // The function never fails
+    T *ForceSlotToWrite()  {
+      if(LeftToWrite() == 0) FinishedReading();
+      return GetSlotToWrite();
+    } // ForceSlotToWrite
 
-  //************* Reader functions ***************************************
-  tSize LeftToRead() const  { return (BeingWritten - BeingRead) & Mask; }
+    //************* Reader functions ***************************************
+    tSize LeftToRead() const  { return (BeingWritten - BeingRead) & Mask; }
 
-  //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
-  T const *GetSlotToRead() { return &Buffer[BeingRead]; }
+    //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
+    T const *GetSlotToRead() { return &Buffer[BeingRead]; }
 
-  void FinishedReading() { BeingRead = (BeingRead + 1) & Mask; }
+    void FinishedReading() { BeingRead = (BeingRead + 1) & Mask; }
 
-  T Read_() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
+    T Read_() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
 
-  bool Read(T* Dst) {
-    if(LeftToRead() == 0) return false;
-    else { *Dst = Read_(); return true; }
-  } // safer Read
+    bool Read(T* Dst) {
+      if(LeftToRead() == 0) return false;
+      else { *Dst = Read_(); return true; }
+    } // safer Read
 
-protected:
-  T Buffer[size_t(GetCapacity())+1]; //!< buffer size is 2^sizeLog2
-  static constexpr tSize Mask = GetCapacity(); //!< marks used bits in index variables
-  // we do not care what happens in upper bits
-  tSize BeingRead, BeingWritten; //!< indexes of buffer currently being ....
+  protected:
+    T Buffer[size_t(GetCapacity())+1]; //!< buffer size is 2^sizeLog2
+    static constexpr tSize Mask = GetCapacity(); //!< marks used bits in index variables
+    // we do not care what happens in upper bits
+    tSize BeingRead, BeingWritten; //!< indexes of buffer currently being ....
 }; // CircBuffer
 
 #endif /* CIRCBUFFER_H_ */

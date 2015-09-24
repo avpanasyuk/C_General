@@ -23,4 +23,4 @@ namespace avp {
   }
 } // namespace avp
 
-extern "C" int PRINTF_WRAPPER(debug_printf,avp::debug_vprintf)
+PRINTF_WRAPPER(debug_printf,avp::debug_vprintf)
