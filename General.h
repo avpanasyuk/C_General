@@ -52,6 +52,9 @@ namespace avp {
 // volatile auto x = (unused-value-expression);
 // avp::unused(x)
   template<typename T> void unused(T const &) {}
+  static inline constexpr uint32_t FourCharsToUint32(const char str[4]) {
+    return (((((uint32_t(str[3]) << 8) + str[2]) << 8) + str[1]) << 8) + str[0];
+  }
 } // avp
 
 #endif /* GENERAL_H_ */

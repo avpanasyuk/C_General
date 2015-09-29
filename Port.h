@@ -19,10 +19,11 @@
 *    new data in buffer to transmit
 * -# HW_IO_ should call StoreReceivedByte supplied to it by Init call when it received a byte
 * -# HW_IO_ should call GetBlockToSend or GetByteToSend when it is ready to send new data
+* -# should provide void FlushRX();
 *
 * To avoid needless data copying  there are two transmit buffers - one for bytes which buffers data
-* and one for blocks which buffers only pointyers,
-* data themself are unbuffered!
+* and one for blocks which buffers only pointers,
+* data themselves are unbuffered!
 * blocks are not buffered, ReleaseFunc function should be provided with a blcok
 * and data in block are supposed to be intact all the time until
 * this function is called
@@ -47,6 +48,7 @@
 
 namespace avp {
   //! @note this template should not be instatiated - use either PortByteTX or PortBlockTX
+  //! @tparam HW_IO_ - hardware communication class which provides this as in the header description above
   //! @tparam tSize - type of CircBuffer counter, should be big enough to fit all buffer sizes.
   //! @tparam ESC_code - this is special byte code placed in BufferTX to indicate that we
   //! should transmit block here. If next byte is ESC_code we have to transmit block. If it is 0 we transmit just ECS_code
