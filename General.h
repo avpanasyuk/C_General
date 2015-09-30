@@ -8,6 +8,8 @@
 #ifndef GENERAL_H_
 #define GENERAL_H_
 
+#include <stdint.h>
+
 // following are operators which can be universaly derived from others
 template<typename T> inline T operator++(T &v) { return v += 1; }
 template<typename T> inline T operator++(T &v, int) { T old(v); v += 1; return old; }
@@ -52,9 +54,16 @@ namespace avp {
 // volatile auto x = (unused-value-expression);
 // avp::unused(x)
   template<typename T> void unused(T const &) {}
-  static inline constexpr uint32_t FourCharsToUint32(const char str[4]) {
-    return (((((uint32_t(str[3]) << 8) + str[2]) << 8) + str[1]) << 8) + str[0];
-  }
+
+  template<typename T, uint8_t NumChars = sizeof(T)>
+  static inline constexpr T Bytes2type(const uint8_t bytes[NumChars]) {
+    return T(bytes[0]) + (NumChars == 1?0:(Bytes2type<T,NumChars-1>(bytes+1) << 8));
+  } // Chars2type
+
+  template<typename T, uint8_t NumChars = sizeof(T)>
+  static inline constexpr T Chars2type(const char str[NumChars]) {
+    return Bytes2type<T,NumChars>((const uint8_t *)str);
+  } // Chars2type
 } // avp
 
 #endif /* GENERAL_H_ */

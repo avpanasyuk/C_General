@@ -58,7 +58,7 @@ namespace avp {
 
   __PORT_TEMPLATE__ struct  Port: public HW_IO_ {
       struct BlockInfo;
-      typedef void (* tReleaseFunc)(const BlockInfo *p);
+      typedef void (* tReleaseFunc)();
       struct BlockInfo {
         const uint8_t *Ptr;
         size_t Size;
@@ -89,7 +89,7 @@ namespace avp {
           const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead();
 
           if(++pCurByteInBlock == pCurBlock->Ptr + pCurBlock->Size) { // we are done with this block
-            if(pCurBlock->pReleaseFunc != nullptr) (*pCurBlock->pReleaseFunc)(pCurBlock);
+            if(pCurBlock->pReleaseFunc != nullptr) (*pCurBlock->pReleaseFunc)();
             BlockInfoBufTX.FinishedReading();
             pCurByteInBlock = nullptr;
           } else {
@@ -127,7 +127,7 @@ namespace avp {
 
         if(LastSentIsBlock) { // finish with previous block
           const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead();
-          if(pCurBlock->pReleaseFunc != nullptr) (*pCurBlock->pReleaseFunc)(pCurBlock);
+          if(pCurBlock->pReleaseFunc != nullptr) (*pCurBlock->pReleaseFunc)();
           BlockInfoBufTX.FinishedReading();
           LastSentIsBlock = false;
         }
@@ -235,14 +235,14 @@ namespace avp {
    *!
    */
   __PORT_TEMPLATE__ struct  PortByteTX: public _TEMPLATE_SPEC_ {
-    static void Init() { HW_IO_::SetCallBacks(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetByteToSend); }
+    static void Init() { HW_IO_::Init(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetByteToSend); }
   }; //  PortByteTX
 
   /*! Port template for HW_IO which transmits by block
    *!
    */
   __PORT_TEMPLATE__ struct  PortBlockTX: public _TEMPLATE_SPEC_ {
-    static void Init() { HW_IO_::SetCallBacks(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetBlockToSend); }
+    static void Init() { HW_IO_::Init(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetBlockToSend); }
   }; //  PortBlockTX
 
 

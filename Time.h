@@ -68,4 +68,6 @@ namespace avp {
 extern uint32_t millis();
 extern uint32_t micros();
 
+typedef class avp::TimePeriod<millis> Millisec;
+
 #endif /* TIME_H_INCLUDED */

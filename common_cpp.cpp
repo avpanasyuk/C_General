@@ -8,13 +8,12 @@
 #include <stdio.h>
 #include "General.h"
 #include "Error.h"
-#include "IO.h"
 
 namespace avp {
   volatile uint8_t FailReason = 0;
 
   /// crap, ::vprintf does not work with semihosting
-  ///__weak bool debug_vprintf(const char *format, va_list a) { return vprintf<write< ::printf>>(format,a); }
+  ///__weak bool debug_vprintf(const char *format, va_list a) { return vprintf<write_buffered< ::printf>>(format,a); }
   __weak bool debug_vprintf(const char *format, va_list a) { return ::vprintf(format,a) >= 0; }
   __weak void hang_cpu() { while(1); }
   __weak void major_fail(uint8_t reason) {
@@ -23,4 +22,10 @@ namespace avp {
   }
 } // namespace avp
 
-PRINTF_WRAPPER(debug_printf,avp::debug_vprintf)
+int debug_printf(char const *format, ...) {
+  va_list ap;
+  va_start(ap,format);
+  bool Out = avp::debug_vprintf(format,ap);
+  va_end(ap);
+  return Out?1:-1;
+}
