@@ -23,7 +23,7 @@ namespace avp {
       Link(const char *Name_, CommandFunc_ pFunc_, uint8_t NumParamBytes_, Link *pFirst):
         ID(avp::Chars2type<IDtype>(Name_)), pFunc(pFunc_), NumParamBytes(NumParamBytes_), pNext(pFirst) {
         AVP_ASSERT_WITH_EXPL((ID & 0xFF) != 0,2,"Byte  0 is reserved for NOOP pseudo-command.");
-        AVP_ASSERT_WITH_EXPL(NumParamBytes <= MaxNumParamBytes,3,"Modify MaxNumParamBytes to accommodate %hh bytes.",NumParamBytes);
+        AVP_ASSERT_WITH_EXPL(NumParamBytes <= MaxNumParamBytes,3,"Modify MaxNumParamBytes to accommodate %hhu bytes.",NumParamBytes);
         AVP_ASSERT_WITH_EXPL(pFunc != nullptr,4,"We do not do useless commands.");
       } //  constructor
       bool IsIt(IDtype ID_) const { return ID_ == ID; }
@@ -76,10 +76,13 @@ namespace avp {
       if(++pInputByte == InputBytes.Params) { // just got a new command ID
         if((pCur = FindByID(InputBytes.ID)) == nullptr) return WRONG_ID;
       } else if(pInputByte == &InputBytes.Params[pCur->NumParamBytes + 1])  { // got everything: command,parameters and checksum
-        if(avp::sum<uint8_t>(InputBytes.Name,sizeof(IDtype) + pCur->NumParamBytes + 1) == InputBytes.Params[pCur->NumParamBytes]) {
+        if(avp::sum<uint8_t>(InputBytes.Name,sizeof(IDtype) + pCur->NumParamBytes) == InputBytes.Params[pCur->NumParamBytes]) {
           pCur->pFunc(InputBytes.Params); // executing command
           pInputByte = InputBytes.Name;
-        } else return BAD_CHECKSUM;
+        } else {
+          debug_printf("CS received = %hhu, calculated = %hhu", 0,0);
+          return BAD_CHECKSUM;
+        }
       }
       return NO_ERROR; // everything's OK
     } // ParseByte
