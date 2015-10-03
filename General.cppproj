@@ -150,6 +150,15 @@
     <Compile Include="CircBuffer.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="CommandChain.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="CommandParser.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="CommandTable.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="common_cpp.cpp">
       <SubType>compile</SubType>
     </Compile>

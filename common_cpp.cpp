@@ -8,8 +8,10 @@
 #include <stdio.h>
 #include "General.h"
 #include "Error.h"
+#include "CommandTable.h"
 
 namespace avp {
+  uint8_t CommandTable::InputI = 0;
   volatile uint8_t FailReason = 0;
 
   /// crap, ::vprintf does not work with semihosting

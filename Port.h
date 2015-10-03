@@ -235,14 +235,14 @@ namespace avp {
    *!
    */
   __PORT_TEMPLATE__ struct  PortByteTX: public _TEMPLATE_SPEC_ {
-    static void Init() { HW_IO_::Init(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetByteToSend); }
+    static void Init() { HW_IO_::SetCallBacks(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetByteToSend); }
   }; //  PortByteTX
 
   /*! Port template for HW_IO which transmits by block
    *!
    */
   __PORT_TEMPLATE__ struct  PortBlockTX: public _TEMPLATE_SPEC_ {
-    static void Init() { HW_IO_::Init(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetBlockToSend); }
+    static void Init() { HW_IO_::SetCallBacks(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetBlockToSend); }
   }; //  PortBlockTX
 
 

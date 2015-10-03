@@ -110,7 +110,7 @@ namespace avp {
     static void SendBeacon() { if(!PortConnected) write_buffered<Port::write>::string(BeaconStr); }
 
     static void cycle() {
-      static RunPeriodically<millis,SendBeacon,500> BeaconTicker;
+      static RunPeriodically<millis,SendBeacon,100> BeaconTicker;
 
       BeaconTicker.cycle();
 
