@@ -54,6 +54,16 @@ namespace avp {
 // volatile auto x = (unused-value-expression);
 // avp::unused(x)
   template<typename T> void unused(T const &) {}
+
+  template<typename T, uint8_t NumChars = sizeof(T)>
+  static inline constexpr T Bytes2type(const uint8_t bytes[NumChars]) {
+    return T(bytes[0]) + (NumChars == 1?0:(Bytes2type<T,NumChars-1>(bytes+1) << 8));
+  } // Chars2type
+
+  template<typename T, uint8_t NumChars = sizeof(T)>
+  static inline constexpr T Chars2type(const char str[NumChars]) {
+    return Bytes2type<T,NumChars>((const uint8_t *)str);
+  } // Chars2type
 } // avp
 
 #endif /* GENERAL_H_ */
