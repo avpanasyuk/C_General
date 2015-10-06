@@ -47,6 +47,9 @@ namespace avp {
   template<typename type> inline constexpr type bits(type x, uint8_t first_bit) {
     return x >> first_bit;
   } // bits
+  template<typename type> inline constexpr type getbits(type x, uint8_t numbits, uint8_t first_bit) {
+    return (x >> first_bit) & ((type(1U) << numbits) - 1);
+  } // bits
 } // namespace avp
 
 
