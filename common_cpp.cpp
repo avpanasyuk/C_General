@@ -15,7 +15,6 @@ namespace avp {
   int8_t CommandTable::CurNumOfParamBytes;
   volatile uint8_t FailReason = 0;
 
-
   /// crap, ::vprintf does not work with semihosting
   ///__weak bool debug_vprintf(const char *format, va_list a) { return vprintf<write_buffered< ::printf>>(format,a); }
   __weak bool debug_vprintf(const char *format, va_list a) { return ::vprintf(format,a) >= 0; }

@@ -36,7 +36,9 @@ namespace avp {
         AVP_ASSERT_WITH_EXPL(InputI < sizeof(Input.Cmd),1,
                              "Modify MaxNumParamBytes to fit %hhu param bytes.",
                              InputI);
+        IGNORE(-Warray-bounds)
         Input.Bytes[InputI++] = b;
+        STOP_IGNORING
 
         if(InputI == 1) { // b is a CurCommand.ID
           if(b != 0) { // it is not a NOOP command
