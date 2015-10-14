@@ -48,16 +48,14 @@ namespace avp {
   } // write
 
   /// function which allows to write something with timeout and call loop function while write is pending
+  /// @return true - succeess, false - timeout
   template<write_type_func write_func, uint32_t Timeout = 1000, uint32_t (*TickFunction)() = millis,
-           void (*loop_func)() = nullptr, failfunc_type fail_func = nullptr>
+           void (*loop_func)() = nullptr>
   bool write_with_timeout(const uint8_t *Ptr, size_t Size)  {
-    TimeOut<TickFunction> T(Timeout); \
+    TimeOut<TickFunction> T(Timeout);
     while(!write_func(Ptr,Size)) {
       if(loop_func != nullptr) loop_func();
-      if(T) {
-        if(fail_func != nullptr) fail_func(TIMEOUT);
-        return false;
-      }
+      if(T) return false;
     };
     return true;
   } // write_with_timeout
@@ -85,18 +83,18 @@ namespace avp {
   template<bool (*write_)(const uint8_t *Ptr, size_t Size, void (*ReleaseFunc)())>
   struct write_unbuffered {
     template<typename T> static bool object(const T &obj, void (*ReleaseFunc)() = nullptr)
-      { return write_((const uint8_t *)&obj,sizeof(obj),ReleaseFunc); }
+    { return write_((const uint8_t *)&obj,sizeof(obj),ReleaseFunc); }
     template<typename T> static bool array(T *p, size_t Size=1, void (*ReleaseFunc)() = nullptr)
-      { return write_((const uint8_t *)p,sizeof(p[0])*Size,ReleaseFunc); }
+    { return write_((const uint8_t *)p,sizeof(p[0])*Size,ReleaseFunc); }
     static bool string(const char *str, void (*ReleaseFunc)() = nullptr)
-      { return  write_((const uint8_t *)str,strlen(str),ReleaseFunc); }
+    { return  write_((const uint8_t *)str,strlen(str),ReleaseFunc); }
   }; // class write_unbuffered
 
 
 
   // ******************** FUNCTION TEMPLATES, I DO NOT KNOW HOW USEFUL THEY ARE
   template<write_type_func write>
-  inline bool vprintf(char const *format, va_list ap) { return write_buffered<write>::vprintf(format,ap); }
+  bool vprintf(char const *format, va_list ap) { return write_buffered<write>::vprintf(format,ap); }
   template<write_byte_func write_byte, size_t (*space_left)() = nullptr>
   bool vprintf(char const *format, va_list ap) { return vprintf<write<write_byte,space_left>>(format, ap); }
   template<vprintf_type_func vprintf> PRINTF_WRAPPER(printf,vprintf)

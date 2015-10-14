@@ -10,10 +10,22 @@
 #include <stdlib.h>
 
 namespace avp {
-  // bit-banging functions
+  // byte-combining functions
+  template<typename T, uint8_t NumChars = sizeof(T)>
+  static inline constexpr T Bytes2type(const uint8_t bytes[NumChars]) {
+    return T(bytes[0]) + (NumChars == 1?0:(Bytes2type<T,NumChars-1>(bytes+1) << 8));
+  } // Chars2type
+
+  template<typename T, uint8_t NumChars = sizeof(T)>
+  static inline constexpr T Chars2type(const char str[NumChars]) {
+    return Bytes2type<T,NumChars>((const uint8_t *)str);
+  } // Chars2type
+
   static inline constexpr uint16_t Word(const uint8_t *Bytes) {
-    return (uint16_t(Bytes[1]) << 8)+Bytes[0];
+    return Bytes2type<uint16_t>(Bytes);
   } // Word
+
+  // bit-banging functions
   template<typename ElType, typename SzType> ElType checkXOR(const ElType *p, SzType size) {
     ElType XORvalue = 0;
     while(size--) XORvalue ^= *(p++);

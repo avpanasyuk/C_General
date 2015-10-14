@@ -1,6 +1,9 @@
 /**
   * @file AVP_LIBS/General/Error.h
   * @author Alexander Panasyuk
+  * @note - to use MACROS you have to properly implement "avp::debug_vprintf".
+  * it is weakly linked in service.c as an output to stderr which often does
+  * not work
   */
 
 #ifndef ERROR_H_INCLUDED
@@ -21,6 +24,7 @@ namespace avp {
   /// defined in General library as weak, sending stuff to ::vprintf
   /// may be redefined
   bool debug_vprintf(const char *format, va_list a);
+  /// @param reason - 1 _MALLOC fail, other are user defined
   void major_fail(uint8_t reason = 0) __attribute__((noreturn));
   void hang_cpu() __attribute__((noreturn));
 }; //avp
