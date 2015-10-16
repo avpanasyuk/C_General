@@ -24,46 +24,46 @@
 namespace avp {
   template<write_type_func write_func, size_t BufferSize, char OverrunIndicator = '~'>
   class BG_message { //
-    static uint8_t CurBuffer; //!< toggles between two buffers indexed 0 and 1
-    static class Buffer_ {
-    protected:
-      size_t FilledBytes;
-      char Chars[BufferSize];
+      static uint8_t CurBuffer; //!< toggles between two buffers indexed 0 and 1
+      static class Buffer_ {
+        protected:
+          size_t FilledBytes;
+          char Chars[BufferSize];
+        public:
+
+          Buffer_(): FilledBytes(0) {}
+
+          IGNORE(-Wsign-compare)
+          bool vAppend(const char *format, va_list ap) {
+            size_t Space = BufferSize-FilledBytes; // space for text and ending 0, we will replace 0 with OverrunIndicator there
+            // to indicate overrun
+            if(Space != 0) {
+              int Size = vsnprintf(Chars+FilledBytes,Space,format,ap);
+              // gcc vsnprintf always return full size as if string was not truncated. This size is without 0, but 0 is
+              // always written
+              if(Size < 0) return false;
+              if(Size >= Space) Chars[(FilledBytes = BufferSize)-1] = OverrunIndicator;
+              // we store ~ as a last character to indicate that there was more, but it did not fit
+              else FilledBytes += Size;
+            }
+            return true;
+          } // vAppend
+          STOP_IGNORING
+
+
+          void WriteOut() {
+            if(FilledBytes) {
+              write_func((uint8_t *)Chars,FilledBytes); // we send size byte and a buffer in one go.
+              FilledBytes = 0;
+            }
+          } // WriteOut
+      } Buffer[2];
     public:
+      //! does not do any immediate writing to a serial port, so does not call bg_loop
+      static bool vAppend(const char *format, va_list ap) { return Buffer[CurBuffer].vAppend(format,ap); }
+      static PRINTF_WRAPPER(printf,vAppend);
 
-      Buffer_(): FilledBytes(0) {}
-
-      IGNORE(-Wsign-compare)
-      bool vAppend(const char *format, va_list ap) {
-        size_t Space = BufferSize-FilledBytes; // space for text and ending 0, we will replace it with OverrunIndicator there
-        // to indicate overrun
-        if(Space != 0) {
-          int Size = vsnprintf(Chars+FilledBytes,Space,format,ap);
-          // gcc vsnprintf always return full size as if string was not truncated. This size is without 0, but 0 is
-          // always written
-          if(Size < 0) return false;
-          if(Size >= Space) Chars[(FilledBytes = BufferSize)-1] = OverrunIndicator;
-          // we store ~ as a last character to indicate that there was more, but it did not fit
-          else FilledBytes += Size;
-        }
-        return true;
-      } // vAppend
-      STOP_IGNORING
-
-
-      void WriteOut() {
-        if(FilledBytes) {
-          write_func((uint8_t *)Chars,FilledBytes); // we send size byte and a buffer in one go.
-          FilledBytes = 0;
-        }
-      } // WriteOut
-    } Buffer[2];
-  public:
-    //! does not do any immediate writing to a serial port, so does not call bg_loop
-    static bool vAppend(const char *format, va_list ap) { return Buffer[CurBuffer].vAppend(format,ap); }
-    static PRINTF_WRAPPER(printf,vAppend);
-
-    static void WriteOut() { Buffer[1 - (CurBuffer = 1 - CurBuffer)].WriteOut(); } // switches buffers as well
+      static void WriteOut() { Buffer[1 - (CurBuffer = 1 - CurBuffer)].WriteOut(); } // switches buffers as well
   }; // class BG_message
 
 #define _TEMPLATE_DECL_  template<write_type_func write_func, size_t BufferSize, char OverrunIndicator>

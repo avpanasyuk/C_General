@@ -53,7 +53,7 @@ namespace avp {
 
 #define AVP_ASSERT_WITH_CODE(exp,code) AVP_ASSERT_WITH_EXPL(exp,code,"")
 #define AVP_ASSERT(exp) AVP_ASSERT_WITH_CODE(exp,0)
-#define AVP_ERROR(...) AVP_ERROR_WITH_CODE(0,##__VA_ARGS__)
+#define AVP_ERROR(...) AVP_ASSERT_WITH_EXPL(0,1,##__VA_ARGS__)
 #define ASSERT_BEING_0(exp) AVP_ASSERT((exp) == 0)
 
 #else

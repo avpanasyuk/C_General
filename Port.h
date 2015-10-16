@@ -64,6 +64,8 @@ namespace avp {
         size_t Size;
         tReleaseFunc pReleaseFunc; //!< data pointed by Ptr should not get corrupted until this function is called
       }; // BlockInfo
+      static uint8_t RunningCS;
+      static uint16_t BytesTransmitted;
     protected:
       static CircBuffer<uint8_t, tSize, Log2_TX_Buf_size> BufferTX; // byte transmit buffer
 
@@ -155,6 +157,7 @@ namespace avp {
         return true;
       } //  GetBlockToSend
 
+      //! ************** ALL OUTPUT GOES THROUGH THE FOLLOWING TWO FUNCTIONS ******************************
       //! unbuffered unsafe write - no BufferTX check, no interrupt reenable
       //! @param Size - block size. Size == 0 is a special case, we create a fake BlockInfo entry,
       //! it just mean that we have to transmit ESC_code-valued byte
@@ -167,6 +170,8 @@ namespace avp {
         }
         BlockInfoBufTX.FinishedWriting();
         BufferTX.Write_(ESC_code); // do this afterwards, so transmit callback does not find ESC_code without block being in place
+        RunningCS += avp::sum<uint8_t>(Ptr,Size);
+        BytesTransmitted += Size;
         return true;
       } // write_unbuffered_
 
@@ -174,6 +179,8 @@ namespace avp {
       static bool write_byte_(uint8_t d) {
         if(d == ESC_code) return write_unbuffered_(nullptr,0);
         BufferTX.Write_(d);
+        RunningCS += d;
+        BytesTransmitted++;
         return true;
       } // write_byte_
 
@@ -208,6 +215,9 @@ namespace avp {
         return Res;
       } // write_unbuffered
 
+      static uint8_t GetRCS() { return RunningCS; } ///< get current rinning checksum
+      static uint8_t GetNtransmitted() { return BytesTransmitted; } ///< get number of transmitted bytes since beginning of session
+
       // ********************************** RECEPTION *********************
       //! stores character by pointer pd, returns true if there is really a character to read
       static void FlushRX() { HW_IO_::FlushRX();  BufferRX.Clear(); }
@@ -230,6 +240,8 @@ namespace avp {
   _TEMPLATE_DECL_ CircBuffer<uint8_t, tSize, Log2_TX_Buf_size> _TEMPLATE_SPEC_::BufferTX;
   _TEMPLATE_DECL_ CircBuffer<struct _TEMPLATE_SPEC_::BlockInfo, tSize, Log2_TX_BlockBufSize> _TEMPLATE_SPEC_::BlockInfoBufTX;
   _TEMPLATE_DECL_ CircBuffer<uint8_t, tSize, Log2_RX_Buf_Size> _TEMPLATE_SPEC_::BufferRX;
+  _TEMPLATE_DECL_ uint8_t _TEMPLATE_SPEC_::RunningCS;
+  _TEMPLATE_DECL_ uint16_t _TEMPLATE_SPEC_::BytesTransmitted = 0;
 
   /*! Port template for HW_IO which transmits by byte
    *!
@@ -244,7 +256,6 @@ namespace avp {
   __PORT_TEMPLATE__ struct  PortBlockTX: public _TEMPLATE_SPEC_ {
     static void Init() { HW_IO_::SetCallBacks(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetBlockToSend); }
   }; //  PortBlockTX
-
 
 #undef _TEMPLATE_DECL_
 #undef _TEMPLATE_SPEC_

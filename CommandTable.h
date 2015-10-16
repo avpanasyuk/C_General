@@ -49,7 +49,7 @@ namespace avp {
             return NOOP;
           }
         } else {
-          if(InputI == 2 && CurNumOfParamBytes == -1) CurNumOfParamBytes = b; // variable number of parameters
+          if(InputI == 2 && CurNumOfParamBytes == -1) CurNumOfParamBytes = b+1; // variable number of parameters
           if(InputI == CurNumOfParamBytes + 2) { // we've got all parameter bytes
             // and a checksum
             if(sum<uint8_t>(Input.Bytes,InputI - 1) != b) return BAD_CHECKSUM;
