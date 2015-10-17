@@ -191,7 +191,7 @@ namespace avp {
       // some useful templates
       template<typename type>
       static void Return(type X) {
-        AVP_ASSERT(avp::write_buffered<ReturnBytesBuffered>::object(X));
+        AVP_ASSERT(ReturnBytesBuffered((const uint8_t *)&X,sizeof(X)));
       }
       template<typename type>
       static void ReturnByPtr(const type *p, size_t size=1) {
