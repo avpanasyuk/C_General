@@ -216,7 +216,7 @@ namespace avp {
       } // write_unbuffered
 
       static uint8_t GetRCS() { return RunningCS; } ///< get current rinning checksum
-      static uint8_t GetNtransmitted() { return BytesTransmitted; } ///< get number of transmitted bytes since beginning of session
+      static uint16_t GetNtransmitted() { return BytesTransmitted; } ///< get number of transmitted bytes since beginning of session
 
       // ********************************** RECEPTION *********************
       //! stores character by pointer pd, returns true if there is really a character to read

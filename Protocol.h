@@ -190,7 +190,7 @@ namespace avp {
       }
       // some useful templates
       template<typename type>
-      static void Return(type X) {
+      static void Return(const type &X) {
         AVP_ASSERT(ReturnBytesBuffered((const uint8_t *)&X,sizeof(X)));
       }
       template<typename type>
