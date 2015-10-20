@@ -6,12 +6,14 @@
   * [PROTOCOL]
   * @verbatium
     Protocol description.
-    - all GUI->FW messages are commands:
-      - Either command ID or mnemonics.
-      - if NumParamBytes == -1 in correspong Command_ structure a byte giving the number of following parameter bytes
-      - parameter bytes. Number is given either by NumParamBytes or previous byte
+    - all GUI->FW messages are commands. Command is sequence of bytes which contains:
+      - Either 1 byte command ID (if InputParser is CommandTable) or mnemonics ( if InputParser is CommandChain)
+      - if NumParamBytes == -1 in correspong Command_ structure:
+        - a byte giving the number of following parameter bytes parameter bytes.
+      - Parameter bytes. Their number is given either by NumParamBytes field in Command_ structure (if it is not -1) or previous byte
+        if NumParamBytes == -1
       - 1 byte of checksum of the bytes above
-    - FW-GUI messages are differentiated  based on the first int8_t CODE. It may be:
+    - FW-GUI messages are formatted in blocks, each one starts with int8_t CODE and ends with checksum. Block content may be:
         - command return:
           - CODE byte
           - If CODE is 0 the following is successful latest command return:
@@ -36,7 +38,7 @@
           - info message text without trailing 0
           - 1 uint8_t info message text checksum
           .
-        Info messages may come at any time
+        Info message block may come at any time, but not inside another block
       If error or info message do not fit into 127 bytes remaining text is formatted into consecutive  info message(s) is
   * @endverbatim
   * [PROTOCOL]

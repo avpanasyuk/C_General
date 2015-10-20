@@ -47,7 +47,7 @@ namespace avp {
 
 #else // RELEASE
 # define AVP_ERROR_WITH_CODE(code,format,...) avp::major_fail(code)
-# define AVP_ASSERT_WITH_EXPL(exp,code,ext_format,...) do{ (void)((exp),##__VA_ARGS__); }while(0)
+# define AVP_ASSERT_WITH_EXPL(exp,code,ext_format,...) do{ (void)((void)(exp),##__VA_ARGS__); }while(0)
 // we gotta execute exp and args but do nothing else
 #endif // DEBUG
 
