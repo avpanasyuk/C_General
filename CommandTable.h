@@ -14,8 +14,9 @@ namespace avp {
     int8_t NumParamBytes; ///< if == -1 the command has variable number of arguments, and the first
     /// parameter byte is the number of following parameters
   }; // struct Command_
-
+  
 /// Table and NumCommands should be implemented in the user code
+template<uint8_t MaxNumParamBytes = 255>
   class CommandTable: public CommandParser {
     protected:
       static int8_t CurNumOfParamBytes;
@@ -33,9 +34,6 @@ namespace avp {
         } Input;
         /// @note COMMAND BYTE is index in CommandTable + 1.
         /// COMMAND BYTE == 0 is NOOP command
-        AVP_ASSERT_WITH_EXPL(InputI < sizeof(Input.Cmd),1,
-                             "Modify MaxNumParamBytes to fit %hhu param bytes.",
-                             InputI);
         IGNORE(-Warray-bounds)
         Input.Bytes[InputI++] = b;
         STOP_IGNORING
@@ -49,7 +47,10 @@ namespace avp {
             return NOOP;
           }
         } else {
-          if(InputI == 2 && CurNumOfParamBytes == -1) CurNumOfParamBytes = b+1; // variable number of parameters
+          if(InputI == 2) {
+			  if(CurNumOfParamBytes == -1) CurNumOfParamBytes = b+1; // variable number of parameters
+			  AVP_ASSERT(CurNumOfParamBytes <= MaxNumParamBytes);
+		  }
           if(InputI == CurNumOfParamBytes + 2) { // we've got all parameter bytes
             // and a checksum
             if(sum<uint8_t>(Input.Bytes,InputI - 1) != b) return BAD_CHECKSUM;
@@ -64,6 +65,9 @@ namespace avp {
 
       static void Flush() {InputI = 0;}
   }; // class CommandTable
+  
+  template<uint8_t MaxNumParamBytes> int8_t CommandTable<MaxNumParamBytes>::CurNumOfParamBytes;
+  template<uint8_t MaxNumParamBytes> uint8_t CommandTable<MaxNumParamBytes>::InputI = 0; 
 } // namespace avp
 
 

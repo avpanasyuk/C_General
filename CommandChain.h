@@ -7,7 +7,7 @@
 
 namespace avp {
 /// unidirectional command chain
-  template<typename IDtype>
+  template<typename IDtype, uint8_t MaxNumParamBytes = 255>
   class CommandChain: public CommandParser {
 
     /// One Command makes a Link ------------------------------------------------
@@ -61,7 +61,7 @@ namespace avp {
     static void AddCommand(const char Name[sizeof(IDtype)], CommandFunc_ pFunc, uint8_t NumParamBytes) {
       AVP_ASSERT_WITH_EXPL(FindByID(avp::Chars2type<IDtype>(Name)) == nullptr,1,
                            "A command with this ID already exists."); // check whether we have this command name already
-
+	  AVP_ASSERT(NumParamBytes <= MaxNumParamBytes);					   
       pFirst = new Link(Name,pFunc,NumParamBytes,pFirst);
     } // AddCommand
 

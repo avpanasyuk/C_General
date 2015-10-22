@@ -5,7 +5,6 @@
 
 namespace avp {
   typedef void (*CommandFunc_)(const uint8_t Params[]);
-  static constexpr uint8_t MaxNumParamBytes = 100;
 
   class CommandParser {
   public:
