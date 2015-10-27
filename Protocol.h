@@ -4,7 +4,6 @@
   * @brief Implements only function identical between ProtocolWithIDs and ProtocolWithMnemonics
   *        DO NOT INSTANTIATE THING CLASS BY ITSELF
   * [PROTOCOL]
-  * @verbatium
     Protocol description.
     - all GUI->FW messages are commands. Command is sequence of bytes which contains:
       - Either 1 byte command ID (if InputParser is CommandTable) or mnemonics ( if InputParser is CommandChain)
@@ -40,7 +39,6 @@
           .
         Info message block may come at any time, but not inside another block
       If error or info message do not fit into 127 bytes remaining text is formatted into consecutive  info message(s) is
-  * @endverbatim
   * [PROTOCOL]
   * @date 9/21/15 instead of dynamically creating commands let's create a static table
   * avp::Protocol::Command_ avp::Protocol::CommandTable = {{Func,NumParamBytes},{Func,NumParamBytes},...}
