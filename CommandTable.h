@@ -1,5 +1,8 @@
 /*! @file General\CommandTable.h
- *! @author Alexander Panasyuk
+ *  @author Alexander Panasyuk
+ *  To use define
+ * template<> const avp::Command_ avp::CommandTable<>::Table[] = {{command,num parameter bytes},...};
+ * template<> const uint8_t CommandTable<>::NumCommands = N_ELEMENTS(Table);
  */
 #ifndef COMMANDTABLE_H_INCLUDED
 #define COMMANDTABLE_H_INCLUDED
