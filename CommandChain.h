@@ -1,8 +1,9 @@
-#ifndef COMMANDCONTAINERS_H_INCLUDED
-#define COMMANDCONTAINERS_H_INCLUDED
+#ifndef COMMANDCHAIN_H_INCLUDED
+#define COMMANDCHAIN_H_INCLUDED
 
 #include <stdint.h>
 #include "Error.h"
+#include "BitBang.h"
 #include "CommandParser.h"
 
 namespace avp {
@@ -21,7 +22,7 @@ namespace avp {
       Link *pNext;
     // public:
       Link(const char *Name_, CommandFunc_ pFunc_, uint8_t NumParamBytes_, Link *pFirst):
-        ID(avp::Chars2type<IDtype>(Name_)), pFunc(pFunc_), NumParamBytes(NumParamBytes_), pNext(pFirst) {
+        ID(Chars2type<IDtype>(Name_)), pFunc(pFunc_), NumParamBytes(NumParamBytes_), pNext(pFirst) {
         AVP_ASSERT_WITH_EXPL((ID & 0xFF) != 0,2,"Byte  0 is reserved for NOOP pseudo-command.");
         AVP_ASSERT_WITH_EXPL(NumParamBytes <= MaxNumParamBytes,3,"Modify MaxNumParamBytes to accommodate %hhu bytes.",NumParamBytes);
         AVP_ASSERT_WITH_EXPL(pFunc != nullptr,4,"We do not do useless commands.");
@@ -59,9 +60,9 @@ namespace avp {
     } // FindByID
   public:
     static void AddCommand(const char Name[sizeof(IDtype)], CommandFunc_ pFunc, uint8_t NumParamBytes) {
-      AVP_ASSERT_WITH_EXPL(FindByID(avp::Chars2type<IDtype>(Name)) == nullptr,1,
+      AVP_ASSERT_WITH_EXPL(FindByID(Chars2type<IDtype>(Name)) == nullptr,1,
                            "A command with this ID already exists."); // check whether we have this command name already
-	  AVP_ASSERT(NumParamBytes <= MaxNumParamBytes);					   
+	  AVP_ASSERT(NumParamBytes <= MaxNumParamBytes);
       pFirst = new Link(Name,pFunc,NumParamBytes,pFirst);
     } // AddCommand
 
@@ -88,8 +89,8 @@ namespace avp {
     } // ParseByte
   }; //class CommandChain
 
-#define _TEMPLATE_DECL_ template<typename IDtype>
-#define _TEMPLATE_SPEC_ CommandChain<IDtype>
+#define _TEMPLATE_DECL_ template<typename IDtype, uint8_t MaxNumParamBytes>
+#define _TEMPLATE_SPEC_ CommandChain<IDtype, MaxNumParamBytes>
 
   _TEMPLATE_DECL_ typename _TEMPLATE_SPEC_::Link *_TEMPLATE_SPEC_::pFirst = nullptr;
   _TEMPLATE_DECL_ typename _TEMPLATE_SPEC_::InputBytes_ _TEMPLATE_SPEC_::InputBytes;
@@ -103,4 +104,4 @@ namespace avp {
 
 
 
-#endif /* COMMANDCONTAINERS_H_INCLUDED */
+#endif /* COMMANDCHAIN_H_INCLUDED */
