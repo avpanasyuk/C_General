@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "BitBang.h"
 #include "Error.h"
+#include "BitBang.h"
 #include "CommandParser.h"
 
 namespace avp {

@@ -14,7 +14,7 @@ namespace avp {
   template<typename T, uint8_t NumChars = sizeof(T)>
   static inline constexpr T Bytes2type(const uint8_t bytes[NumChars]) {
     return T(bytes[0]) + (NumChars == 1?0:(Bytes2type<T,NumChars-1>(bytes+1) << 8));
-  } // Chars2type
+  } // NumChars
 
   template<typename T, uint8_t NumChars = sizeof(T)>
   static inline constexpr T Chars2type(const char str[NumChars]) {
