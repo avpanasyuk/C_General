@@ -120,6 +120,7 @@ namespace avp {
           debug_printf("Port overrun!");
           return_error_code(PORT_OVERRUN);
           FlushRX();
+          InputParser::Flush();
         } else if(SomethingToRX()) {
           int8_t ErrCode;
           switch(ErrCode = InputParser::ParseByte(Port::GetByte())) {
