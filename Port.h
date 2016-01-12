@@ -46,6 +46,10 @@
 #include <stdlib.h>
 #include "CircBuffer.h"
 
+#define AVP_PORT_DEF_RX_BUF_SIZE 7
+#define AVP_PORT_DEF_TX_BUF_SIZE 7
+#define AVP_PORT_DEF_BLK_BUF_SIZE 4
+
 namespace avp {
   //! @note this template should not be instatiated - use either PortByteTX or PortBlockTX
   //! @tparam HW_IO_ - hardware communication class which provides this as in the header description above
@@ -53,7 +57,9 @@ namespace avp {
   //! @tparam ESC_code - this is special byte code placed in BufferTX to indicate that we
   //! should transmit block here. If next byte is ESC_code we have to transmit block. If it is 0 we transmit just ECS_code
   //! the value is random, selected so it is not ASCII and there is nothing special about it
-# define __PORT_TEMPLATE__ template<class HW_IO_, uint8_t Log2_TX_Buf_size=7, uint8_t Log2_TX_BlockBufSize=4, uint8_t Log2_RX_Buf_Size=7, \
+# define __PORT_TEMPLATE__ template<class HW_IO_, uint8_t Log2_TX_Buf_size=AVP_PORT_DEF_TX_BUF_SIZE, \
+                                    uint8_t Log2_TX_BlockBufSize=AVP_PORT_DEF_BLK_BUF_SIZE, \
+                                    uint8_t Log2_RX_Buf_Size=AVP_PORT_DEF_RX_BUF_SIZE, \
                                     typename tSize=uint8_t, uint8_t ESC_code = 224 /* random value */>
 
   __PORT_TEMPLATE__ struct  Port: public HW_IO_ {

@@ -1,19 +1,17 @@
 /**
   * @file
   * @author Alexander Panasyuk
-  * @brief Implements only function identical between ProtocolWithIDs and ProtocolWithMnemonics
-  *        DO NOT INSTANTIATE THING CLASS BY ITSELF
   * [PROTOCOL]
     Protocol description.
     - all GUI->FW messages are commands. Command is sequence of bytes which contains:
       - Either 1 byte command ID (if InputParser is CommandTable) or mnemonics ( if InputParser is CommandChain)
-      - if NumParamBytes == -1 in correspong Command_ structure:
+      - if NumParamBytes == -1 in corresponding Command_ structure:
         - a byte giving the number of following parameter bytes parameter bytes.
       - Parameter bytes. Their number is given either by NumParamBytes field in Command_ structure (if it is not -1) or previous byte
         if NumParamBytes == -1
       - 1 byte of checksum of the bytes above
     - FW-GUI messages are formatted in blocks, each one starts with int8_t CODE and ends with checksum. Block content may be:
-        - command return:
+        -1 command return:
           - CODE byte
           - If CODE is 0 the following is successful latest command return:
             - typical command
@@ -32,8 +30,8 @@
             - if CODE < -2, command was properly received but failed. CODE it is the error message size
               - error message of size -CODE (no trailing 0)
               - 1 uint8_t error message text checksum
-        - info message
-        - If CODE is > 0, then it is an info message size, followed by
+        -2 info message
+         - If CODE is > 0, then it is an info message size, followed by
           - info message text without trailing 0
           - 1 uint8_t info message text checksum
           .

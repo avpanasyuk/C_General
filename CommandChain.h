@@ -9,9 +9,11 @@
 
 namespace avp {
 /// unidirectional command chain
-  template<typename IDtype, uint8_t MaxNumParamBytes = 255>
+  template<typename IDtype, uint8_t MaxNumParamBytes = 255-sizeof(IDtype)-1>
   class CommandChain: public CommandParser {
-
+  public:
+    static constexpr uint8_t VAR_PARAM_NUM = 255;
+  protected:
     /// One Command makes a Link ------------------------------------------------
     static struct Link {
       union {
@@ -21,11 +23,15 @@ namespace avp {
       const CommandFunc_ pFunc;
       const uint8_t NumParamBytes;
       Link *pNext;
-    // public:
+      // public:
+      /// @param NumParamBytes if VAR_PARAM_NUM the command has variable number of arguments, and the first
+      /// parameter byte is the number of following parameters
       Link(const char *Name_, CommandFunc_ pFunc_, uint8_t NumParamBytes_, Link *pFirst):
         ID(Chars2type<IDtype>(Name_)), pFunc(pFunc_), NumParamBytes(NumParamBytes_), pNext(pFirst) {
         AVP_ASSERT_WITH_EXPL((ID & 0xFF) != 0,2,"Byte  0 is reserved for NOOP pseudo-command.");
-        AVP_ASSERT_WITH_EXPL(NumParamBytes <= MaxNumParamBytes,3,"Modify MaxNumParamBytes to accommodate %hhu bytes.",NumParamBytes);
+        AVP_ASSERT_WITH_EXPL(NumParamBytes == VAR_PARAM_NUM ||
+                             NumParamBytes <= MaxNumParamBytes,3,
+                             "Modify MaxNumParamBytes to accommodate %hhu bytes.",NumParamBytes);
         AVP_ASSERT_WITH_EXPL(pFunc != nullptr,4,"We do not do useless commands.");
       } //  constructor
       bool IsIt(IDtype ID_) const { return ID_ == ID; }
@@ -60,10 +66,12 @@ namespace avp {
       return nullptr;
     } // FindByID
   public:
+    /// @param NumParamBytes if VAR_PARAM_NUM the command has variable number of arguments, and the first
+    /// parameter byte is the number of following parameters.
     static void AddCommand(const char Name[sizeof(IDtype)], CommandFunc_ pFunc, uint8_t NumParamBytes) {
       AVP_ASSERT_WITH_EXPL(FindByID(Chars2type<IDtype>(Name)) == nullptr,1,
                            "A command with this ID already exists."); // check whether we have this command name already
-	  AVP_ASSERT(NumParamBytes <= MaxNumParamBytes);
+      AVP_ASSERT(NumParamBytes == VAR_PARAM_NUM || NumParamBytes <= MaxNumParamBytes);
       pFirst = new Link(Name,pFunc,NumParamBytes,pFirst);
     } // AddCommand
 
@@ -71,23 +79,33 @@ namespace avp {
 
     static ParseError_ ParseByte(uint8_t NewByte) { // this is static member function
       static const Link *pCur;
+      static uint8_t ParamNum;
       if(pInputByte == InputBytes.Name && NewByte == 0) return NOOP;
 
-      *pInputByte = NewByte;
+      *(pInputByte++) = NewByte;
 
-      if(++pInputByte == InputBytes.Params) { // just got a new command ID
+      if(pInputByte == InputBytes.Params) { // just got a new command ID
         if((pCur = FindByID(InputBytes.ID)) == nullptr) return WRONG_ID;
-      } else if(pInputByte == &InputBytes.Params[pCur->NumParamBytes + 1])  { // got everything: command,parameters and checksum
-        if(sum<uint8_t>(InputBytes.Name,sizeof(IDtype) + pCur->NumParamBytes) == InputBytes.Params[pCur->NumParamBytes]) {
-          pCur->pFunc(InputBytes.Params); // executing command
-          pInputByte = InputBytes.Name;
-        } else {
-          debug_printf("CS received = %hhu, calculated = %hhu", 0,0);
-          return BAD_CHECKSUM;
+      } else {
+        if(pInputByte == InputBytes.Params + 1)
+          // we store variable param number as a parameter, but it is not included in number of parameter byte value, that's
+          // why we have + 1 here
+          ParamNum = pCur->NumParamBytes == VAR_PARAM_NUM?NewByte+1:pCur->NumParamBytes;
+        AVP_ASSERT(ParamNum < MaxNumParamBytes);
+        if(pInputByte == InputBytes.Params + ParamNum + 1)  { // got everything: command,parameters and checksum
+          if(sum<uint8_t>(InputBytes.Name,sizeof(IDtype) + ParamNum) == InputBytes.Params[ParamNum]) {
+            pCur->pFunc(InputBytes.Params); // executing command
+            pInputByte = InputBytes.Name;
+          } else {
+            debug_printf("CS received = %hhu, calculated = %hhu", 0,0);
+            return BAD_CHECKSUM;
+          }
         }
       }
       return NO_ERROR; // everything's OK
     } // ParseByte
+
+    static constexpr GetMaxParamBytes() { return MaxNumParamBytes; }
   }; //class CommandChain
 
 #define _TEMPLATE_DECL_ template<typename IDtype, uint8_t MaxNumParamBytes>
