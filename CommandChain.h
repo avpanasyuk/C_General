@@ -89,7 +89,7 @@ namespace avp {
       } else {
         if(pInputByte == InputBytes.Params + 1)
           // we store variable param number as a parameter, but it is not included in number of parameter byte value, that's
-          // why we have + 1 here
+          // why we have + 1 here >
           ParamNum = pCur->NumParamBytes == VAR_PARAM_NUM?NewByte+1:pCur->NumParamBytes;
         AVP_ASSERT(ParamNum < MaxNumParamBytes);
         if(pInputByte == InputBytes.Params + ParamNum + 1)  { // got everything: command,parameters and checksum
