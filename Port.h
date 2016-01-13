@@ -44,6 +44,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <AVP_LIBS/General/Math.h>
 #include "CircBuffer.h"
 
 #define AVP_PORT_DEF_RX_BUF_SIZE 7

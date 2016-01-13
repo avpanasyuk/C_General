@@ -105,7 +105,7 @@ namespace avp {
       return NO_ERROR; // everything's OK
     } // ParseByte
 
-    static constexpr GetMaxParamBytes() { return MaxNumParamBytes; }
+    static constexpr uint8_t GetMaxParamBytes() { return MaxNumParamBytes; }
   }; //class CommandChain
 
 #define _TEMPLATE_DECL_ template<typename IDtype, uint8_t MaxNumParamBytes>
