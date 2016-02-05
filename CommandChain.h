@@ -1,6 +1,10 @@
 #ifndef COMMANDCHAIN_H_INCLUDED
 #define COMMANDCHAIN_H_INCLUDED
 
+/*
+* see Protocol.h for protocol description
+*/
+
 #include <stdint.h>
 #include "BitBang.h"
 #include "Error.h"
@@ -86,18 +90,22 @@ namespace avp {
 
       if(pInputByte == InputBytes.Params) { // just got a new command ID
         if((pCur = FindByID(InputBytes.ID)) == nullptr) return WRONG_ID;
+        debug_printf("Command: %.4s   ",InputBytes.Name);
       } else {
-        if(pInputByte == InputBytes.Params + 1)
+        if(pInputByte == InputBytes.Params + 1) // Ok, now we decide where we get N of parameter  bytes from
           // we store variable param number as a parameter, but it is not included in number of parameter byte value, that's
           // why we have + 1 here >
           ParamNum = pCur->NumParamBytes == VAR_PARAM_NUM?NewByte+1:pCur->NumParamBytes;
+        debug_printf("Expected parameters: %hu\n",ParamNum);
         AVP_ASSERT(ParamNum < MaxNumParamBytes);
         if(pInputByte == InputBytes.Params + ParamNum + 1)  { // got everything: command,parameters and checksum
-          if(sum<uint8_t>(InputBytes.Name,sizeof(IDtype) + ParamNum) == InputBytes.Params[ParamNum]) {
+          uint8_t DataCS = sum<uint8_t>(InputBytes.Name,sizeof(IDtype) + ParamNum),
+                  SentCS = InputBytes.Params[ParamNum];
+          if(DataCS == SentCS) {
             pCur->pFunc(InputBytes.Params); // executing command
             pInputByte = InputBytes.Name;
           } else {
-            debug_printf("CS received = %hhu, calculated = %hhu", 0,0);
+            debug_printf("CS received = %hu, calculated = %hu\n", SentCS, DataCS);
             return BAD_CHECKSUM;
           }
         }

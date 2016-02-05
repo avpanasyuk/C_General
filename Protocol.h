@@ -65,7 +65,7 @@ namespace avp {
   template<class Port, class InputParser>
   class Protocol: public Port {
     protected:
-      enum ErrorCodes_ { CS_ERROR = 1, PORT_OVERRUN };
+      enum ErrorCodes_ {CS_ERROR = 1, PORT_OVERRUN};
       static bool PortConnected;
       static const char *BeaconStr;
 
@@ -116,7 +116,7 @@ namespace avp {
 
         if(Port::IsOverrun()) {
           debug_printf("Port overrun!");
-          return_error_code(PORT_OVERRUN);
+          return_error_code(-PORT_OVERRUN);
           FlushRX();
           InputParser::Flush();
         } else if(SomethingToRX()) {
@@ -126,7 +126,7 @@ namespace avp {
               return_error_printf("Command is not defined!\n");
               break;
             case InputParser::BAD_CHECKSUM:
-              return_error_code(CS_ERROR);
+              return_error_code(-CS_ERROR);
               FlushRX();  // Oops
             case InputParser::NO_ERROR: break;
             case InputParser::NOOP: ReturnOK(); break;
@@ -160,7 +160,7 @@ namespace avp {
 
       /// returns code which indicated that command was not received and has to be resent
       static bool return_error_code(int8_t Code) {
-        AVP_ASSERT(Code <= PORT_OVERRUN);
+        AVP_ASSERT(Code <= -PORT_OVERRUN);
         return Port::write_char(-Code) && Port::write_char(-Code); // checksum which is equal to error code
       } //  return_error_code
 
@@ -194,13 +194,13 @@ namespace avp {
       }
       template<typename type>
       static void ReturnByPtr(const type *p, size_t size=1) {
-        AVP_ASSERT(avp::write_buffered<ReturnBytesBuffered>::array(p,size));
+        AVP_ASSERT(write_buffered<ReturnBytesBuffered>::array(p,size));
       }
 
       // We do not have to do ReturnUnbuffered, there always should be pointer
       template<typename type>
       static void ReturnUnbufferedByPtr(const type *p, size_t size=1) {
-        AVP_ASSERT(avp::write_unbuffered<ReturnBytesUnbuffered>::array(p,size));
+        AVP_ASSERT(write_unbuffered<ReturnBytesUnbuffered>::array(p,size));
       }
   }; //class Protocol
 
