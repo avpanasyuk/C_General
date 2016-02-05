@@ -84,26 +84,33 @@ namespace avp {
     static ParseError_ ParseByte(uint8_t NewByte) { // this is static member function
       static const Link *pCur;
       static uint8_t ParamNum;
-      if(pInputByte == InputBytes.Name && NewByte == 0) return NOOP;
+      if(pInputByte == InputBytes.Name && NewByte == 0) {
+        // debug_printf("Got NOOP\n");
+        return NOOP;
+      }
 
+      // debug_printf("%hu ",NewByte);
       *(pInputByte++) = NewByte;
 
       if(pInputByte == InputBytes.Params) { // just got a new command ID
         if((pCur = FindByID(InputBytes.ID)) == nullptr) return WRONG_ID;
-        debug_printf("Command: %.4s   ",InputBytes.Name);
+        // debug_printf("Command: %.4s   ",InputBytes.Name);
       } else {
-        if(pInputByte == InputBytes.Params + 1) // Ok, now we decide where we get N of parameter  bytes from
+        if(pInputByte == InputBytes.Params + 1) { // Ok, now we decide where we get N of parameter  bytes from
           // we store variable param number as a parameter, but it is not included in number of parameter byte value, that's
           // why we have + 1 here >
           ParamNum = pCur->NumParamBytes == VAR_PARAM_NUM?NewByte+1:pCur->NumParamBytes;
-        debug_printf("Expected parameters: %hu\n",ParamNum);
-        AVP_ASSERT(ParamNum < MaxNumParamBytes);
+          // debug_printf("Expected param bytes: %hu\n",ParamNum);
+          AVP_ASSERT(ParamNum < MaxNumParamBytes);
+        }
+
         if(pInputByte == InputBytes.Params + ParamNum + 1)  { // got everything: command,parameters and checksum
           uint8_t DataCS = sum<uint8_t>(InputBytes.Name,sizeof(IDtype) + ParamNum),
                   SentCS = InputBytes.Params[ParamNum];
           if(DataCS == SentCS) {
             pCur->pFunc(InputBytes.Params); // executing command
             pInputByte = InputBytes.Name;
+            // debug_printf("\nDone\n");
           } else {
             debug_printf("CS received = %hu, calculated = %hu\n", SentCS, DataCS);
             return BAD_CHECKSUM;
