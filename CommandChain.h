@@ -101,7 +101,7 @@ namespace avp {
           // why we have + 1 here >
           ParamNum = pCur->NumParamBytes == VAR_PARAM_NUM?NewByte+1:pCur->NumParamBytes;
           // debug_printf("Expected param bytes: %hu\n",ParamNum);
-          AVP_ASSERT(ParamNum < MaxNumParamBytes);
+          AVP_ASSERT_WITH_EXPL(ParamNum < MaxNumParamBytes,0,"%hu vs %hu", ParamNum, MaxNumParamBytes);
         }
 
         if(pInputByte == InputBytes.Params + ParamNum + 1)  { // got everything: command,parameters and checksum
@@ -109,7 +109,7 @@ namespace avp {
                   SentCS = InputBytes.Params[ParamNum];
           if(DataCS == SentCS) {
             pCur->pFunc(InputBytes.Params); // executing command
-            pInputByte = InputBytes.Name;
+            pInputByte = InputBytes.Name; ///< get ready for new command
             // debug_printf("\nDone\n");
           } else {
             debug_printf("CS received = %hu, calculated = %hu\n", SentCS, DataCS);

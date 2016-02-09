@@ -91,6 +91,7 @@ namespace avp {
         if(PadSize) AVP_ASSERT(write_buffered<Port::write>::array(Pad,PadSize));
       } // error_message
 
+      /// flashing serial port input
       static void FlushRX() {
         // read the rest if something is transmitted
         Millisec::Pause(10); // for uart to finish
