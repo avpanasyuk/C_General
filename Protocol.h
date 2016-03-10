@@ -161,7 +161,7 @@ namespace avp {
 
       /// returns code which indicated that command was not received and has to be resent
       static bool return_error_code(int8_t Code) {
-        AVP_ASSERT(Code <= -PORT_OVERRUN);
+        AVP_ASSERT(Code >= -PORT_OVERRUN);
         return Port::write_char(-Code) && Port::write_char(-Code); // checksum which is equal to error code
       } //  return_error_code
 
