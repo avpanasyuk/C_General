@@ -121,7 +121,7 @@ namespace avp {
           FlushRX();
           InputParser::Flush();
         } else if(SomethingToRX()) {
-          int8_t ErrCode;
+          enum CommandParser::ParseError_ ErrCode;
           switch(ErrCode = InputParser::ParseByte(Port::GetByte())) {
             case InputParser::WRONG_ID:
               return_error_printf("Command is not defined!\n");
@@ -192,6 +192,11 @@ namespace avp {
       template<typename type>
       static void Return(const type &X) {
         AVP_ASSERT(ReturnBytesBuffered((const uint8_t *)&X,sizeof(X)));
+      }
+      // some useful templates
+      template<typename type>
+      static void ReturnUnbuffered(const type &X, typename Port::tReleaseFunc pFunc = nullptr) {
+        AVP_ASSERT(ReturnBytesUnbuffered((const uint8_t *)&X,sizeof(X),pFunc));
       }
       template<typename type>
       static void ReturnByPtr(const type *p, size_t size=1) {
