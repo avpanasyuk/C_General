@@ -126,7 +126,7 @@ namespace avp {
         return_error_code(-(int8_t)PORT_OVERRUN);
         FlushRX();
         InputParser::Flush();
-      } else if(Port::SomethingToRX()) {
+      } else if(SomethingToRX()) {
         switch(InputParser::ParseByte(Port::GetByte())) {
           case InputParser::WRONG_ID:
             return_error_printf("Command is not defined!\n");
