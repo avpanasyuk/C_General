@@ -78,4 +78,53 @@ struct CircBuffer {
     tSize BeingRead, BeingWritten; //!< indexes of buffer currently being ....
 }; // CircBuffer
 
+template <typename T, uint8_t size = uint8_t(-1)>
+struct CircBufferNonPWR2 {
+    // *********** General functions
+    CircBufferNonPWR2() { BeingWritten = 0; Clear(); }
+    void Clear()  {  BeingRead = BeingWritten; }
+    static constexpr uint8_t GetCapacity() { return size - 1; };
+
+    //************* Reader functions ***************************************
+    uint8_t LeftToRead() const  { return BeingWritten > BeingRead?BeingWritten - BeingRead:BeingWritten + size - BeingRead; }
+
+    //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
+    T const *GetSlotToRead() { return &Buffer[BeingRead]; }
+
+    void FinishedReading() { if(++BeingRead == size) BeingRead = 0; }
+
+    T Read_() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
+
+    bool Read(T* Dst) {
+      if(LeftToRead() == 0) return false;
+      else { *Dst = Read_(); return true; }
+    } // safer Read
+
+    //************* Writer functions *************************************************
+    uint8_t LeftToWrite() const  { return GetCapacity() - LeftToRead(); }
+
+    T *GetSlotToWrite() { return &Buffer[BeingWritten]; }
+
+    void FinishedWriting() { if(++BeingWritten == size) BeingWritten = 0; }
+
+    void Write_(T const &d) { *GetSlotToWrite() = d; FinishedWriting(); }
+
+    bool Write(T const &d) {
+      if(LeftToWrite() == 0) return false;
+      else { Write_(d); return true; }
+    } // safe Write
+
+    // It is risky function because if there is no place to write it modifies BeingRead index, so interferes with reading function. E.g
+    // if read is in progress and this function is called from the interrupt (or vise versa) things may get screwed up.
+    // The function never fails
+    T *ForceSlotToWrite()  {
+      if(LeftToWrite() == 0) FinishedReading();
+      return GetSlotToWrite();
+    } // ForceSlotToWrite
+
+  protected:
+    T Buffer[size];
+    uint8_t BeingRead, BeingWritten; //!< indexes of buffer currently being ....
+}; // CircBuffer
+
 #endif /* CIRCBUFFER_H_ */
