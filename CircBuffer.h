@@ -86,7 +86,7 @@ struct CircBufferNonPWR2 {
     static constexpr uint8_t GetCapacity() { return size - 1; };
 
     //************* Reader functions ***************************************
-    uint8_t LeftToRead() const  { return BeingWritten > BeingRead?BeingWritten - BeingRead:BeingWritten + size - BeingRead; }
+    uint8_t LeftToRead() const  { return BeingWritten >= BeingRead?BeingWritten - BeingRead:BeingWritten + size - BeingRead; }
 
     //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
     T const *GetSlotToRead() { return &Buffer[BeingRead]; }
