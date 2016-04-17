@@ -34,6 +34,7 @@ namespace avp {
       constexpr size_t N() const { return Length; }
 
       T* get_ptr() const { return Data; }
+      const T* after_last() const { return Data + Length; }
 
 
       inline friend bool operator!=(Vector const &v1, Vector const &v2) {
