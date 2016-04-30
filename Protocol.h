@@ -205,8 +205,8 @@ namespace avp {
 
     // We do not have to do ReturnUnbuffered, there always should be pointer
     template<typename type>
-    static void ReturnUnbufferedByPtr(const type *p, size_t size=1) {
-      AVP_ASSERT(write_unbuffered<ReturnBytesUnbuffered>::array(p,size));
+    static void ReturnUnbufferedByPtr(const type *p, size_t size=1, typename Port::tReleaseFunc pFunc = nullptr) {
+      AVP_ASSERT(write_unbuffered<ReturnBytesUnbuffered>::array(p,size,pFunc));
     }
   }; //class Protocol
 
