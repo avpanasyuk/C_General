@@ -144,11 +144,11 @@ namespace avp {
     /// split info message into proper chunks
     static bool info_message(const uint8_t *Src, size_t Size) {
       while(Size > INT8_MAX)  {
-        info_message_(Src,INT8_MAX);
+        AVP_ASSERT(info_message_(Src,INT8_MAX));
         Src += INT8_MAX;
         Size -= INT8_MAX;
       }
-      info_message_(Src,Size);
+      AVP_ASSERT(info_message_(Src,Size));
       return true;
     } // info_message
 
