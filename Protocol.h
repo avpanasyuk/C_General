@@ -117,7 +117,7 @@ namespace avp {
     } //  return_error_code
 
     static void cycle() {
-      static RunPeriodically<millis,SendBeacon,100> BeaconTicker;
+      static RunPeriodically<millis,SendBeacon,50> BeaconTicker; % should be able to send 8 chracters in halve a second
 
       BeaconTicker.cycle();
 
