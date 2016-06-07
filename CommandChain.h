@@ -89,19 +89,19 @@ namespace avp {
         return NOOP;
       }
 
-      // debug_printf("%hu ",NewByte);
+      debug_printf("%hu ",NewByte);
       *(pInputByte++) = NewByte;
 
       if(pInputByte == InputBytes.Params) { // just got a new command ID
         if((pCur = FindByID(InputBytes.ID)) == nullptr) return WRONG_ID;
-        // debug_printf("Command: %.4s   ",InputBytes.Name);
+        debug_printf("Command: %.4s   ",InputBytes.Name);
       } else {
         if(pInputByte == InputBytes.Params + 1) { // Ok, now we decide where we get N of parameter  bytes from
           // we store variable param number as a parameter, but it is not included in number of parameter byte value, that's
           // why we have + 1 here >
           ParamNum = pCur->NumParamBytes == VAR_PARAM_NUM?NewByte+1:pCur->NumParamBytes;
           // debug_printf("Expected param bytes: %hu\n",ParamNum);
-          AVP_ASSERT_WITH_EXPL(ParamNum < MaxNumParamBytes,0,"%hu vs %hu", ParamNum, MaxNumParamBytes);
+          AVP_ASSERT_WITH_EXPL(ParamNum <= MaxNumParamBytes,0,"%hu vs %hu", ParamNum, MaxNumParamBytes);
         }
 
         if(pInputByte == InputBytes.Params + ParamNum + 1)  { // got everything: command,parameters and checksum
