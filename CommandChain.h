@@ -90,7 +90,7 @@ namespace avp {
         return NOOP;
       }
 
-      debug_printf("%hu ",NewByte);
+      // debug_printf("%hu ",NewByte);
       *(pInputByte++) = NewByte;
 
       if(pInputByte == InputBytes.Params) { // just got a new command ID
@@ -112,7 +112,7 @@ namespace avp {
           if(DataCS == SentCS) {
             pCur->pFunc(InputBytes.Params); // executing command
             pInputByte = InputBytes.Name; ///< get ready for new command
-            debug_printf("Done\n");
+            // debug_printf("Done\n");
           } else {
             // debug_printf("CS received = %hu, calculated = %hu\n", SentCS, DataCS);
             return BAD_CHECKSUM;
