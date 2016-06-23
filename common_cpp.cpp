@@ -21,6 +21,7 @@ namespace avp {
     FailReason = reason;
     hang_cpu();
   }
+  __weak void debug_action() {};
 } // namespace avp
 
 int debug_printf(char const *format, ...) {
@@ -30,3 +31,4 @@ int debug_printf(char const *format, ...) {
   va_end(ap);
   return Out?1:-1;
 }
+
