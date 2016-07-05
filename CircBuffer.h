@@ -72,10 +72,10 @@ struct CircBuffer {
     } // safer Read
 
   protected:
+    tSize BeingRead, BeingWritten; //!< indexes of buffer currently being ....
     T Buffer[size_t(GetCapacity())+1]; //!< buffer size is 2^sizeLog2
     static constexpr tSize Mask = GetCapacity(); //!< marks used bits in index variables
     // we do not care what happens in upper bits
-    tSize BeingRead, BeingWritten; //!< indexes of buffer currently being ....
 }; // CircBuffer
 
 template <typename T, uint8_t size = uint8_t(-1)>
@@ -123,8 +123,8 @@ struct CircBufferNonPWR2 {
     } // ForceSlotToWrite
 
   protected:
-    T Buffer[size];
     uint8_t BeingRead, BeingWritten; //!< indexes of buffer currently being ....
+    T Buffer[size];
 }; // CircBuffer
 
 #endif /* CIRCBUFFER_H_ */
