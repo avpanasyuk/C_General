@@ -5,7 +5,7 @@
     <ProjectVersion>6.2</ProjectVersion>
     <ToolchainName>com.Atmel.AVRGCC8.CPP</ToolchainName>
     <ProjectGuid>{941d5cce-305a-4df1-bde4-3b9aee7fed1f}</ProjectGuid>
-    <avrdevice>ATmega88A</avrdevice>
+    <avrdevice>ATmega328P</avrdevice>
     <avrdeviceseries>none</avrdeviceseries>
     <OutputType>StaticLibrary</OutputType>
     <Language>CPP</Language>
@@ -53,7 +53,8 @@
       <ToolNumber>00A200040724</ToolNumber>
       <ToolName>AVR Dragon</ToolName>
     </com_atmel_avrdbg_tool_avrdragon>
-    <avrtoolinterface>JTAG</avrtoolinterface>
+    <avrtoolinterface>
+    </avrtoolinterface>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <ToolchainSettings>
@@ -95,6 +96,8 @@
         </avrgcccpp.linker.libraries.Libraries>
       </AvrGccCpp>
     </ToolchainSettings>
+    <OutputFileName>libGeneral</OutputFileName>
+    <OutputFileExtension>.a</OutputFileExtension>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ToolchainSettings>
@@ -136,6 +139,8 @@
         <avrgcccpp.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcccpp.assembler.debugging.DebugLevel>
       </AvrGccCpp>
     </ToolchainSettings>
+    <OutputFileName>libGeneral</OutputFileName>
+    <OutputFileExtension>.a</OutputFileExtension>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="BG_message.h">

@@ -37,9 +37,9 @@ namespace avp {
     return ((type(1) << numbits) - 1) << lowest_bit;
   }
   // SETTING BITS
-  template<typename type> inline void set_high(type &var, uint8_t bitI) { var |= 1 << bitI; }
+  template<typename type> inline void set_high(type &var, uint8_t bitI) { var |= (1 << bitI); }
   template<typename type> inline void set_low(type &var, uint8_t bitI) { var &= ~(1 << bitI); }
-  template<typename type> inline void toggle(type &var, uint8_t bitI) { var ^= 1 << bitI; }
+  template<typename type> inline void toggle(type &var, uint8_t bitI) { var ^= (1 << bitI); }
   template<typename type> inline void setbit(type &var, uint8_t bitI, bool value) {
     value?set_high(var,bitI):set_low(var,bitI);
   } // setbit
