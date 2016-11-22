@@ -44,7 +44,7 @@ inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 ==
 
 #if  defined ( __GNUC__ )
 #ifndef __weak
-#define __weak   __attribute__((weak))
+#define __weak   __attribute__((weak,noinline))
 #endif /* __weak */
 #endif /* __GNUC__ */
 
