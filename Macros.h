@@ -12,7 +12,7 @@
 
 #define N_ELEMENTS(array) (sizeof(array)/sizeof(array[0]))
 #define AFTER_LAST(array) (array + N_ELEMENTS(array))
-#define FOR_ARRAY(array,index)     for(auto index = array; index < AFTER_LAST(array); ++index)
+#define FOR_ARRAY(array,ptr)     for(auto ptr = array; ptr < AFTER_LAST(array); ++ptr)
 
 
 #define SINGLE_ARG(...) __VA_ARGS__ // in case there a commas in arguments to a macro
