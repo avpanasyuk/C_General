@@ -5,7 +5,7 @@
     Protocol description.
     - all GUI->FW messages are commands. Command is sequence of bytes which contains:
       - Either 1 byte command ID (if InputParser is CommandTable) or mnemonics ( if InputParser is CommandChain)
-      - if NumParamBytes == -1 in corresponding Command_ structure:
+      - if NumParamBytes == -1 in corresponding Command_ structure (which means that command take a variable number of Parameter bytes)
         - a byte giving the number of following parameter bytes parameter bytes.
       - Parameter bytes. Their number is given either by NumParamBytes field in Command_ structure (if it is not -1) or previous byte
         if NumParamBytes == -1
