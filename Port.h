@@ -6,7 +6,7 @@
 * transmission and reception
 *
 * There are two types of HW_IO class - one can transmit only by bytes, another by block (via DMA, e.g)
-* template Port should not be instatiated - use either PortByteTX or PortBlockTX
+* template Port should not be instantiated - use either PortByteTX or PortBlockTX
 *
 * -# should be static
 * -# member functions:HW_IO_::SetCallBacks(StoreReceivedByte,GetByteToSend), or

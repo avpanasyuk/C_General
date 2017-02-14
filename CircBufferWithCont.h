@@ -102,6 +102,38 @@ struct CircBufferWithCont {
 
   tSize GetSizeToRead() { return LastReadSize; }
 
+  // ************* two Continous block reading functions
+  #ifdef TWO_BLOCKS
+  /**
+   * when BeingWritten pointer is wrapped over the data to read consist of two continuous blocks. Following is
+   * at the same time to return both of them
+  */
+  struct TwoBlocks_ {
+      T const *pBlock[2];
+      tSize Size[2];
+  }; // TwoBlocks
+
+ TwoBlocks_ GetContinousBlockToRead() {
+     TwoBlocks_ Out;
+
+     LastReadSize = LeftToRead();
+     Out.pBlock[1] = &Buffer[BeingRead];
+
+    if(BeingRead > BeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
+      Out.Size[1] = GetCapacity() + 1 - BeingRead;
+      Out.pBlock[2] = &Buffer[0];
+      Out.Size[2] = BeingWritten;
+    } else {
+      Out.Size[1] = LastReadSize;
+      Out.pBlock[2] = nullptr;
+      Out.Size[2] = 0;
+    }
+    return Out;
+  } // GetContinousBlockToRead
+
+  #endif
+
+  // ************* service functions
   // for debugging purposes
   void GetInternals(tSize *WriteI, tSize *ReadI, tSize *ReadSize) {
     *WriteI = BeingWritten; *ReadI = BeingRead; *ReadSize = LastReadSize;
