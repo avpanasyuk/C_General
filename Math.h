@@ -11,9 +11,9 @@
 namespace avp {
   template<typename T> inline constexpr T max(T const& a, T const& b) { return a>b?a:b; }
   template<typename T> inline constexpr T min(T const& a, T const& b) { return a<b?a:b; }
-  template<typename T> inline constexpr T Abs(T const& a) { 
-    static_assert(T(-1) < 0,"Type got to be signed, otherwise operator- screws things up!"); 
-    return a<0?-a:a; 
+  template<typename T> inline constexpr T Abs(T const& a) {
+    static_assert(T(-1) < 0,"Type got to be signed, otherwise operator- screws things up!");
+    return a<0?-a:a;
   }
   template<typename T> inline constexpr T CeilRatio(T const& num, T const& denom)
   { return (num + denom - 1)/denom; }
@@ -40,7 +40,7 @@ namespace avp {
            (numer > denom?
             (numer > 0x4000?
              RoundLog2Ratio(numer>>1,denom,true):RoundLog2Ratio(numer,denom<<1,true)
-            )+1:(numer*numer*2 < denom*denom?-1:0)
+        )+1:(numer*numer*2 < denom*denom?-1:0)
            ):(numer > denom?RoundLog2Ratio(numer,denom,true):-RoundLog2Ratio(denom,numer,true));
   }
   constexpr int8_t CeilLog2Ratio(uint32_t numer, uint32_t denom) {
@@ -64,6 +64,18 @@ namespace avp {
     while(size--) out += *(p++);
     return out;
   } // sum
+
+#if  defined(__ARM_FP)
+  static inline float vsqrtf(float op1) {
+    if(op1 <= 0.f)
+      return 0.f;
+
+    float result;
+    asm volatile ("vsqrt.f32 %0, %1" : "=w" (result) : "w" (op1) );
+    return (result);
+  } //vsqrtf
+#endif
+
 } // namespace avp
 
 #endif /* MATH_H_INCLUDED */
