@@ -64,150 +64,204 @@ namespace avp {
 ///   Subclass of CommandParser, currently either CommandChain or CommandTable
   template<class Port, class InputParser>
   class Protocol: public Port {
-  protected:
-    enum ErrorCodes_ {CS_ERROR = 1, PORT_OVERRUN};
-    static bool PortConnected;
-    static const char *BeaconStr;
+    protected:
+      enum ErrorCodes_ {CS_ERROR = 1, PORT_OVERRUN};
+      static bool PortConnected;
+      static const char *BeaconStr;
 
-    /// base private message which writes both info and error messages
-    static inline bool info_message_(const uint8_t *Src, int8_t Size) {
-      return Port::write_char(Size) &&
-             Port::write(Src,Size) &&
-             Port::write_byte(sum<uint8_t>(Src,Size));
-    } // info_message_
+      /// base private message which writes both info and error messages
+      static inline bool info_message_(const uint8_t *Src, int8_t Size) {
+        return Port::write_char(Size) &&
+               Port::write(Src,Size) &&
+               Port::write_byte(sum<uint8_t>(Src,Size));
+      } // info_message_
 
-    /// sends error message, checking whether we need padding
-    /// @param Size - positive
-    static inline void error_message_(const uint8_t *Src, int8_t Size) {
-      AVP_ASSERT(Size > 0);
-      uint8_t PadSize = 0;
-      if(Size <= PORT_OVERRUN) Size += (PadSize = PORT_OVERRUN-Size+1);
+      /// sends error message, checking whether we need padding
+      /// @param Size - positive
+      static inline void error_message_(const uint8_t *Src, int8_t Size) {
+        AVP_ASSERT(Size > 0);
+        uint8_t PadSize = 0;
+        if(Size <= PORT_OVERRUN) Size += (PadSize = PORT_OVERRUN-Size+1);
 
-      AVP_ASSERT(Port::write_char(-Size));
-      AVP_ASSERT(Port::write(Src,Size));
-      AVP_ASSERT(Port::write_byte(sum<uint8_t>(Src,Size)));
+        AVP_ASSERT(Port::write_char(-Size));
+        AVP_ASSERT(Port::write(Src,Size));
+        AVP_ASSERT(Port::write_byte(sum<uint8_t>(Src,Size)));
 
-      static uint8_t Pad[PORT_OVERRUN];
-      if(PadSize) AVP_ASSERT(write_buffered<Port::write>::array(Pad,PadSize));
-    } // error_message
+        static uint8_t Pad[PORT_OVERRUN];
+        if(PadSize) AVP_ASSERT(write_buffered<Port::write>::array(Pad,PadSize));
+      } // error_message
 
-    /// flashing serial port input
-    static void FlushRX() {
-      // read the rest if something is transmitted
-      Millisec::Pause(10); // for uart to finish
-      uint8_t b;
-      do {
-        Port::FlushRX();
-        // wait if something appears
-        uint32_t WaitUntil = millis() + 3;
-        while(WaitUntil - millis() > UINT32_MAX/2); // 10 millis delay
-      } while(Port::read(&b));
-      InputParser::Flush();
-    } // FlushRX
-
-  public:
-    static void Init(const char *BeaconStr_) { BeaconStr = BeaconStr_; }
-    //! if port is disconnected run beacon, which allows GUI to find our serial port
-    static void SendBeacon() { if(!PortConnected) write_buffered<Port::write>::string(BeaconStr); }
-
-    /// returns code which indicated that command was not received and has to be resent
-    static bool return_error_code(int8_t Code) {
-      AVP_ASSERT(Code >= -(int8_t)PORT_OVERRUN);
-      return Port::write_char(-Code) && Port::write_char(-Code); // checksum which is equal to error code
-    } //  return_error_code
-
-    static void cycle() {
-      static RunPeriodically<millis,SendBeacon,50> BeaconTicker; // should be able to send 8 chracters in halve a second
-
-      BeaconTicker.cycle();
-
-      if(Port::IsOverrun()) {
-        debug_printf("Port overrun!");
-        return_error_code(-(int8_t)PORT_OVERRUN);
-        FlushRX();
+      /// flashing serial port input
+      static void FlushRX() {
+        // read the rest if something is transmitted
+        Millisec::Pause(10); // for uart to finish
+        uint8_t b;
+        do {
+          Port::FlushRX();
+          // wait if something appears
+          uint32_t WaitUntil = millis() + 3;
+          while(WaitUntil - millis() > UINT32_MAX/2); // 10 millis delay
+        } while(Port::read(&b));
         InputParser::Flush();
-      } else if(SomethingToRX()) {
-        switch(InputParser::ParseByte(Port::GetByte())) {
-          case InputParser::WRONG_ID:
-            return_error_printf("Command is not defined!\n");
-            break;
-          case InputParser::BAD_CHECKSUM:
-            return_error_code(-(int8_t)CS_ERROR);
-            FlushRX();  // Oops
-          case InputParser::NO_ERROR: break;
-          case InputParser::NOOP: ReturnOK(); break;
-          default: AVP_ERROR("Unrecognized error code.");
+      } // FlushRX
+
+    public:
+      static void Init(const char *BeaconStr_) { BeaconStr = BeaconStr_; }
+      //! if port is disconnected run beacon, which allows GUI to find our serial port
+      static void SendBeacon() { if(!PortConnected) write_buffered<Port::write>::string(BeaconStr); }
+
+      /// returns code which indicated that command was not received and has to be resent
+      static bool return_error_code(int8_t Code) {
+        AVP_ASSERT(Code >= -(int8_t)PORT_OVERRUN);
+        return Port::write_char(-Code) && Port::write_char(-Code); // checksum which is equal to error code
+      } //  return_error_code
+
+      static void cycle() {
+        static RunPeriodically<millis,SendBeacon,50> BeaconTicker; // should be able to send 8 chracters in halve a second
+
+        BeaconTicker.cycle();
+
+        if(Port::IsOverrun()) {
+          debug_printf("Port overrun!");
+          return_error_code(-(int8_t)PORT_OVERRUN);
+          FlushRX();
+          InputParser::Flush();
+        } else if(SomethingToRX()) {
+          switch(InputParser::ParseByte(Port::GetByte())) {
+            case InputParser::WRONG_ID:
+              return_error_printf("Command is not defined!\n");
+              break;
+            case InputParser::BAD_CHECKSUM:
+              return_error_code(-(int8_t)CS_ERROR);
+              FlushRX();  // Oops
+            case InputParser::NO_ERROR: break;
+            case InputParser::NOOP: ReturnOK(); break;
+            default: AVP_ERROR("Unrecognized error code.");
+          }
         }
-      }
-    } //  cycle
+      } //  cycle
 
-    /// split info message into proper chunks
-    static bool info_message(const uint8_t *Src, size_t Size) {
-      while(Size > INT8_MAX)  {
-        AVP_ASSERT(info_message_(Src,INT8_MAX));
-        Src += INT8_MAX;
-        Size -= INT8_MAX;
-      }
-      AVP_ASSERT(info_message_(Src,Size));
-      return true;
-    } // info_message
-
-    static PRINTF_WRAPPER(info_printf, vprintf<info_message>)
-
-    static bool return_error_message(const uint8_t *Src, size_t Size) {
-      if(Size > INT8_MAX) {
-        error_message_(Src,INT8_MAX);
-        info_message(Src+INT8_MAX,Size-INT8_MAX);
-      } else error_message_(Src,Size);
-      return true;
-    } // return_error_message
-
-    static PRINTF_WRAPPER(return_error_printf, vprintf<return_error_message>)
-
-
-    static bool ReturnBytesBuffered(const uint8_t *src, size_t size) {
-      return Port::write_byte(0) &&
-             write_buffered<Port::write>::object((uint16_t)size) &&
-             Port::write(src, size) &&
-             Port::write_byte(sum<uint8_t>((const uint8_t *)src,size));
-    } // Protocol::ReturnBytesBuffered
-    static bool ReturnBytesUnbuffered(const uint8_t *src, size_t size, typename Port::tReleaseFunc pFunc = nullptr)  {
-      return Port::write_byte(0) &&
-             write_buffered<Port::write>::object((uint16_t)size) &&
-             Port::write_unbuffered(src, size, pFunc) &&
-             Port::write_byte(sum<uint8_t>((const uint8_t *)src,size));
-    } // Protocol::ReturnBytesUnbuffered;
-
-    static void ReturnOK() {
-      AVP_ASSERT(write_buffered<Port::write>::object(uint32_t(0)));  // 1 byte status, 2 - size and 1 - checksum
-    }
-
-    static bool SomethingToRX() {
-      if(Port::SomethingToRX()) {
-        PortConnected = true;
+      /// split info message into proper chunks
+      static bool info_message(const uint8_t *Src, size_t Size) {
+        while(Size > INT8_MAX)  {
+          AVP_ASSERT(info_message_(Src,INT8_MAX));
+          Src += INT8_MAX;
+          Size -= INT8_MAX;
+        }
+        AVP_ASSERT(info_message_(Src,Size));
         return true;
-      } else return false;
-    }
-    // some useful templates
-    template<typename type>
-    static void Return(const type &X) {
-      AVP_ASSERT(ReturnBytesBuffered((const uint8_t *)&X,sizeof(X)));
-    }
-    // some useful templates
-    template<typename type>
-    static void ReturnUnbuffered(const type &X, typename Port::tReleaseFunc pFunc = nullptr) {
-      AVP_ASSERT(ReturnBytesUnbuffered((const uint8_t *)&X,sizeof(X),pFunc));
-    }
-    template<typename type>
-    static void ReturnByPtr(const type *p, size_t size=1) {
-      AVP_ASSERT(write_buffered<ReturnBytesBuffered>::array(p,size));
-    }
+      } // info_message
 
-    // We do not have to do ReturnUnbuffered, there always should be pointer
-    template<typename type>
-    static void ReturnUnbufferedByPtr(const type *p, size_t size=1, typename Port::tReleaseFunc pFunc = nullptr) {
-      AVP_ASSERT(write_unbuffered<ReturnBytesUnbuffered>::array(p,size,pFunc));
-    }
+      static PRINTF_WRAPPER(info_printf, vprintf<info_message>)
+
+      static bool return_error_message(const uint8_t *Src, size_t Size) {
+        if(Size > INT8_MAX) {
+          error_message_(Src,INT8_MAX);
+          info_message(Src+INT8_MAX,Size-INT8_MAX);
+        } else error_message_(Src,Size);
+        return true;
+      } // return_error_message
+
+      static PRINTF_WRAPPER(return_error_printf, vprintf<return_error_message>)
+
+
+      static bool ReturnBytesBuffered(const uint8_t *src, size_t size) {
+        return Port::write_byte(0) &&
+               write_buffered<Port::write>::object((uint16_t)size) &&
+               Port::write(src, size) &&
+               Port::write_byte(sum<uint8_t>(src,size));
+      } // Protocol::ReturnBytesBuffered
+      static bool ReturnBytesUnbuffered(const uint8_t *src, size_t size, typename Port::tReleaseFunc pFunc = nullptr)  {
+        return Port::write_byte(0) &&
+               write_buffered<Port::write>::object((uint16_t)size) &&
+               Port::write_unbuffered(src, size, pFunc) &&
+               Port::write_byte(sum<uint8_t>(src,size));
+      } // Protocol::ReturnBytesUnbuffered;
+
+#define RET_IF_FALSE(exp) do{if(!(exp)) return false;}while(0)
+
+      /** this function allows us to return several blocks with one call
+      it takes variable number of arguments in triplets or quadruplets
+      all integer values get promoted to "int" in variable list, so that's the only type
+      we can use
+      (const uint8_t *src, int numbytes, int Buffered[, typename Port::tReleaseFunc pFunc])
+      pFunc is present only when Buffered is false
+      the end of the list is marked by src == nullptr. numbytes and Buffered are absent
+      */
+      static bool ReturnMultiByPtrs(const void *src, int numbytes, int Buffered, ...) {
+        va_list ap, ap_size;
+        uint16_t total_bytes = numbytes;
+        bool IsBuf = Buffered;
+
+        va_start(ap, Buffered);
+        // first pass through the arguments to calculate full size
+        va_copy(ap_size, ap);
+
+        while(1) {
+          if(!IsBuf) va_arg(ap_size, typename Port::tReleaseFunc);
+          // lets pull the next tri/quadro/plet
+          if(va_arg(ap_size, const uint8_t *) == nullptr) break;
+          total_bytes += va_arg(ap_size, int);
+          IsBuf = va_arg(ap_size, int);
+        }
+        va_end(ap_size);
+
+        // sending
+        RET_IF_FALSE(Port::write_byte(0)); // status OK
+        RET_IF_FALSE(write_buffered<Port::write>::object(total_bytes));
+
+        uint8_t cs = 0;
+
+        // now send data
+        while(1) {
+         if(!Buffered)
+             RET_IF_FALSE(Port::write_unbuffered((const uint8_t *)src, numbytes, va_arg(ap, typename Port::tReleaseFunc)));
+         else
+             RET_IF_FALSE(Port::write((const uint8_t *)src,numbytes));
+          cs += sum<uint8_t>(src,numbytes);
+
+          // lets pull the next tri/quadro/plet
+          if((src = va_arg(ap, const uint8_t *)) == nullptr) break;
+          numbytes = va_arg(ap, int);
+          Buffered = va_arg(ap, int);
+        }
+        va_end(ap);
+
+        RET_IF_FALSE(Port::write_byte(cs));
+
+        return true;
+      } // ReturnMultiByPtrs
+
+      static void ReturnOK() {
+        AVP_ASSERT(write_buffered<Port::write>::object(uint32_t(0)));  // 1 byte status, 2 - size and 1 - checksum
+      }
+
+      static bool SomethingToRX() {
+        if(Port::SomethingToRX()) {
+          PortConnected = true;
+          return true;
+        } else return false;
+      }
+      // some useful templates
+      template<typename type>
+      static void Return(const type &X) {
+        AVP_ASSERT(ReturnBytesBuffered((const uint8_t *)&X,sizeof(X)));
+      }
+      // some useful templates
+      template<typename type>
+      static void ReturnUnbuffered(const type &X, typename Port::tReleaseFunc pFunc = nullptr) {
+        AVP_ASSERT(ReturnBytesUnbuffered((const uint8_t *)&X,sizeof(X),pFunc));
+      }
+      template<typename type>
+      static void ReturnByPtr(const type *p, size_t size=1) {
+        AVP_ASSERT(write_buffered<ReturnBytesBuffered>::array(p,size));
+      }
+
+      // We do not have to do ReturnUnbuffered, there always should be pointer
+      template<typename type>
+      static void ReturnUnbufferedByPtr(const type *p, size_t size=1, typename Port::tReleaseFunc pFunc = nullptr) {
+        AVP_ASSERT(write_unbuffered<ReturnBytesUnbuffered>::array(p,size,pFunc));
+      }
   }; //class Protocol
 
 // following defines are just for code clearness, do not use elsewhere
