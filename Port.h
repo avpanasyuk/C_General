@@ -137,8 +137,8 @@ namespace avp {
       static bool LastSentIsBlock = false;  // if we got a block to send last time we've got to
       // do FinishedReading
 
-      if(LastSentIsBlock) { // finish with previous block
-        const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead();
+      if(LastSentIsBlock) { // finalize after previous block
+        const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead(); // returns the same slot as last time
         if(pCurBlock->pReleaseFunc != nullptr) (*pCurBlock->pReleaseFunc)();
         BlockInfoBufTX.FinishedReading();
         LastSentIsBlock = false;
