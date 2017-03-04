@@ -2,8 +2,8 @@
 #define BITBANG_H_INCLUDED
 
 /**
-  * @file AVP_LIBS/General/BitBang.h
-  * @author Alexander Panasyuk
+  @file AVP_LIBS/General/BitBang.h
+  @author Alexander Panasyuk
   */
 
 #include <stdint.h>
