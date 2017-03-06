@@ -9,7 +9,7 @@
 #ifndef AVP_COMPLEX_H_
 #define AVP_COMPLEX_H_
 
-#include <math.h>
+// #include <math.h>
 
 namespace avp {
   template<typename T = float>
@@ -55,6 +55,7 @@ namespace avp {
     static Complex conj(Complex a) {
       return a.conj();
     }  // conj
+
 
 // FOllowing are binary operators as friends
 #define BINARY_OP_FROM_SELF(op) \

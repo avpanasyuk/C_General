@@ -7,6 +7,7 @@
   */
 #include <stdlib.h>
 #include <stdint.h>
+#include <AVP_LIBS/General/Complex.h>
 
 namespace avp {
   template<typename T> inline constexpr T max(T const& a, T const& b) { return a>b?a:b; }
@@ -67,13 +68,18 @@ namespace avp {
 
 #if  defined(__ARM_FP)
   static inline float vsqrtf(float op1) {
-    if(op1 <= 0.f)
-      return 0.f;
+    if(op1 <= 0.f) return 0.f;
 
     float result;
     asm volatile ("vsqrt.f32 %0, %1" : "=w" (result) : "w" (op1) );
     return (result);
   } //vsqrtf
+
+
+  static inline float sin_phase(Complex<float> a) {
+    float Out = vsqrtf(1/(1+sqr(a.Real/a.Imag)));
+    return a.Imag >= 0 ?Out:-Out;
+  } // sin_phase
 #endif
 
 } // namespace avp
