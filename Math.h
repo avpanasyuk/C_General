@@ -7,7 +7,7 @@
   */
 #include <stdlib.h>
 #include <stdint.h>
-#include <AVP_LIBS/General/Complex.h>
+#include "Complex.h"
 
 namespace avp {
   template<typename T> inline constexpr T max(T const& a, T const& b) { return a>b?a:b; }
