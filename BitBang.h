@@ -47,7 +47,10 @@ namespace avp {
     var = (var & ~make_mask<type>(lowest_bit,numbits)) | (value << lowest_bit);
   }
   // GETTING BITS
-  //! single bit
+  /**
+  single bit
+  @param bitI 0-based bit index
+  */
   template<typename type> inline constexpr bool getbit(type const &var,uint8_t bitI) {
     return (var >> bitI) & 1;
   }
