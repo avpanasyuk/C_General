@@ -28,8 +28,12 @@ namespace avp {
       const uint8_t NumParamBytes;
       Link *pNext;
       // public:
-      /// @param NumParamBytes if VAR_PARAM_NUM the command has variable number of arguments, and the first
-      /// parameter byte is the number of following parameters
+      /// constructor
+      /// @param Name_ - string, command mnemonics
+      /// @param pFunc_ - pointer to a static function which will be executed when the mnemonics arrives
+      /// @param NumParamBytes_ if VAR_PARAM_NUM the command has variable number of arguments, and the first
+      ///   parameter byte is the number of following parameters
+      /// @param pFirst - pointger to the first link in the chain, current Link will be inserted in front
       Link(const char *Name_, CommandFunc_ pFunc_, uint8_t NumParamBytes_, Link *pFirst):
         ID(Chars2type<IDtype>(Name_)), pFunc(pFunc_), NumParamBytes(NumParamBytes_), pNext(pFirst) {
         AVP_ASSERT_WITH_EXPL((ID & 0xFF) != 0,2,"Byte  0 is reserved for NOOP pseudo-command.");
@@ -71,8 +75,13 @@ namespace avp {
       return nullptr;
     } // FindByID
   public:
-    /// @param NumParamBytes if VAR_PARAM_NUM the command has variable number of arguments, and the first
-    /// parameter byte is the number of following parameters.
+    /**
+    @brief adds command to chain
+    @param NumParamBytes if VAR_PARAM_NUM the command has variable number of arguments, and the first
+      parameter byte is the number of following parameters.
+    @param Name - command mnemonics
+    @param pFunc - callback function to call when command arrives
+    */
     static void AddCommand(const char Name[sizeof(IDtype)], CommandFunc_ pFunc, uint8_t NumParamBytes) {
       AVP_ASSERT_WITH_EXPL(FindByID(Chars2type<IDtype>(Name)) == nullptr,1,
                            "A command with this ID already exists."); // check whether we have this command name already

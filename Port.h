@@ -83,7 +83,10 @@ namespace avp {
     static CircBuffer<uint8_t, tSize, Log2_RX_Buf_Size> BufferRX; //  receive buffer ( we receive by byte only )
     static const uint8_t *pCurByteInBlock; //!< when we are currently reading from block it is read pointer
 
-    //! this function is called from HW_IO interrupt handler to store received byte in the RX Circular buffer
+   /// @{
+   /// @brief these are a callback functions which Port supplies to HW_IO class.
+
+   //! this function is called from HW_IO interrupt handler to store received byte in the RX Circular buffer
     static bool StoreReceivedByte(uint8_t b) {
       if(!BufferRX.LeftToWrite()) return false;
       BufferRX.Write(b);
@@ -91,10 +94,11 @@ namespace avp {
     } // StoreReceivedByte
 
 
-    /// this function is called from HW_IO interrupt handler to get byte from Circular buffer to send
-    /// !!!!!! WRITING TO *p may immediately send byte, so do it ONLY ONCE !
+     /// This function is called from HW_IO interrupt handler to get byte from Circular buffer to send
+    /// @note WRITING TO *p may immediately send byte, so do it ONLY ONCE !
     /// because this function may read both from byte buffer and block buffer it is
     /// complicated
+    /// @param[out] p - pointer supplied by HW_IO to write the byte to
     static bool GetByteToSend(volatile uint8_t *p) {
       // debug_action();
 
@@ -127,12 +131,17 @@ namespace avp {
       return true;
     } //  GetByteToSend
 
-    /// If HW_IO is capable to send data by blocks (say via DMA) we can use this function
-    /// !!!!! this function may be  called from HW_IO interrupt handler to get data block to send !!!!!
-    /// This function uses static variables - care should be taken to avoid this function being reentered!!!!!
-    /// This is the only function reading BlockInfoBufTX and BufferTX
-    /// @param[out] p - pointer to pointer from where to send data.
-    /// @param[out] pSz - to return block size.
+    /** @brief HW_IO class uses this function to request data to write
+        @note If HW_IO is capable to send data by blocks (say via DMA) we can use this function
+        @note This function uses static variables - care should be taken to avoid this function being reentered!!!!!
+        @note This is the only function reading BlockInfoBufTX and BufferTX
+     *
+     * @param[out] pp - pointer to pointer from where to send data. Pointer returned  by this parameter should be
+        persistant enough to keep oin existing while HW_IO sends it out
+     * @param[out] pSz - to return block size.
+     * @return bool - whether there is anything to send
+     *
+     */
     static bool GetBlockToSend(const uint8_t **pp, size_t *pSz) {
       static bool LastSentIsBlock = false;  // if we got a block to send last time we've got to
       // do FinishedReading
@@ -167,10 +176,20 @@ namespace avp {
       return true;
     } //  GetBlockToSend
 
-    //! ************** ALL OUTPUT GOES THROUGH THE FOLLOWING TWO FUNCTIONS ******************************
-    //! unbuffered unsafe write - no BufferTX check, no interrupt reenable
-    //! @param Size - block size. Size == 0 is a special case, we create a fake BlockInfo entry,
-    //! it just mean that we have to transmit ESC_code-valued byte
+    ///@}
+
+    ///@{
+    /// Functions for writing
+    /// @{
+    /// Low level functions all output goes through
+
+    /**
+     unbuffered unsafe write - no BufferTX check, no interrupt reenable
+     @param Ptr - pointer to data block. data should keep on existing until function does not send them out and call pReleaseFunc
+     @param Size - block size. Size == 0 is a special case, we create a fake BlockInfo entry,
+      it just mean that we have to transmit ESC_code-valued byte
+     @param pReleaseFunc - function to call when data are sent and may be released
+    */
     static bool write_unbuffered_(const uint8_t *Ptr, size_t Size, tReleaseFunc pReleaseFunc = nullptr) {
       if(!BlockInfoBufTX.LeftToWrite()) return false;
       BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToWrite();
@@ -186,6 +205,7 @@ namespace avp {
     } // write_unbuffered_
 
     //! unsafe write - no BufferTX check, no interrupt reenable
+    /// @param d - byte to send
     static bool write_byte_(uint8_t d) {
       if(d == ESC_code) return write_unbuffered_(nullptr,0);
       BufferTX.Write_(d);
@@ -193,6 +213,7 @@ namespace avp {
       BytesTransmitted++;
       return true;
     } // write_byte_
+    /// @}
 
   public:
     // *************** TRANSMISSION FUNCTIONS ********************
@@ -224,6 +245,7 @@ namespace avp {
       HW_IO_::TryToSend();
       return Res;
     } // write_unbuffered
+    //! @}
 
     static uint8_t GetRCS() { return RunningCS; } ///< get current rinning checksum
     static uint16_t GetNtransmitted() { return BytesTransmitted; } ///< get number of transmitted bytes since beginning of session

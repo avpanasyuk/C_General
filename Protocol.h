@@ -1,46 +1,46 @@
 /**
   @file
   @author Alexander Panasyuk
-  [PROTOCOL]
-    Protocol description.
-    - all GUI->FW messages are commands. Command is sequence of bytes which contains:
-      - Either 1 byte command ID (if InputParser is CommandTable) or mnemonics ( if InputParser is CommandChain)
-      - if NumParamBytes == -1 in corresponding Command_ structure (which means that command take a variable number of Parameter bytes)
-        - a byte giving the number of following parameter bytes parameter bytes.
-      - Parameter bytes. Their number is given either by NumParamBytes field in Command_ structure (if it is not -1) or previous byte
+
+  @defgroup ProtocolDescription GUI<->FW Communication Protocol Description
+  @brief  Protocol description.
+  @{
+    - all GUI->FW messages are commands. Command is a sequence of bytes which contains:
+      + Either a single byte command ID (if InputParser is avp::CommandTable) or mnemonics ( if InputParser is avp::CommandChain)
+      + a byte giving the number of following parameter bytes. It is present only for commands that take a variable number of Parameter bytes
+        which is indicated by NumParamBytes == -1 in corresponding avp::Command_ structure
+      + Parameter bytes. Their number is given either by corresponding avp::Command_::NumParamBytes field (if it is >=0) or by previous byte
         if NumParamBytes == -1
-      - 1 byte of checksum of the bytes above
-    - FW-GUI messages are formatted in blocks, each one starts with int8_t CODE and ends with checksum. Block content may be:
-        -1 command return:
-          - CODE byte
-          - If CODE is 0 the following is successful latest command return:
-            - typical command
-              - uint16_t Size is size of data being transmitted.
-              - data
-              - 1 uint8_t data checksum
-            - SOME COMMANDS WHICH RETURN LARGE DATA VOLUMES MAY USE DIFFERENT RETURN SEQUENCE
-          - If CODE is < 0, then
-            - if
-                CODE == -1, command block is received with checksum error, command was never executed
-                and should be resent
-                or
-                CODE == -2, port RX is overrun, communication should be flushed and command was never executed
-                and should be resent
-              - checksum byte which is equal to CODE
-            - if CODE < -2, command was properly received but failed. CODE it is the error message size
-              - error message of size -CODE (no trailing 0)
-              - 1 uint8_t error message text checksum
-        -2 info message
-         - If CODE is > 0, then it is an info message size, followed by
-          - info message text without trailing 0
-          - 1 uint8_t info message text checksum
-          .
-        Info message block may come at any time, but not inside another block
-      If error or info message do not fit into 127 bytes remaining text is formatted into consecutive  info message(s) is
-  [PROTOCOL]
-  @date 9/21/15 instead of dynamically creating commands let's create a static table
-  avp::Protocol::Command_ avp::Protocol::CommandTable = {{Func,NumParamBytes},{Func,NumParamBytes},...}
-  should be defined elsewhere
+      + one byte of checksum of the bytes above
+    - FW<-GUI messages are formatted in blocks. Block starts with a single byte CODE, and then either
+      -# successful command return, indicated by CODE equal 0. In this case following are:
+        + uint16_t Size is the size of data being transmitted.
+        + data
+        + one uint8_t data checksum
+      -# unsuccessful command error message, indicated by CODE < 0, then
+        + if CODE == -1, the command block was received with a checksum error, so the command was never executed
+            and should be resent. A checksum byte which is equal to CODE follows.
+        + if CODE == -2, port RX is overrun, the command was never executed, communication should be flushed and
+            the command should be resent. A checksum byte which is equal to CODE follows.
+        + if CODE < -2, command was properly received but failed. -CODE value is the error message size. In this case following are:
+          - error message text of size -CODE (no trailing 0)
+          - one uint8_t error message text checksum
+      -# an info message, indicated by CODE is > 0 which represents info message size, followed by
+        + info message text without trailing 0
+        + one info message text checksum
+        .
+        Info message block may come at any time, but not inside another return block
+      .
+      If error or info message do not fit into 127 bytes remaining text is formatted into consecutive  info message(s).
+    .
+  /// @defgroup LowLevelCommands Low level protocol commands
+  /// @brief Commands used mostly for testing
+
+  /// @defgroup HighLevelCommands High level protocol commands
+  /// @brief Commands used for routine operations
+
+  /// @defgroup CommandsMnemonics List of protocol commands mnemonics
+  @}
   */
 
 #ifndef COMMAND_PROTOCOL_HPP_INCLUDED
@@ -58,7 +58,7 @@
 
 namespace avp {
 /// @tparam Port static class defined by template in AVP_LIBS/General/Port.h. We should call
-///   proper Port::Init??? function
+///   proper avp::Port::Init() function
 /// @tparam InputParser - class which provides ParseByte and Flush commands. Former parses input byte stream,
 ///   finding commands and parameters and executing them and latter flushes it if something goes wrong.
 ///   Subclass of CommandParser, currently either CommandChain or CommandTable
@@ -77,7 +77,9 @@ namespace avp {
       } // info_message_
 
       /// sends error message, checking whether we need padding
-      /// @param Size - positive
+      /// @param Src - string to output
+      /// @param Size - stirng size
+
       static inline void error_message_(const uint8_t *Src, int8_t Size) {
         AVP_ASSERT(Size > 0);
         uint8_t PadSize = 0;
@@ -214,10 +216,10 @@ namespace avp {
 
         // now send data
         while(1) {
-         if(!Buffered)
-             RET_IF_FALSE(Port::write_unbuffered((const uint8_t *)src, numbytes, va_arg(ap, typename Port::tReleaseFunc)));
-         else
-             RET_IF_FALSE(Port::write((const uint8_t *)src,numbytes));
+          if(!Buffered)
+            RET_IF_FALSE(Port::write_unbuffered((const uint8_t *)src, numbytes, va_arg(ap, typename Port::tReleaseFunc)));
+          else
+            RET_IF_FALSE(Port::write((const uint8_t *)src,numbytes));
           cs += sum<uint8_t>(src,numbytes);
 
           // lets pull the next tri/quadro/plet

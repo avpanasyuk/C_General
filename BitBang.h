@@ -48,8 +48,10 @@ namespace avp {
   }
   // GETTING BITS
   /**
-  single bit
+  extracts a single bit from a number
   @param bitI 0-based bit index
+  @param var - variable or value to get bit from
+  @return bool, bit value
   */
   template<typename type> inline constexpr bool getbit(type const &var,uint8_t bitI) {
     return (var >> bitI) & 1;
