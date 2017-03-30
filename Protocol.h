@@ -2,9 +2,7 @@
   @file
   @author Alexander Panasyuk
 
-  @defgroup ProtocolDescription GUI<->FW Communication Protocol Description
-  @brief  Protocol description.
-  @{
+  @page ProtocolDescription GUI<->FW Communication Protocol Description
     - all GUI->FW messages are commands. Command is a sequence of bytes which contains:
       + Either a single byte command ID (if InputParser is avp::CommandTable) or mnemonics ( if InputParser is avp::CommandChain)
       + a byte giving the number of following parameter bytes. It is present only for commands that take a variable number of Parameter bytes
@@ -33,14 +31,21 @@
       .
       If error or info message do not fit into 127 bytes remaining text is formatted into consecutive  info message(s).
     .
-  /// @defgroup LowLevelCommands Low level protocol commands
-  /// @brief Commands used mostly for testing
 
-  /// @defgroup HighLevelCommands High level protocol commands
-  /// @brief Commands used for routine operations
-
-  /// @defgroup CommandsMnemonics List of protocol commands mnemonics
-  @}
+  @section StartHandshake Initial Handshake.
+  There may be several physical and virtual COM ports in the system, and we got to determine which
+  one device is connected to. This class supports automatic port finding. It sends out avp::Protocol::BeaconStr
+  every time avp::Protocol::SendBeacon is called (which should be done continuously before connection). The program on the
+  opposite end of connection should
+    -# (optional) checks every port until it finds one continuously transmitting avp::Protocol::BeaconStr.
+    -# leave the transmitting port open (or reopen it)
+    -# sends NOOP command (which a single 0 byte) to the port
+    -# immediately start monitoring incoming stream on the presence of four 0 byte sequence
+    -# on reception of NOOP command this class stops sending ' to port and
+      responds to it in a standard way \ref ProtocolDescription "Protocol Description",
+      sending out four 0 bytes - one for status, two for size and the last one as checksum. It immediately
+    -# when the communicating program receives four 0 byte sequence it should continue communication
+      using \ref ProtocolDescription "Protocol Description".
   */
 
 #ifndef COMMAND_PROTOCOL_HPP_INCLUDED
@@ -57,11 +62,13 @@
 #include "CommandParser.h"
 
 namespace avp {
-/// @tparam Port static class defined by template in AVP_LIBS/General/Port.h. We should call
-///   proper avp::Port::Init() function
-/// @tparam InputParser - class which provides ParseByte and Flush commands. Former parses input byte stream,
-///   finding commands and parameters and executing them and latter flushes it if something goes wrong.
-///   Subclass of CommandParser, currently either CommandChain or CommandTable
+  /**
+  @tparam Port static class defined by template in AVP_LIBS/General/Port.h. We should call
+  proper avp::Port::Init() function
+  @tparam InputParser - class which provides ParseByte and Flush commands. Former parses input byte stream,
+  finding commands and parameters and executing them and latter flushes it if something goes wrong.
+  Subclass of CommandParser, currently either CommandChain or CommandTable
+  */
   template<class Port, class InputParser>
   class Protocol: public Port {
     protected:
@@ -109,6 +116,7 @@ namespace avp {
 
     public:
       static void Init(const char *BeaconStr_) { BeaconStr = BeaconStr_; }
+
       //! if port is disconnected run beacon, which allows GUI to find our serial port
       static void SendBeacon() { if(!PortConnected) write_buffered<Port::write>::string(BeaconStr); }
 
