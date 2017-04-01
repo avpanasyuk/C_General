@@ -51,6 +51,11 @@ namespace avp {
           STOP_IGNORING
 
 
+          /**
+          @brief this function should be called repeatedly as a part of main program loop to maintain background message facility.
+          Background messages allow to pass information from e.g. interrupt handlers when using normal messaging would cause race
+          conditions and excess delays
+          */
           void WriteOut() {
             if(FilledBytes) {
               write_func((uint8_t *)Chars,FilledBytes); // we send size byte and a buffer in one go.

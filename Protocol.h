@@ -4,11 +4,11 @@
 
   @page ProtocolDescription GUI<->FW Communication Protocol Description
     - all GUI->FW messages are commands. Command is a sequence of bytes which contains:
-      + Either a single byte command ID (if InputParser is avp::CommandTable) or mnemonics ( if InputParser is avp::CommandChain)
+      + either a single byte command ID (if InputParser is avp::CommandTable) or mnemonics ( if InputParser is avp::CommandChain)
       + a byte giving the number of following parameter bytes. It is present only for commands that take a variable number of Parameter bytes
-        which is indicated by NumParamBytes == -1 in corresponding avp::Command_ structure
-      + Parameter bytes. Their number is given either by corresponding avp::Command_::NumParamBytes field (if it is >=0) or by previous byte
-        if NumParamBytes == -1
+        which is indicated by parameter NumParamBytes being equal to VAR_PARAM_NUM  in corresponding AddCommand call.
+      + Parameter bytes. Their number is given either by corresponding NumParamBytes parameter in AddCommand call (if it is >=0) or
+        by the previous byte if NumParamBytes == VAR_PARAM_NUM
       + one byte of checksum of the bytes above
     - FW<-GUI messages are formatted in blocks. Block starts with a single byte CODE, and then either
       -# successful command return, indicated by CODE equal 0. In this case following are:
@@ -29,7 +29,7 @@
         .
         Info message block may come at any time, but not inside another return block
       .
-      If error or info message do not fit into 127 bytes remaining text is formatted into consecutive  info message(s).
+      If error or info message do not fit into 127 bytes remaining text is formatted into consecutive info message(s).
     .
 
   @section StartHandshake Initial Handshake.
@@ -41,7 +41,7 @@
     -# leave the transmitting port open (or reopen it)
     -# sends NOOP command (which a single 0 byte) to the port
     -# immediately start monitoring incoming stream on the presence of four 0 byte sequence
-    -# on reception of NOOP command this class stops sending ' to port and
+    -# on reception of NOOP command this class stops sending '2XjA' to port and
       responds to it in a standard way \ref ProtocolDescription "Protocol Description",
       sending out four 0 bytes - one for status, two for size and the last one as checksum. It immediately
     -# when the communicating program receives four 0 byte sequence it should continue communication
@@ -134,6 +134,10 @@ namespace avp {
         return Port::write_char(-Code) && Port::write_char(-Code); // checksum which is equal to error code
       } //  return_error_code
 
+      /**
+      @brief this function should be called repeatedly as a part of main program loop to maintain communication
+      @callgraph
+      */
       static void cycle() {
         static RunPeriodically<millis,SendBeacon,50> BeaconTicker; // should be able to send 8 chracters in halve a second
 
