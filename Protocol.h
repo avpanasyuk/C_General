@@ -37,22 +37,27 @@
   one device is connected to. This class supports automatic port finding. It sends out '2XjA'
   every time avp::Protocol::SendBeacon is called (which should be done continuously before connection). The program on the
   opposite end of connection should
-    -# (optional) checks every port until it finds one continuously transmitting '2XjA'.
+    -# (optional) if port number is unknown, checks every COM port until it finds one continuously transmitting '2XjA'.
     -# leave the transmitting port open (or reopen it)
     -# sends NOOP command (which a single 0 byte) to the port
     -# immediately start monitoring incoming stream on the presence of four 0 byte sequence
-    -# on reception of NOOP command this class stops sending '2XjA' to port and
-      responds to it in a standard way \ref ProtocolDescription "Protocol Description",
-      sending out four 0 bytes - one for status, two for size and the last one as checksum. It immediately
+    -# on reception of NOOP command this FW stops sending '2XjA' to port and
+      responds to it in a standard way according to \ref ProtocolDescription "Protocol Description",
+      sending out four 0 bytes - one for status, two for size and the last one as checksum.
     -# when the communicating program receives four 0 byte sequence it should continue communication
       using \ref ProtocolDescription "Protocol Description".
 
   @section Resynchronization Resynchronization
   If a byte or two got lost communication may hang, because e.g. the FW may wait for missing parameter bytes, so
   it would not process the command and send out return.
-  To resync the protocol communicating program may be sending NOOPs (single 0 byte) one by one.
-  Eventually FW will receive all byte it was waiting for, return "bad checksum" error status and  and starts responding
-  with four 0 byte on every NOOP received. When it happens the protocol is resynchronized.
+  To resync the protocol:
+    - communicating program should start sending NOOPs (single 0 byte) one by one.
+    - eventually FW will receive all bytes it was waiting for (though they would not be correct bytes to properly execute previous command),
+    - FW will return "bad checksum" error status (because parameter bytes would be wrong)
+    - FW will starts responding with four 0 byte on every NOOP received.
+    - as soon communicating program receives the first four 0 bytes return it should stop sending NOOPs
+    - communicating program should read out all 0 bytes until there are no more
+    - when it happens the protocol is resynchronized.
 
   */
 
