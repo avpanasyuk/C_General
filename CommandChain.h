@@ -75,6 +75,8 @@ namespace avp {
       return nullptr;
     } // FindByID
   public:
+    static uint32_t Count; ///< purely informative variable, counts commands
+
     /**
     @brief adds command to chain
     @param NumParamBytes if VAR_PARAM_NUM the command has variable number of arguments, and the first
@@ -121,6 +123,7 @@ namespace avp {
           if(DataCS == SentCS) {
             pCur->pFunc(InputBytes.Params); // executing command
             pInputByte = InputBytes.Name; ///< get ready for new command
+            ++Count;
             // debug_printf("Done\n");
           } else {
             // debug_printf("CS received = %hu, calculated = %hu\n", SentCS, DataCS);
@@ -139,7 +142,8 @@ namespace avp {
 
   _TEMPLATE_DECL_ typename _TEMPLATE_SPEC_::Link *_TEMPLATE_SPEC_::pFirst = nullptr;
   _TEMPLATE_DECL_ typename _TEMPLATE_SPEC_::InputBytes_ _TEMPLATE_SPEC_::InputBytes;
-  _TEMPLATE_DECL_  uint8_t *_TEMPLATE_SPEC_::pInputByte = (uint8_t *)_TEMPLATE_SPEC_::InputBytes.Name;
+  _TEMPLATE_DECL_ uint8_t *_TEMPLATE_SPEC_::pInputByte = (uint8_t *)_TEMPLATE_SPEC_::InputBytes.Name;
+  _TEMPLATE_DECL_ uint32_t _TEMPLATE_SPEC_::Count = 0;
 
 #undef _TEMPLATE_DECL_
 #undef _TEMPLATE_SPEC_

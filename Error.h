@@ -59,9 +59,9 @@ namespace avp {
 #define AVP_ERROR(...) AVP_ASSERT_WITH_EXPL(0,1,##__VA_ARGS__)
 #define ASSERT_BEING_0(exp) AVP_ASSERT((exp) == 0)
 
-#else
+#else // #ifdef __cplusplus
 extern int debug_printf(const char *format, ...);
-#endif
+#endif // #ifdef __cplusplus
 
 
 #endif /* ERROR_H_INCLUDED */

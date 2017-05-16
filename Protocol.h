@@ -133,6 +133,8 @@ namespace avp {
       //! if port is disconnected run beacon, which allows GUI to find our serial port
       static void SendBeacon() { if(!PortConnected) write_buffered<Port::write>::string(BeaconStr); }
 
+      static inline bool IsConnected() { return PortConnected; }
+
       /// returns code which indicated that command was not received and has to be resent
       static bool return_error_code(int8_t Code) {
         AVP_ASSERT(Code >= -(int8_t)PORT_OVERRUN);
@@ -144,9 +146,7 @@ namespace avp {
       @callgraph
       */
       static void cycle() {
-        static RunPeriodically<millis,SendBeacon,50> BeaconTicker; // should be able to send 8 chracters in halve a second
-
-        BeaconTicker.cycle();
+        RunPeriodically<millis,SendBeacon,50>::cycle();
 
         if(Port::IsOverrun()) {
           debug_printf("Port overrun!");
@@ -156,7 +156,7 @@ namespace avp {
         } else if(SomethingToRX()) {
           switch(InputParser::ParseByte(Port::GetByte())) {
             case InputParser::WRONG_ID:
-              return_error_printf("Command is not defined!\n");
+              return_error_str("Command is not defined!\n");
               break;
             case InputParser::BAD_CHECKSUM:
               return_error_code(-(int8_t)CS_ERROR);
@@ -188,6 +188,10 @@ namespace avp {
         } else error_message_(Src,Size);
         return true;
       } // return_error_message
+
+      static bool return_error_str(const char* ErrMsg) {
+        return return_error_message((const uint8_t *)ErrMsg, strlen(ErrMsg));
+      } // return_error_str
 
       static PRINTF_WRAPPER(return_error_printf, vprintf<return_error_message>)
 
