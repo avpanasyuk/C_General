@@ -48,7 +48,7 @@ namespace avp {
     return ceil_log2(CeilRatio(numer,denom));
   }
 
-  template<typename out_type, typename in_type> out_type Sqrt(in_type y) {
+  template<typename out_type, typename in_type> out_type IntSqrt(in_type y) {
     in_type x = 1, old_x, y_=y;
     while(y_>>=2) x <<= 1; // rough estimate
     do {
@@ -56,7 +56,7 @@ namespace avp {
       x = (old_x+y/old_x)>>1;
     } while (x != old_x && x + 1 != old_x);
     return x;
-  } //Sqrt
+  } // IntSqrt
 
   template<typename OutType, typename ElType>
   OutType sum(const ElType *p_, size_t size = sizeof(ElType)) {
