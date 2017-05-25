@@ -272,7 +272,10 @@ namespace avp {
           PortConnected = true;
           return true;
         } else return false;
-      }
+      } // SomethingToRX
+
+      static bool SomethingToTX() { return Port::SomethingToTX(); }
+
       // some useful templates
       template<typename type>
       static void Return(const type &X) {
