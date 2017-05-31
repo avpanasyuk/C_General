@@ -75,10 +75,15 @@ namespace avp {
     return (result);
   } //vsqrtf
 
-
   static inline float sin_phase(Complex<float> a) {
     float Out = vsqrtf(1/(1+sqr(a.Real/a.Imag)));
     return a.Imag >= 0 ?Out:-Out;
+  } // sin_phase
+
+  static inline float cos_phase(Complex<float> a) {
+    float s = sqr(a.Real);
+    float Out = vsqrtf(s/(s+sqr(a.Imag)));
+    return a.Real >= 0 ?Out:-Out;
   } // sin_phase
 #endif
 

@@ -26,7 +26,6 @@ namespace avp {
       SELF_OP_V(Vector) // assignment operator
       SELF_OP_T(Vector) // assign a single value T to the whole vector
       const Vector &operator=(const T *p) { for(size_t i=0; i < Length; i++) Data[i] = p[i];  return *this;}
-      // const Vector &operator=(T x) { for(size_t i=0; i < Length; i++) Data[i] = x;  return *this;}
 
       T &operator[](uint8_t i) { AVP_ASSERT(i < Length); return Data[i]; }
 
@@ -34,7 +33,7 @@ namespace avp {
 
       constexpr size_t N() const { return Length; }
 
-      T* get_ptr() const { return Data; }
+      const T* get_ptr() const { return Data; }
       const T* after_last() const { return Data + Length; }
 
 
@@ -71,7 +70,7 @@ namespace avp {
 
       BINARY_OP_FROM_SELF(-)
       BINARY_OP_FROM_SELF(+)
-      BINARY_OP_FROM_SELF( *)
+      BINARY_OP_FROM_SELF(*)
       BINARY_OP_FROM_SELF(/)
 #undef BINARY_OP_FROM_SELF
 
