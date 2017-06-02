@@ -90,27 +90,37 @@ namespace avp {
       static const char *BeaconStr;
 
       /// base private message which writes both info and error messages
-      static inline bool info_message_(const uint8_t *Src, int8_t Size) {
+      /// @param Src - string to output
+      /// @param Size - int8_t size of string
+      /// @param NonVolat - bool, true if string is static until sent, false by default
+      static bool info_message_(const uint8_t *Src, int8_t Size, bool NonVolat = false) {
         return Port::write_char(Size) &&
-               Port::write(Src,Size) &&
+               (NonVolat?Port::write_unbuffered(Src,Size):Port::write(Src,Size)) &&
                Port::write_byte(sum<uint8_t>(Src,Size));
       } // info_message_
 
       /// sends error message, checking whether we need padding
       /// @param Src - string to output
-      /// @param Size - stirng size
-
-      static inline void error_message_(const uint8_t *Src, int8_t Size) {
-        AVP_ASSERT(Size > 0);
+      /// @param Size - int8_t size of string
+      /// @param NonVolat - bool, true if string is static until sent, false by default
+      static void error_message_(const uint8_t *Src, int8_t Size, bool NonVolat = false) {
+        AVP_ASSERT(Size >= 0);
+        // Because Sizes <= PORT_OVERRUN are special error codes we can not have a
+        // text error message with this Size. So if it does occur we pad it with some empty
+        // bytes
         uint8_t PadSize = 0;
         if(Size <= PORT_OVERRUN) Size += (PadSize = PORT_OVERRUN-Size+1);
 
         AVP_ASSERT(Port::write_char(-Size));
-        AVP_ASSERT(Port::write(Src,Size));
-        AVP_ASSERT(Port::write_byte(sum<uint8_t>(Src,Size)));
+        if(NonVolat) AVP_ASSERT(Port::write_unbuffered(Src,Size));
+        else AVP_ASSERT(Port::write(Src,Size));
 
-        static uint8_t Pad[PORT_OVERRUN];
-        if(PadSize) AVP_ASSERT(write_buffered<Port::write>::array(Pad,PadSize));
+        static uint8_t Pad[] = {' ',' '};
+        static_assert(sizeof(Pad) == PORT_OVERRUN, "Adjust Pad initialization if PORT_OVERRUN changes!");
+
+        if(PadSize) AVP_ASSERT(Port::write_unbuffered(Pad,PadSize));
+
+        AVP_ASSERT(Port::write_byte(sum<uint8_t>(Src,Size) + sum<uint8_t>(Pad,PadSize)));
       } // error_message
 
       /// flashing serial port input
@@ -169,32 +179,48 @@ namespace avp {
       } //  cycle
 
       /// split info message into proper chunks
-      static bool info_message(const uint8_t *Src, size_t Size) {
+      static bool info_message(const uint8_t *Src, size_t Size, bool NonVolat) {
         while(Size > INT8_MAX)  {
-          AVP_ASSERT(info_message_(Src,INT8_MAX));
+          if(!info_message_(Src,INT8_MAX,NonVolat)) return false;
           Src += INT8_MAX;
           Size -= INT8_MAX;
         }
-        AVP_ASSERT(info_message_(Src,Size));
-        return true;
+        return info_message_(Src,Size,NonVolat);
       } // info_message
+
+      /// @note - I do not use default parameters in the previous function because it screws templates
+      static inline bool info_message(const uint8_t *Src, size_t Size) { return info_message(Src,Size,false); }
 
       static PRINTF_WRAPPER(info_printf, vprintf<info_message>)
 
-      static bool return_error_message(const uint8_t *Src, size_t Size) {
+      /// sends error message of any size, splits if necessary into chunks
+      /// @param Src - array to output
+      /// @param Size - size_t size of string
+      /// @param NonVolat - bool, true if string is static until sent
+      static bool return_error_message(const uint8_t *Src, size_t Size, bool NonVolat) {
         if(Size > INT8_MAX) {
-          error_message_(Src,INT8_MAX);
-          info_message(Src+INT8_MAX,Size-INT8_MAX);
-        } else error_message_(Src,Size);
+          error_message_(Src,INT8_MAX,NonVolat);
+          info_message(Src+INT8_MAX,Size-INT8_MAX,NonVolat);
+        } else error_message_(Src,Size,NonVolat);
         return true;
       } // return_error_message
 
-      static bool return_error_str(const char* ErrMsg) {
-        return return_error_message((const uint8_t *)ErrMsg, strlen(ErrMsg));
+      /// @note - I do not use default parameters becasu it screws templates
+      static inline bool return_error_message(const uint8_t *Src, size_t Size) {
+        return return_error_message(Src,Size,false);
+      } // return_error_message
+
+      /// @param ErrMsg - string to output
+      /// sends error message of any size, splits if necessary into chunks
+      /// @param Size - size_t size of string
+      /// @param NonVolat - bool, true if string is static until sent, true by default
+      /// @note NonVolat is different here than in other similar functions, because
+      /// this function is used on static strings most of the time
+      static bool return_error_str(const char* ErrMsg, bool NonVolat = true) {
+        return return_error_message((const uint8_t *)ErrMsg, strlen(ErrMsg), NonVolat);
       } // return_error_str
 
       static PRINTF_WRAPPER(return_error_printf, vprintf<return_error_message>)
-
 
       static bool ReturnBytesBuffered(const uint8_t *src, size_t size) {
         return Port::write_byte(0) &&

@@ -185,7 +185,7 @@ namespace avp {
 
     /**
      unbuffered unsafe write - no BufferTX check, no interrupt reenable
-     @param Ptr - pointer to data block. data should keep on existing until function does not send them out and call pReleaseFunc
+     @param Ptr - pointer to data block. data should keep on existing until function finishes sending them out and call pReleaseFunc
      @param Size - block size. Size == 0 is a special case, we create a fake BlockInfo entry,
       it just mean that we have to transmit ESC_code-valued byte
      @param pReleaseFunc - function to call when data are sent and may be released
