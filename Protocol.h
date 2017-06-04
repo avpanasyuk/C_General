@@ -179,6 +179,9 @@ namespace avp {
       } //  cycle
 
       /// split info message into proper chunks
+      /// @param Src - byte array to output
+      /// @param Size - size_t size of array
+     /// @param NonVolat - bool, true if the array would not disappear until sent in background
       static bool info_message(const uint8_t *Src, size_t Size, bool NonVolat) {
         while(Size > INT8_MAX)  {
           if(!info_message_(Src,INT8_MAX,NonVolat)) return false;
@@ -189,14 +192,16 @@ namespace avp {
       } // info_message
 
       /// @note - I do not use default parameters in the previous function because it screws templates
+      /// @param Src - byte array to output
+      /// @param Size - size_t size of array
       static inline bool info_message(const uint8_t *Src, size_t Size) { return info_message(Src,Size,false); }
 
       static PRINTF_WRAPPER(info_printf, vprintf<info_message>)
 
       /// sends error message of any size, splits if necessary into chunks
-      /// @param Src - array to output
-      /// @param Size - size_t size of string
-      /// @param NonVolat - bool, true if string is static until sent
+      /// @param Src - byte array to output
+      /// @param Size - size_t size of array
+      /// @param NonVolat - bool, true if the array would not disappear until sent in background
       static bool return_error_message(const uint8_t *Src, size_t Size, bool NonVolat) {
         if(Size > INT8_MAX) {
           error_message_(Src,INT8_MAX,NonVolat);
@@ -205,15 +210,16 @@ namespace avp {
         return true;
       } // return_error_message
 
-      /// @note - I do not use default parameters becasu it screws templates
+      /// @note - I do not use default parameters because it screws templates
+      /// @param Src - byte array to output
+      /// @param Size - size_t size of array
       static inline bool return_error_message(const uint8_t *Src, size_t Size) {
         return return_error_message(Src,Size,false);
       } // return_error_message
 
-      /// @param ErrMsg - string to output
       /// sends error message of any size, splits if necessary into chunks
-      /// @param Size - size_t size of string
-      /// @param NonVolat - bool, true if string is static until sent, true by default
+      /// @param ErrMsg - string to output
+      /// @param NonVolat - bool, true if string would not disappear until sent in background, true by default
       /// @note NonVolat is different here than in other similar functions, because
       /// this function is used on static strings most of the time
       static bool return_error_str(const char* ErrMsg, bool NonVolat = true) {
