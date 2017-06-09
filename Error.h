@@ -19,14 +19,14 @@ extern "C" int debug_printf(const char *format, ...);
 
 namespace avp {
   extern volatile uint8_t FailReason;
-  typedef void (*failfunc_type)(uint8_t reason) __attribute__((noreturn));
+  typedef void (*failfunc_type)(uint8_t reason); //  __attribute__((noreturn));
 
   /// defined in General library as weak, sending stuff to ::vprintf
   /// may be redefined
   bool debug_vprintf(const char *format, va_list a);
   /// @param reason - 1 _MALLOC fail, other are user defined
-  void major_fail(uint8_t reason = 0) __attribute__((noreturn));
-  void hang_cpu() __attribute__((noreturn));
+  void major_fail(uint8_t reason = 0); // __attribute__((noreturn));
+  void hang_cpu(); //  __attribute__((noreturn));
   void debug_action(); // if we want to debug something in General lib in primitive way
   // we can redefine this function (it is defined in common_cpp as a __weak  empty function)
   // and call it from everywhere.
