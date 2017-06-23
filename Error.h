@@ -4,6 +4,7 @@
   * @note - to use MACROS you have to properly implement "avp::debug_vprintf".
   * it is weakly linked in service.c as an output to stderr which often does
   * not work
+  * @note AVP_ASSERT in Release built DOES NOT CHECK EXPRESSION!
   */
 
 #ifndef ERROR_H_INCLUDED
