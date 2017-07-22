@@ -12,6 +12,13 @@
   const Class &operator __VA_ARGS__##=(const Class<T,Length> &rhs) { \
     size_t i=0;  do Vector<T,Length>::Data[i] __VA_ARGS__##= rhs.Data[i]; while(++i < Length); return *this; }
 
+template<class tPlacedVector>
+void * operator new(size_t s, tPlacedVector &Vector) {
+  AVP_ASSERT(s == sizeof(Vector.Data[0]));
+  AVP_ASSERT(Vector.Nfilled < N_ELEMENTS(Vector.Data));
+  return (void *)&Vector.Data[Vector.Nfilled++];
+} // placement new
+
 namespace avp {
   template<typename T, size_t Length>
   class Vector {
@@ -45,6 +52,15 @@ namespace avp {
       inline friend bool operator==(Vector const &v1, Vector const &v2) { return !(v1 != v2); }
       // SELF_OP_V(Vector) // this is default operation=
   }; // class Vector
+
+  template<typename T, size_t Length>
+  class PlacedVector: public Vector<T,Length> {
+    protected:
+      size_t Nfilled;
+    public:
+      PlacedVector():Nfilled(0) {}
+      friend void * ::operator new<PlacedVector>(size_t, PlacedVector &);
+  }; // PlacedVector
 
   template<typename T, size_t Length>
   class ArithVector: public Vector<T,Length> {

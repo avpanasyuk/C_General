@@ -16,22 +16,28 @@
 #include "Macros.h"
 
 #ifdef __cplusplus
-extern "C" int debug_printf(const char *format, ...);
+extern "C" {
+#endif
+  int debug_printf(const char *format, ...);
 
-namespace avp {
   extern volatile uint8_t FailReason;
   typedef void (*failfunc_type)(uint8_t reason); //  __attribute__((noreturn));
 
   /// defined in General library as weak, sending stuff to ::vprintf
   /// may be redefined
-  bool debug_vprintf(const char *format, va_list a);
+  int debug_vprintf(const char *format, va_list a);
+
+  enum MAJOR_FAIL_REASONS_0 {MEMALLOC = 1,NUM_FAIL_REASONS_0};
   /// @param reason - 1 _MALLOC fail, other are user defined
-  void major_fail(uint8_t reason = 0); // __attribute__((noreturn));
+  void major_fail(uint8_t reason); // __attribute__((noreturn));
   void hang_cpu(); //  __attribute__((noreturn));
   void debug_action(); // if we want to debug something in General lib in primitive way
   // we can redefine this function (it is defined in common_cpp as a __weak  empty function)
   // and call it from everywhere.
-}; //avp
+  void new_handler(); // NOTE! got to be installed on startup with std::set_new_handler(avp::new_handler);
+#ifdef __cplusplus
+}
+#endif
 
 // ************************* ASSERT/ERROR macros **********************
 // ERROR halts program even in RELEASE
@@ -40,7 +46,7 @@ namespace avp {
 #ifdef DEBUG
 # define AVP_ERROR_WITH_CODE(code,format, ...) do{ \
     debug_printf("Error in file " __FILE__ ", line %d: " format, \
-                 __LINE__, ##__VA_ARGS__); avp::major_fail(code); }while(0)
+                 __LINE__, ##__VA_ARGS__); major_fail(code); }while(0)
 
 /// AVP_ASSERT_WITH_EXPL = AVP_ASSERT_WITH_CODE with additional explanation
 /// @code - numeric code, optional
@@ -50,7 +56,7 @@ namespace avp {
                           ##__VA_ARGS__); }}while(0)
 
 #else // RELEASE
-# define AVP_ERROR_WITH_CODE(code,format,...) avp::major_fail(code)
+# define AVP_ERROR_WITH_CODE(code,format,...) major_fail(code)
 # define AVP_ASSERT_WITH_EXPL(exp,code,ext_format,...) do{ (void)((void)(exp),##__VA_ARGS__); }while(0)
 // we gotta execute exp and args but do nothing else
 #endif // DEBUG
@@ -59,10 +65,6 @@ namespace avp {
 #define AVP_ASSERT(exp) AVP_ASSERT_WITH_CODE(exp,0)
 #define AVP_ERROR(...) AVP_ASSERT_WITH_EXPL(0,1,##__VA_ARGS__)
 #define ASSERT_BEING_0(exp) AVP_ASSERT((exp) == 0)
-
-#else // #ifdef __cplusplus
-extern int debug_printf(const char *format, ...);
-#endif // #ifdef __cplusplus
 
 
 #endif /* ERROR_H_INCLUDED */
