@@ -66,6 +66,20 @@ namespace avp {
     return out;
   } // sum
 
+  template<typename Type>
+  Type XOR(const Type *p, size_t size) {
+    Type Out = -1; // we select 111111 as start value so sequence of 0s does not
+    // create valid CheckXOR
+    while(size--) Out ^= *(p++);
+    return Out;
+  } // XOR
+
+//  template<typename Type>
+//  static constexpr Type XOR(const Type *p, size_t size) {
+//    return (size?p[0]:-1) ^ XOR(p+1,size-1);
+//  } // XOR
+
+
 #if  defined(__ARM_FP)
   static inline float vsqrtf(float op1) {
     if(op1 <= 0.f) return 0.f;

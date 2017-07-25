@@ -39,6 +39,8 @@ extern "C" {
 }
 #endif
 
+IGNORE(-Wunused-value)
+
 // ************************* ASSERT/ERROR macros **********************
 // ERROR halts program even in RELEASE
 // ASSERT works only in DEBUG

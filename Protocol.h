@@ -196,6 +196,10 @@ namespace avp {
       /// @param Size - size_t size of array
       static inline bool info_message(const uint8_t *Src, size_t Size) { return info_message(Src,Size,false); }
 
+      static inline bool info_str(const char *s, bool NonVolat = true) {
+        return info_message((const uint8_t *)s,strlen(s),NonVolat);
+      } // info_str
+
       static PRINTF_WRAPPER(info_printf, vprintf<info_message>)
 
       /// sends error message of any size, splits if necessary into chunks

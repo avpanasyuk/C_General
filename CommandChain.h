@@ -80,7 +80,7 @@ namespace avp {
     /**
     @brief adds command to chain
     @param NumParamBytes if VAR_PARAM_NUM the command has variable number of arguments, and the first
-      parameter byte is the number of following parameters.
+      parameter byte is the number of following parameter bytes.
     @param Name - command mnemonics
     @param pFunc - callback function to call when command arrives
     */
