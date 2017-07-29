@@ -9,19 +9,20 @@
 * template Port should not be instantiated - use either PortByteTX or PortBlockTX, depending on capability
 *
 * -# should be static
-* -# member functions:HW_IO_::SetCallBacks(StoreReceivedByte,GetByteToSend), or
-*    HW_IO_::SetCallBacks(StoreReceivedByte,GetBlockToSend), depending on class capability
+* -# member functions:
+*    - static void SetCallBacks(tStoreReceivedByte pStoreReceivedByte_,  tGetBlockToSend pGetBlockToSend_), or
+*    - static void SetCallBacks(tStoreReceivedByte pStoreReceivedByte_,  tGetByteToSend pGetByteToSend_), depending on class capability
 *    (whether it can send by blocks, via, e.g. DMA), where
-*     - bool StoreReceivedByte(uint8_t b)
-*     - bool GetByteToSend(uint8_t *p)
-*     - bool GetBlockToSend(uint8_t **p, size_t *pSz)
-* -# HW_IO_::TryToSend(); - this class calls it to let HW_IO_ know that there are
+*      - bool StoreReceivedByte(uint8_t b)
+*      - bool GetByteToSend(uint8_t *p)
+*      - bool GetBlockToSend(uint8_t **p, size_t *pSz)
+* -# static void TryToSend(); - this class calls it to let HW_IO_ know that there are
 *    new data in buffer to transmit. This function may be called at the end of all primary "write"
 *    functions, from the interrupt indicating end of previous transfer, or from the "cycle" loop
 *    just in case. It should maintain locks when necessary.
 * -# HW_IO_ should call StoreReceivedByte supplied to it by SetCallBacks call when it received a byte
 * -# HW_IO_ should call GetBlockToSend or GetByteToSend when it is ready to send new data
-* -# should provide void FlushRX();
+* -# should provide static void FlushRX();
 *
 * To avoid needless data copying  there are two transmit buffers - one for bytes which buffers data
 * and one for blocks which buffers only pointers,
