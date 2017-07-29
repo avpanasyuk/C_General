@@ -6,7 +6,7 @@
 * transmission and reception
 *
 * There are two types of HW_IO class - one can transmit only by bytes, another by block (via DMA, e.g)
-* template Port should not be instantiated - use either PortByteTX or PortBlockTX
+* template Port should not be instantiated - use either PortByteTX or PortBlockTX, depending on capability
 *
 * -# should be static
 * -# member functions:HW_IO_::SetCallBacks(StoreReceivedByte,GetByteToSend), or
@@ -16,8 +16,10 @@
 *     - bool GetByteToSend(uint8_t *p)
 *     - bool GetBlockToSend(uint8_t **p, size_t *pSz)
 * -# HW_IO_::TryToSend(); - this class calls it to let HW_IO_ know that there are
-*    new data in buffer to transmit
-* -# HW_IO_ should call StoreReceivedByte supplied to it by Init call when it received a byte
+*    new data in buffer to transmit. This function may be called at the end of all primary "write"
+*    functions, from the interrupt indicating end of previous transfer, or from the "cycle" loop
+*    just in case. It should maintain locks when necessary.
+* -# HW_IO_ should call StoreReceivedByte supplied to it by SetCallBacks call when it received a byte
 * -# HW_IO_ should call GetBlockToSend or GetByteToSend when it is ready to send new data
 * -# should provide void FlushRX();
 *

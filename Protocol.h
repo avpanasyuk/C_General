@@ -34,14 +34,14 @@
 
   @section StartHandshake Initial Handshake.
   There may be several physical and virtual COM ports in the system, and we got to determine which
-  one device is connected to. This class supports automatic port finding. It sends out '2XjA'
+  one device is connected to. This class supports automatic port finding. It sends out BeaconStr
   every time avp::Protocol::SendBeacon is called (which should be done continuously before connection). The program on the
   opposite end of connection should
-    -# (optional) if port number is unknown, checks every COM port until it finds one continuously transmitting '2XjA'.
+    -# (optional) if port number is unknown, checks every COM port until it finds one continuously transmitting BeaconStr.
     -# leave the transmitting port open (or reopen it)
     -# sends NOOP command (which a single 0 byte) to the port
     -# immediately start monitoring incoming stream on the presence of four 0 byte sequence
-    -# on reception of NOOP command this FW stops sending '2XjA' to port and
+    -# on reception of NOOP command this FW stops sending BeaconStr to port and
       responds to it in a standard way according to \ref ProtocolDescription "Protocol Description",
       sending out four 0 bytes - one for status, two for size and the last one as checksum.
     -# when the communicating program receives four 0 byte sequence it should continue communication
@@ -175,6 +175,7 @@ namespace avp {
             case InputParser::NOOP: ReturnOK(); break;
             default: AVP_ERROR("Unrecognized error code.");
           }
+          Port::TryToSend();
         }
       } //  cycle
 
