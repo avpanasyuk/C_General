@@ -13,9 +13,6 @@
 volatile uint8_t FailReason = 0;
 void new_handler() { major_fail(MEMALLOC); }
 
-
-/// crap, ::vprintf does not work with semihosting
-///__weak bool debug_vprintf(const char *format, va_list a) { return vprintf<write_buffered< ::printf>>(format,a); }
 __weak int debug_vprintf(const char *format, va_list a) { return ::vprintf(format,a); }
 __weak void hang_cpu() { while(1); }
 
