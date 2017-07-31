@@ -68,8 +68,8 @@ namespace avp {
 
   template<typename Type>
   Type XOR(const Type *p, size_t size) {
-    Type Out = -1; // we select 111111 as start value so sequence of 0s does not
-    // create valid CheckXOR
+    Type Out = Type(0x12345678UL); // we select this as start value because there is
+    // very small chance that it will happen unintentionally
     while(size--) Out ^= *(p++);
     return Out;
   } // XOR

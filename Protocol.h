@@ -175,8 +175,8 @@ namespace avp {
             case InputParser::NOOP: ReturnOK(); break;
             default: AVP_ERROR("Unrecognized error code.");
           }
-          Port::TryToSend();
         }
+        Port::TryToSend();
       } //  cycle
 
       /// split info message into proper chunks
