@@ -33,7 +33,7 @@
 
 #define LOG10(x) ((x)>999?3:(x)>99?2:(x)>9?1:0)
 
-#if 0
+#if 1
 /*
 Why is this important? Well when a macro is scanned and expanding, it creates a disabling context.
 This disabling context will cause a token, that refers to the currently expanding macro, to be painted blue.
@@ -63,8 +63,8 @@ macros from becoming painted blue. We will just need to apply more scans to the 
 #define INC_6 7
 #define INC_7 8
 #define INC_8 9
-#define INC_9 9
-
+#define INC_9 10
+#define INC_10 11#define INC_11 12#define INC_12 13#define INC_13 14#define INC_14 15#define INC_15 16#define INC_16 17
 #define DEC(x) PRIMITIVE_CAT(DEC_, x)
 #define DEC_0 0
 #define DEC_1 0
@@ -76,6 +76,14 @@ macros from becoming painted blue. We will just need to apply more scans to the 
 #define DEC_7 6
 #define DEC_8 7
 #define DEC_9 8
+#define DEC_10 9
+#define DEC_11 10
+#define DEC_12 11
+#define DEC_13 12
+#define DEC_14 13
+#define DEC_15 14
+#define DEC_16 15
+#define DEC_17 16
 
 // LOGIC
 /*
@@ -88,7 +96,7 @@ macros from becoming painted blue. We will just need to apply more scans to the 
 
 
 #define NOT(x) CHECK(PRIMITIVE_CAT(NOT_, x))
-#define NOT_0 ~, 1,
+#define NOT_0 PROBE(~)
 
 // NOT(0) -> CHECK(NOT_0) -> CHECK(~,1,) -> CHECK_N(~,1,0,) -> 1
 // NOT(anything) -> CHECK(NOT_anything) -> CHECK_N(NOT_anything,0,) -> 0
@@ -129,7 +137,7 @@ macros from becoming painted blue. We will just need to apply more scans to the 
 #define IS_EMPTY_NON_FUNCTION_C() ()
 
 #define IS_EMPTY(x) IIF(BOOL(PRIMITIVE_CAT(CHECK_AFTER_,x)))
-#define CHECK_AFTER_ 0
+#define CHECK_AFTER_ 0/// deferred expressions#define EMPTY()#define DEFER(id) id EMPTY()#define OBSTRUCT(...) __VA_ARGS__ DEFER(EMPTY)()#define EXPAND(...) __VA_ARGS__/// repeat#define REPEAT(count, macro, ...) \    WHEN(count) \    ( \        OBSTRUCT(REPEAT_INDIRECT) () \        ( \            DEC(count), macro, __VA_ARGS__ \        ) \        OBSTRUCT(macro) \        ( \            DEC(count), __VA_ARGS__ \        ) \    )#define REPEAT_INDIRECT() REPEAT//An example of using this macro//#define M(i, _) i//EVAL(REPEAT(8, M, ~)) // generates - 0 1 2 3 4 5 6 7
 
 #endif
 
