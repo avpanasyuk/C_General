@@ -13,10 +13,10 @@
 
 namespace avp {
 /// unidirectional command chain
-  template<typename IDtype, uint8_t MaxNumParamBytes = 255-sizeof(IDtype)-1>
+  template<typename IDtype, uint8_t MaxNumParamBytes = UINT8_MAX-1-sizeof(IDtype)>
   class CommandChain: public CommandParser {
   public:
-    static constexpr uint8_t VAR_PARAM_NUM = 255;
+    static constexpr uint8_t VAR_PARAM_NUM = UINT8_MAX; ///< NumParamBytes value which designates variable parameter number
   protected:
     /// One Command makes a Link ------------------------------------------------
     static struct Link {
@@ -39,7 +39,7 @@ namespace avp {
         AVP_ASSERT_WITH_EXPL((ID & 0xFF) != 0,2,"Byte  0 is reserved for NOOP pseudo-command.");
         AVP_ASSERT_WITH_EXPL(NumParamBytes == VAR_PARAM_NUM ||
                              NumParamBytes <= MaxNumParamBytes,3,
-                             "Modify MaxNumParamBytes to accommodate %hhu bytes.",NumParamBytes);
+                             "Modify MaxNumParamBytes to accommodate %hu bytes.",NumParamBytes);
         AVP_ASSERT_WITH_EXPL(pFunc != nullptr,4,"We do not do useless commands.");
       } //  constructor
       bool IsIt(IDtype ID_) const { return ID_ == ID; }
@@ -105,8 +105,8 @@ namespace avp {
       *(pInputByte++) = NewByte;
 
       if(pInputByte == InputBytes.Params) { // just got a new command ID
+        debug_printf("Command: %.4s\n",InputBytes.Name);
         if((pCur = FindByID(InputBytes.ID)) == nullptr) return WRONG_ID;
-        // debug_printf("Command: %.4s\n",InputBytes.Name);
       } else {
         if(pInputByte == InputBytes.Params + 1) { // even if there is no parameters there is a CS, so we will get here anyway
           // Ok, now we should decide where we get N of parameter  bytes from
