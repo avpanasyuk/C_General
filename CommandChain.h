@@ -2,7 +2,7 @@
 #define COMMANDCHAIN_H_INCLUDED
 
 /*
-* see Protocol.h for protocol description
+* see Protocol.h for protocol description* @note !!!!!!!!!!!!!!!!!!!!!!!!!!!!! DO NOT USE debug_printf here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 
 #include <stdint.h>
@@ -97,15 +97,12 @@ namespace avp {
       static const Link *pCur;
       static uint8_t ParamNum;
       if(pInputByte == InputBytes.Name && NewByte == 0) {
-        // debug_printf("Got NOOP\n");
-        return NOOP;
+       return NOOP;
       }
 
-      // debug_printf("%hu ",NewByte);
       *(pInputByte++) = NewByte;
 
       if(pInputByte == InputBytes.Params) { // just got a new command ID
-        debug_printf("Command: %.4s\n",InputBytes.Name);
         if((pCur = FindByID(InputBytes.ID)) == nullptr) return WRONG_ID;
       } else {
         if(pInputByte == InputBytes.Params + 1) { // even if there is no parameters there is a CS, so we will get here anyway
@@ -113,7 +110,6 @@ namespace avp {
           // we store variable param number as a parameter, but it is not included in number of parameter byte value, that's
           // why we have + 1 here >
           ParamNum = pCur->NumParamBytes == VAR_PARAM_NUM?NewByte+1:pCur->NumParamBytes;
-          // debug_printf("\nExpected param bytes: %hu\n",ParamNum);
           AVP_ASSERT_WITH_EXPL(ParamNum <= MaxNumParamBytes,0,"%hu vs %hu", ParamNum, MaxNumParamBytes);
         }
 
@@ -124,11 +120,7 @@ namespace avp {
             pCur->pFunc(InputBytes.Params); // executing command
             pInputByte = InputBytes.Name; ///< get ready for new command
             ++Count;
-            // debug_printf("Done\n");
-          } else {
-            // debug_printf("CS received = %hu, calculated = %hu\n", SentCS, DataCS);
-            return BAD_CHECKSUM;
-          }
+          } else return BAD_CHECKSUM;
         }
       }
       return NO_ERROR; // everything's OK
