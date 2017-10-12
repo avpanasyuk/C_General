@@ -42,27 +42,20 @@ extern "C" {
 IGNORE(-Wunused-value)
 
 // ************************* ASSERT/ERROR macros **********************
-// ERROR halts program even in RELEASE
-// ASSERT works only in DEBUG
-
 #ifdef DEBUG
 # define AVP_ERROR_WITH_CODE(code,format, ...) do{ \
     debug_printf("Error in file " __FILE__ ", line %d: " format, \
                  __LINE__, ##__VA_ARGS__); major_fail(code); }while(0)
-
+#else // RELEASE
+# define AVP_ERROR_WITH_CODE(code,format,...) do{ major_fail(code); }while(0)
+// we gotta execute exp and args but do nothing else
+#endif // DEBUG
 /// AVP_ASSERT_WITH_EXPL = AVP_ASSERT_WITH_CODE with additional explanation
 /// @code - numeric code, optional
 /// @param ext_format - additional format string, followed by parameters
-# define AVP_ASSERT_WITH_EXPL(exp,code,ext_format,...) do{ if(!(exp)) \
+#define AVP_ASSERT_WITH_EXPL(exp,code,ext_format,...) do{ if(!(exp)) \
     { AVP_ERROR_WITH_CODE(code+0,"Expression \"" #exp "\" is false: " ext_format "!\n", \
                           ##__VA_ARGS__); }}while(0)
-
-#else // RELEASE
-# define AVP_ERROR_WITH_CODE(code,format,...) major_fail(code)
-# define AVP_ASSERT_WITH_EXPL(exp,code,ext_format,...) do{ (void)((void)(exp),##__VA_ARGS__); }while(0)
-// we gotta execute exp and args but do nothing else
-#endif // DEBUG
-
 #define AVP_ASSERT_WITH_CODE(exp,code) AVP_ASSERT_WITH_EXPL(exp,code,"")
 #define AVP_ASSERT(exp) AVP_ASSERT_WITH_CODE(exp,0)
 #define AVP_ERROR(...) AVP_ASSERT_WITH_EXPL(0,1,##__VA_ARGS__)
