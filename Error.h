@@ -5,10 +5,16 @@
   * it is weakly linked in service.c as an output to stderr which often does
   * not work
   * @note AVP_ASSERT in Release built DOES NOT CHECK EXPRESSION!
+  * you can define debug output printf style function name be defining
+  * DEBUG_PRINTF before including this file
   */
 
 #ifndef ERROR_H_INCLUDED
 #define ERROR_H_INCLUDED
+
+#ifndef DEBUG_PRINTF
+#define DEBUG_PRINTF debug_printf
+#endif
 
 #include <stdint.h>
 #include <stddef.h>
@@ -44,12 +50,13 @@ IGNORE(-Wunused-value)
 // ************************* ASSERT/ERROR macros **********************
 #ifdef DEBUG
 # define AVP_ERROR(code,format, ...) do{ \
-    debug_printf("Error in file " __FILE__ ", line %d: " format, \
-                 __LINE__, ##__VA_ARGS__); major_fail(code); }while(0)
+    DEBUG_PRINTF("Error in %s in file " __FILE__ ", line %d: " format, \
+                 __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); major_fail(code);\
+  }while(0)
 #else // RELEASE
 # define AVP_ERROR(code,format,...) do{ major_fail(code); }while(0)
 // we gotta execute exp and args but do nothing else
-#endif // DEBUG
+#endif // DEBUG
 /// AVP_ASSERT_WITH_EXPL = AVP_ASSERT_WITH_CODE with additional explanation
 /// @code - numeric code, optional
 /// @param ext_format - additional format string, followed by parameters
