@@ -9,6 +9,7 @@
 #define GENERAL_H_
 
 #include <stdint.h>
+#include <stdarg.h>
 
 // following are operators which can be universaly derived from others
 template<typename T> inline T operator++(T &v) { return v += 1; }
@@ -48,12 +49,18 @@ inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 ==
 #endif /* __weak */
 #endif /* __GNUC__ */
 
-
 namespace avp {
 // to suppress unused-variable or unused-value
 // volatile auto x = (unused-value-expression);
 // avp::unused(x)
   template<typename T> void unused(T const &) {}
+
+  template<bool (*vprintf_ptr)(char const *, va_list)>
+  PRINTF_WRAPPER(printf,vprintf_ptr)
+
+  std::string string_vprintf(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
+  std::string string_printf(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
 } // avp
+
 
 #endif /* GENERAL_H_ */

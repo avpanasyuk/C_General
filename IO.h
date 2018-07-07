@@ -9,20 +9,20 @@
   */
 
 #include <string.h>
-#include <stdarg.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include "Error.h"
 #include "Time.h"
 
-
 /// creates printf-type function named "func_name" out of vprintf-type function named "vprinf_func"
 /// usage: PRINTF_WRAPPER_BOOL(printf,vprintf)
 #define PRINTF_WRAPPER(func_name, vprintf_func) \
-  bool func_name(char const *format, ...) \
+  bool func_name(char const *format, ...) __attribute__ ((format (printf, 1, 2))) \
   { va_list ap; va_start(ap,format); \
     bool Out =  vprintf_func(format,ap); va_end(ap); \
     return Out; }
+
 
 namespace avp {
 //! @note ALL IO FUNCTIONS HAVE atomic output - either they write or not,
@@ -76,8 +76,6 @@ namespace avp {
       vsprintf((char *)Buffer,format,ap);
       return write_((const uint8_t *)Buffer,Size); // we do not write ending 0 byte
     } // vprintf
-
-    static PRINTF_WRAPPER(printf,vprintf)
   }; // class write_buffered
 
   template<bool (*write_)(const uint8_t *Ptr, size_t Size, void (*ReleaseFunc)())>
