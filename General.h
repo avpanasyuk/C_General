@@ -49,6 +49,14 @@ inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 ==
 #endif /* __weak */
 #endif /* __GNUC__ */
 
+/// creates printf-type function named "func_name" out of vprintf-type function named "vprinf_func"
+/// usage: PRINTF_WRAPPER_BOOL(printf,vprintf)
+#define PRINTF_WRAPPER(func_name, vprintf_func) \
+  inline  __attribute__ ((format (printf, 1, 2))) bool func_name(char const *format, ...) \
+  { va_list ap; va_start(ap,format); \
+    bool Out =  vprintf_func(format,ap); va_end(ap); \
+    return Out; }
+
 namespace avp {
 // to suppress unused-variable or unused-value
 // volatile auto x = (unused-value-expression);

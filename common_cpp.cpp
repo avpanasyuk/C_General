@@ -31,7 +31,7 @@ __weak int debug_printf(char const *format, ...) {
 }
 
 namespace avp {
-  std::string string_vprintf(const char *format, va_list a) {
+  std::string string_vprintf(const char *format, va_list ap) {
     int Size = vsnprintf(NULL,0,format,ap);
     char Buffer[Size+1]; // +1 to include ending zero byte
     vsprintf(Buffer,format,ap);
