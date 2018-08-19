@@ -20,7 +20,7 @@ namespace avp {
                 const char *format, ...) {
         va_list ap;
         va_start(ap,format);
-        err_text = string_printf("Error in %s of file %s at line %d: ",
+        err_text = string_printf("Error in function \"%s\" of file \"%s\" at line %d: ",
                                  func_name, file, line) + string_vprintf(format,ap);
         va_end(ap);
       } // constructor
