@@ -11,12 +11,14 @@
 #include <stdint.h>
 #include <stdarg.h>
 
+#if 0 // cause reallu weird errors in c+11 and I think already built-in
 // following are operators which can be universaly derived from others
 template<typename T> inline T operator++(T &v) { return v += 1; }
 template<typename T> inline T operator++(T &v, int) { T old(v); v += 1; return old; }
 template<typename T> inline T operator--(T &v) { return v -= 1; }
 template<typename T> inline T operator--(T &v, int) { T old(v); v -= 1; return old; }
 template<typename T> inline T operator-(const T &x) { return 0 - x; } // unitary minus
+#endif
 
 #if 0
 // DO NOT REDEFINE BUILT-IN OPERATORS!!!!! INFINITE RECURSION HELL
