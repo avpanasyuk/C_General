@@ -8,7 +8,7 @@ namespace avp {
 
   class CommandParser {
   public:
-    enum ParseError_ {NO_ERROR = 0, NOOP, WRONG_ID, BAD_CHECKSUM, NUM_ERRORS};
+    enum ParseError_ {NO_ERROR = 0, NOOP, WRONG_ID, BAD_CHECKSUM, WRONG_PARAM_SIZE, NUM_ERRORS};
     /// @retval when NO_ERROR ParseByte send response itself (e.g. from CommandFunc )
     /// when error ParseByte does not send response
 //    static ParseError_ ParseByte(uint8_t byte) = 0;

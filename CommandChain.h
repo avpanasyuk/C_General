@@ -96,7 +96,7 @@ namespace avp {
     static ParseError_ ParseByte(uint8_t NewByte) { // this is static member function
       static const Link *pCur;
       static uint8_t ParamNum;
-      if(pInputByte == InputBytes.Name && NewByte == 0) {
+      if(pInputByte == InputBytes.Name && NewByte == 0) {       debug_printf("Got NOOP!\n");
        return NOOP;
       }
 
@@ -110,13 +110,13 @@ namespace avp {
           // we store variable param number as a parameter, but it is not included in number of parameter byte value, that's
           // why we have + 1 here >
           ParamNum = pCur->NumParamBytes == VAR_PARAM_NUM?NewByte+1:pCur->NumParamBytes;
-          AVP_ASSERT_WITH_EXPL(ParamNum <= MaxNumParamBytes,0,"%hu vs %hu", ParamNum, MaxNumParamBytes);
+          if(ParamNum > MaxNumParamBytes) return WRONG_PARAM_SIZE;
         }
 
         if(pInputByte == InputBytes.Params + ParamNum + 1)  { // got everything: command,parameters and checksum
           uint8_t DataCS = sum<uint8_t>(InputBytes.Name,sizeof(IDtype) + ParamNum),
                   SentCS = InputBytes.Params[ParamNum];
-          if(DataCS == SentCS) {
+          if(DataCS == SentCS) {            debug_printf("Got command %.4s ",InputBytes.Name);
             pCur->pFunc(InputBytes.Params); // executing command
             pInputByte = InputBytes.Name; ///< get ready for new command
             ++Count;
