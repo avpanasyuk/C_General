@@ -9,7 +9,7 @@
 #define GENERAL_H_
 
 #include <stdint.h>
-#include <stdarg.h>
+#include <stdarg.h>#include <string>
 
 #if 0 // cause reallu weird errors in c+11 and I think already built-in
 // following are operators which can be universaly derived from others
@@ -54,7 +54,7 @@ inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 ==
 /// creates printf-type function named "func_name" out of vprintf-type function named "vprinf_func"
 /// usage: PRINTF_WRAPPER_BOOL(printf,vprintf)
 #define PRINTF_WRAPPER(func_name, vprintf_func) \
-  inline  __attribute__ ((format (printf, 1, 2))) bool func_name(char const *format, ...) \
+  inline  __attribute__((format (printf, 1, 2))) bool func_name(char const *format, ...) \
   { va_list ap; va_start(ap,format); \
     bool Out =  vprintf_func(format,ap); va_end(ap); \
     return Out; }
@@ -64,9 +64,6 @@ namespace avp {
 // volatile auto x = (unused-value-expression);
 // avp::unused(x)
   template<typename T> void unused(T const &) {}
-
-  template<bool (*vprintf_ptr)(char const *, va_list)>
-  PRINTF_WRAPPER(printf,vprintf_ptr)
 
   std::string string_vprintf(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
   std::string string_printf(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
