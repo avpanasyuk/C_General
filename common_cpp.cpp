@@ -6,7 +6,6 @@
  */
 #include <stdlib.h>
 #include <stdio.h>
-#include <string>
 #include "General.h"
 #include "Error.h"
 
@@ -29,7 +28,7 @@ __weak int debug_printf(char const *format, ...) {
   va_end(ap);
   return Out?1:-1;
 }
-
+#ifndef NO_STL
 namespace avp {
   std::string string_vprintf(const char *format, va_list ap) {
     va_list ap_;
@@ -48,6 +47,6 @@ namespace avp {
     va_end(ap);
     return Out;
   } // string_printf
+} // namnespace avp#endif
 
-} // namnespace avp
 

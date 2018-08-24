@@ -9,8 +9,7 @@
 #define GENERAL_H_
 
 #include <stdint.h>
-#include <stdarg.h>#include <string>
-
+#include <stdarg.h>
 #if 0 // cause reallu weird errors in c+11 and I think already built-in
 // following are operators which can be universaly derived from others
 template<typename T> inline T operator++(T &v) { return v += 1; }
@@ -64,10 +63,11 @@ namespace avp {
 // volatile auto x = (unused-value-expression);
 // avp::unused(x)
   template<typename T> void unused(T const &) {}
-
+}#ifndef NO_STL#include <string>
+namespace avp {
   std::string string_vprintf(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
   std::string string_printf(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
 } // avp
 
-
+#endif
 #endif /* GENERAL_H_ */

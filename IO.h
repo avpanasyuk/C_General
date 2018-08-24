@@ -90,13 +90,6 @@ namespace avp {
   template<write_type_func write> PRINTF_WRAPPER(printf,vprintf<write>)
   template<write_byte_func write_byte, size_t (*space_left)() = nullptr>
   PRINTF_WRAPPER(printf,SINGLE_ARG(vprintf<write_byte,space_left>))
-
-  // ***************** printf replacement using variadic templates
-      /*
-  template<typename First, typename... Types>
-  std::string make_string(Types... Args) {
-
-  }*/
 } // namespace avp
 
 #endif /* IO_H_INCLUDED */
