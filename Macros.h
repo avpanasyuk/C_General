@@ -64,7 +64,7 @@ macros from becoming painted blue. We will just need to apply more scans to the 
 #define INC_7 8
 #define INC_8 9
 #define INC_9 10
-#define INC_10 11#define INC_11 12#define INC_12 13#define INC_13 14#define INC_14 15#define INC_15 16#define INC_16 17
+#define INC_10 11#define INC_11 12#define INC_12 13#define INC_13 14#define INC_14 15#define INC_15 16#define INC_16 17
 #define DEC(x) PRIMITIVE_CAT(DEC_, x)
 #define DEC_0 0
 #define DEC_1 0
@@ -137,9 +137,19 @@ macros from becoming painted blue. We will just need to apply more scans to the 
 #define IS_EMPTY_NON_FUNCTION_C() ()
 
 #define IS_EMPTY(x) IIF(BOOL(PRIMITIVE_CAT(CHECK_AFTER_,x)))
-#define CHECK_AFTER_ 0/// deferred expressions#define EMPTY()#define DEFER(id) id EMPTY()#define OBSTRUCT(...) __VA_ARGS__ DEFER(EMPTY)()#define EXPAND(...) __VA_ARGS__/// repeat#define REPEAT(count, macro, ...) \    WHEN(count) \    ( \        OBSTRUCT(REPEAT_INDIRECT) () \        ( \            DEC(count), macro, __VA_ARGS__ \        ) \        OBSTRUCT(macro) \        ( \            DEC(count), __VA_ARGS__ \        ) \    )#define REPEAT_INDIRECT() REPEAT//An example of using this macro//#define M(i, _) i//EVAL(REPEAT(8, M, ~)) // generates - 0 1 2 3 4 5 6 7
+#define CHECK_AFTER_ 0/// deferred expressions#define EMPTY()#define DEFER(id) id EMPTY()#define OBSTRUCT(...) __VA_ARGS__ DEFER(EMPTY)()#define EXPAND(...) __VA_ARGS__/// repeat#define REPEAT(count, macro, ...) \    WHEN(count) \    ( \        OBSTRUCT(REPEAT_INDIRECT) () \        ( \            DEC(count), macro, __VA_ARGS__ \        ) \        OBSTRUCT(macro) \        ( \            DEC(count), __VA_ARGS__ \        ) \    )#define REPEAT_INDIRECT() REPEAT//An example of using this macro//#define M(i, _) i//EVAL(REPEAT(8, M, ~)) // generates - 0 1 2 3 4 5 6 7
 
 #endif
+
+// creates a class to be precise alias of another class
+#define PURE_CHILD(class_name,parent) \
+struct class_name: public parent { \
+    template<typename... Types> \
+    class_name(Types... args) : parent(args...) {}  \
+};
+
+
+
 
 #endif /* MACROS_H_INCLUDED */
 
