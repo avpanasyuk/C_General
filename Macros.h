@@ -29,9 +29,7 @@
 #define STOP_IGNORING _Pragma ("GCC diagnostic pop")
 
 // IGNORE(-Wno-psabi)
-//  IGNORE(-Wunused-function)
-
-#define LOG10(x) ((x)>999?3:(x)>99?2:(x)>9?1:0)
+// IGNORE(-Wunused-function)
 
 #if 1
 /*
