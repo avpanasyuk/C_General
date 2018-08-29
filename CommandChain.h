@@ -116,7 +116,7 @@ namespace avp {
         if(pInputByte == InputBytes.Params + ParamNum + 1)  { // got everything: command,parameters and checksum
           uint8_t DataCS = sum<uint8_t>(InputBytes.Name,sizeof(IDtype) + ParamNum),
                   SentCS = InputBytes.Params[ParamNum];
-          if(DataCS == SentCS) {            debug_printf("Got command %.4s ",InputBytes.Name);
+          if(DataCS == SentCS) {            debug_printf("Got command %.4s\n",InputBytes.Name);
             pCur->pFunc(InputBytes.Params); // executing command
             pInputByte = InputBytes.Name; ///< get ready for new command
             ++Count;
