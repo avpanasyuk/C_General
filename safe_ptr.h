@@ -12,9 +12,9 @@ namespace avp {
   template<typename T>
   struct safe_ptr {
     safe_ptr(T *p_ = nullptr): p(p_) {}
-    safe_ptr &operator=(T *p_) { p = p_; return *this; }
+    // safe_ptr &operator=(T *p_) { p = p_; return *this; }
     T &operator*() const { AVP_ASSERT(p != nullptr); return *p; }
-    T *operator-> () const { return &(this->operator*()); }
+    T *operator-> () const { AVP_ASSERT(p != nullptr); return p; }
     T &operator[] (size_t index) { AVP_ASSERT(p != nullptr); return p[index]; }
     // T *operator->() const { AVP_ASSERT(p != nullptr); return p; }
     T *get() const { return p; }
