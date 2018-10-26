@@ -79,7 +79,7 @@ namespace avp {
     static_assert(std::is_same<T1,T2>::value,"Types should be identical!");
     static_assert(std::is_unsigned<T1>::value,"Type should be unsigned!");
     return y - x < std::numeric_limits<T1>::max()/2;
-  }
+  } // unsigned_is_smaller
 } // avp
 #endif
 #endif /* GENERAL_H_ */
