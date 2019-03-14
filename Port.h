@@ -47,7 +47,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include <AVP_LIBS/General/Math.h>
+#include <AVP_LIBS/General/MyMath.h>
 #include <AVP_LIBS/General/Error.h>
 #include "CircBuffer.h"
 
