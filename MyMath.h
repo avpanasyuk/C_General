@@ -1,5 +1,5 @@
-#ifndef MATH_H_INCLUDED
-#define MATH_H_INCLUDED
+#ifndef MYMATH_H_INCLUDED
+#define MYMATH_H_INCLUDED
 
 /**
   * @file AVP_LIBS/General/Math.h
@@ -103,4 +103,4 @@ namespace avp {
 
 } // namespace avp
 
-#endif /* MATH_H_INCLUDED */
+#endif /* MYMATH_H_INCLUDED */
