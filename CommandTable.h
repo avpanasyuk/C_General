@@ -37,9 +37,9 @@ template<uint8_t MaxNumParamBytes = 255>
         } Input;
         /// @note COMMAND BYTE is index in CommandTable + 1.
         /// COMMAND BYTE == 0 is NOOP command
-        IGNORE(-Warray-bounds)
+        IGNORE_WARNING(-Warray-bounds)
         Input.Bytes[InputI++] = b;
-        STOP_IGNORING
+        STOP_IGNORING_WARNING
 
         if(InputI == 1) { // b is a CurCommand.ID
           if(b != 0) { // it is not a NOOP command

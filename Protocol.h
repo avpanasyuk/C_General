@@ -311,7 +311,7 @@ namespace avp {
         // debug_printf("Four zeros\n");
       }
 
-      IGNORE(-Waddress)
+      IGNORE_WARNING(-Waddress)
 
       static bool SomethingToRX() {
         if(Port::SomethingToRX()) {

@@ -38,6 +38,25 @@ namespace avp {
   template<typename T>
   static inline T Chars2type(const char *Chars) { return Bytes2type<T>((const uint8_t *)Chars); }
 
+  /** reinterprets value pointed by the Ptr as "tOut", direct byte order
+   */
+  template<typename tOut, typename T1>
+  static inline tOut Ptr2type(const T1 *Ptr) {
+    tOut Out;
+    const uint8_t *pB = (const uint8_t *)Ptr;
+    for(uint8_t *p = (uint8_t *)&Out; p < (uint8_t *)(&Out + 1); ++p) *p = *(pB++);
+    return Out;
+  } // Bytes2type
+
+  /** reinterprets value pointed by the Ptr as "tOut", Reverse byte order
+   */
+  template<typename tOut, typename T1>
+  static inline tOut Ptr2typeRev(const T1 *Ptr) {
+    tOut Out;
+    const uint8_t *pB = (const uint8_t *)Ptr;
+    for(uint8_t *p = (uint8_t *)&Out + sizeof(tOut) - 1; p >= (uint8_t *)&Out; --p) *p = *(pB++);
+    return Out;
+  } // Bytes2type
 
   // bit-banging functions
   template<typename ElType, typename SzType> ElType checkXOR(const ElType *p, SzType size) {
