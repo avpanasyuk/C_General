@@ -25,38 +25,31 @@ namespace avp {
 //    return Bytes2type<uint16_t>(Bytes);
 //  } // Word
 
-  /**
-  Converts array of bytes to a value without memory alignment problem.
-  */
-  template<typename T>
-  static inline T Bytes2type(const uint8_t *Bytes) {
-    T Out;
-    for(uint8_t *p = (uint8_t *)&Out; p < (uint8_t *)(&Out + 1); ++p) *p = *(Bytes++);
-    return Out;
-  } // Bytes2type
-
-  template<typename T>
-  static inline T Chars2type(const char *Chars) { return Bytes2type<T>((const uint8_t *)Chars); }
-
   /** reinterprets value pointed by the Ptr as "tOut", direct byte order
    */
-  template<typename tOut, typename T1>
+  template<typename tOut, typename T1 = uint8_t>
   static inline tOut Ptr2type(const T1 *Ptr) {
     tOut Out;
     const uint8_t *pB = (const uint8_t *)Ptr;
     for(uint8_t *p = (uint8_t *)&Out; p < (uint8_t *)(&Out + 1); ++p) *p = *(pB++);
     return Out;
-  } // Bytes2type
+  } // Ptr2type
+
+  template<typename T>
+  static inline T Bytes2type(const uint8_t *Bytes) { return Ptr2type<T>(Bytes); }
+  template<typename T>
+  static inline T Chars2type(const char *Chars) { return Ptr2type<T,char>(Chars); }
+
 
   /** reinterprets value pointed by the Ptr as "tOut", Reverse byte order
    */
-  template<typename tOut, typename T1>
+  template<typename tOut, typename T1 = uint8_t>
   static inline tOut Ptr2typeRev(const T1 *Ptr) {
     tOut Out;
     const uint8_t *pB = (const uint8_t *)Ptr;
     for(uint8_t *p = (uint8_t *)&Out + sizeof(tOut) - 1; p >= (uint8_t *)&Out; --p) *p = *(pB++);
     return Out;
-  } // Bytes2type
+  } // Ptr2typeRev
 
   // bit-banging functions
   template<typename ElType, typename SzType> ElType checkXOR(const ElType *p, SzType size) {
