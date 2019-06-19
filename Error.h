@@ -45,7 +45,7 @@ extern "C" {
 }
 #endif
 
-IGNORE(-Wunused-value)
+IGNORE_WARNING(-Wunused-value)
 
 // ************************* ASSERT/ERROR macros **********************
 #ifdef DEBUG

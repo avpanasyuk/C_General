@@ -78,6 +78,10 @@ struct CircBuffer {
     // we do not care what happens in upper bits
 }; // CircBuffer
 
+/**
+ * The same thing as CircBuffer only size doies not have to be a power of 2. Little bit less efficient, becuase we
+ * were relaying on automatic wrap before and have to use "if" statement now
+ */
 template <typename T, uint8_t size = uint8_t(-1)>
 struct CircBufferNonPWR2 {
     // *********** General functions

@@ -24,12 +24,12 @@
 //            foo(b);                       /* no diagnostic for this one */
 //          #pragma GCC diagnostic pop
 
-#define IGNORE(x) _Pragma ("GCC diagnostic push") \
+#define IGNORE_WARNING(x) _Pragma ("GCC diagnostic push") \
   DO_PRAGMA(GCC diagnostic ignored #x)
-#define STOP_IGNORING _Pragma ("GCC diagnostic pop")
+#define STOP_IGNORING_WARNING _Pragma ("GCC diagnostic pop")
 
-// IGNORE(-Wno-psabi)
-// IGNORE(-Wunused-function)
+// IGNORE_WARNING(-Wno-psabi)
+// IGNORE_WARNING(-Wunused-function)
 
 #if 1
 /*
@@ -146,11 +146,14 @@ struct class_name: public parent { \
     class_name(Types... args) : parent(args...) {}  \
 };
 
-/// corresponding binary operator should be defined in advance/// first macro parameter is class name, second one is "+" or "-"#define CLASS_PLUS_MINUS_BLOCK(cl,op) \template<typename T2> cl &operator op##=(const T2& b) { *this = *this op b; return *this; } \
+/// corresponding binary operator should be defined in advance
+/// first macro parameter is class name, second one is "+" or "-"
+#define CLASS_PLUS_MINUS_BLOCK(cl,op) \
+  template<typename T2> cl &operator op##=(const T2& b) { *this = *this op b; return *this; } \
 cl& operator op##op() { *this op##= 1; return *this;} \
 cl operator op##op(int) { cl old(*this); *this op##= 1; return old; } \
-
-#if 0 // following are operators which can be universaly derived from otherstemplate<typename T, typename T2> inline T& operator +=(T& a, const T2& b) { a = a + b; return a; }
+
+#if 0 // following are operators which can be universaly derived from otherstemplate<typename T, typename T2> inline T& operator +=(T& a, const T2& b) { a = a + b; return a; }
 template<typename T, typename T2> inline T& operator -=(T& a, const T2& b) { a = a - b; return a; }
 template<typename T> inline T& operator++(T &v) { v += 1; return v;}
 template<typename T> inline T operator++(T &v, int) { T old(v); v += 1; return old; }
