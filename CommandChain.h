@@ -6,7 +6,7 @@
 */
 
 #include <stdint.h>
-#include "BitBang.h"
+#include <AVP_LIBS/General/MyMath.h>#include "BitBang.h"
 #include "Error.h"
 #include "BitBang.h"
 #include "CommandParser.h"
@@ -114,7 +114,7 @@ namespace avp {
         }
 
         if(pInputByte == InputBytes.Params + ParamNum + 1)  { // got everything: command,parameters and checksum
-          uint8_t DataCS = sum<uint8_t>(InputBytes.Name,sizeof(IDtype) + ParamNum),
+          uint8_t DataCS = avp::sum<uint8_t>(InputBytes.Name,sizeof(IDtype) + ParamNum),
                   SentCS = InputBytes.Params[ParamNum];
           if(DataCS == SentCS) {            // debug_printf("Got command %.4s\n",InputBytes.Name);
             pCur->pFunc(InputBytes.Params); // executing command

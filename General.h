@@ -73,8 +73,8 @@ namespace avp {
   std::string string_printf(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
 
   /// this function is for comparison two relatively close unsigned values of the same type in case larger of them  wraps
-  /// and we want to consider wrapped vallue to be still "larger" than the other one. Literal comparison does not work
-  /// in this case.
+  /// and we want to consider wrapped value to be still "larger" than the other one. Literal comparison does not work
+  /// in this case.  /// @return true if y > x
   template<typename T1, typename T2> inline bool unsigned_is_smaller(const T1 &x, const T2 &y) {
     static_assert(std::is_same<T1,T2>::value,"Types should be identical!");
     static_assert(std::is_unsigned<T1>::value,"Type should be unsigned!");
