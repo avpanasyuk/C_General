@@ -6,7 +6,7 @@
 */
 
 #include <stdint.h>
-#include "BitBang.h"
+#include "BitBang.h"#include "MyMath.h"
 #include "Error.h"
 #include "BitBang.h"
 #include "CommandParser.h"
