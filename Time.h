@@ -38,7 +38,7 @@ namespace avp {
       operator T&() { return Period; }
 
       /// Pause with an internal loop
-      static void Pause(T Delay, void (*LoopFunc)() /* = []() {} */) {
+      static void Pause(T Delay, void (*LoopFunc)()) {
         TimePeriod Timer(Delay);
         while(!Timer.Expired()) (*LoopFunc)();
       } // Pause
@@ -70,9 +70,9 @@ namespace avp {
 
 // following functions should be defined elsewhere and return microseconds and milliseconds
 extern uint32_t millis();
-extern uint32_t micros();
-
+extern uint32_t micros();
 typedef class avp::TimePeriod<millis> Millisec;
 typedef class avp::TimePeriod<micros> Microsec;
+// typedef class avp::TimePeriod<CPU_Ticks> CPU_Tick;
 
 #endif /* TIME_H_INCLUDED */

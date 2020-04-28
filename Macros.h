@@ -185,7 +185,7 @@ BINARY_OP_FROM_SELF(|)
 inline friend bool operator==(CLASS const &v1, CLASS const &v2) { return equal(v1,v2); }
 inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 == v2); }
 
-#endif  // end of example
+#endif  // end of example#define ALWAYS_INLINE __attribute__(( always_inline )) static inline
 
 
 
