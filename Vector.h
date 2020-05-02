@@ -5,13 +5,6 @@
 #include "General.h"
 #include "Error.h"
 
-#define SELF_OP_T(Class,...) \
-  const Class &operator __VA_ARGS__##=(const T &rhs) { \
-    for(size_t i=0; i < Length; i++) Vector<T,Length>::Data[i] __VA_ARGS__##= rhs; return *this; }
-#define SELF_OP_V(Class,...) \
-  const Class &operator __VA_ARGS__##=(const Class<T,Length> &rhs) { \
-    for(size_t i=0; i < Length; i++) Vector<T,Length>::Data[i] __VA_ARGS__##= rhs.Data[i]; return *this; }
-
 template<class tPlacedVector>
 void * operator new(size_t s, tPlacedVector &Vector) {
   AVP_ASSERT(s == sizeof(Vector.Data[0]));
@@ -30,9 +23,16 @@ namespace avp {
       Vector(const T &rhs) { *this = rhs; }
       Vector(const Vector<T,Length> &rhs) { *this = rhs; }
 
-      SELF_OP_V(Vector) // assignment operator
-      SELF_OP_T(Vector) // assign a single value T to the whole vector
-      const Vector &operator=(const T *p) { for(size_t i=0; i < Length; i++) Data[i] = p[i];  return *this;}
+#define SELF_OP_V(Class,...) \
+  template<typename T1 = T> \
+  const Class &operator __VA_ARGS__##=(const Class<T1,Length> &rhs) { \
+    for(size_t i=0; i < Length; i++) Vector<T,Length>::Data[i] __VA_ARGS__##= rhs[i]; return *this; }
+      SELF_OP_V(Vector) // assignment operator
+ #define SELF_OP_T(Class,...) \  template<typename T1 = T> \
+  const Class &operator __VA_ARGS__##=(const T1 &rhs) { \
+    for(size_t i=0; i < Length; i++) Vector<T,Length>::Data[i] __VA_ARGS__##= rhs; return *this; }
+     SELF_OP_T(Vector) // assign a single value T to the whole vector
+      // const Vector &operator=(const T *p) { for(size_t i=0; i < Length; i++) Data[i] = p[i];  return *this;}
 
       T &operator[](uint8_t i) { AVP_ASSERT(i < Length); return Data[i]; }
 
