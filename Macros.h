@@ -31,7 +31,56 @@
 // IGNORE_WARNING(-Wno-psabi)
 // IGNORE_WARNING(-Wunused-function)
 
-#if 1
+
+/// creates a class to be precise alias of another class
+#define PURE_CHILD(class_name,parent) \
+struct class_name: public parent { \
+    template<typename... Types> \
+    class_name(Types... args) : parent(args...) {}  \
+};
+
+/// corresponding binary operator should be defined in advance
+/// first macro parameter is class name, second one is "+" or "-"
+#define CLASS_PLUS_MINUS_BLOCK(cl,op) \
+  template<typename T2> cl &operator op##=(const T2& b) { *this = *this op b; return *this; } \
+cl& operator op##op() { *this op##= 1; return *this;} \
+cl operator op##op(int) { cl old(*this); *this op##= 1; return old; } \#define ALWAYS_INLINE __attribute__(( always_inline )) static inline#define ON_SCOPE_EXIT(exp)   struct _ { ~_() { do{ exp; }while(0); }} __; // executes code when going out of function scope in any way
+
+// ********************************************** CONFUSING MACROS I DO NOT CURRENTLY USE **************************************
+#if 0 // following are operators which can be universaly derived from otherstemplate<typename T, typename T2> inline T& operator +=(T& a, const T2& b) { a = a + b; return a; }
+template<typename T, typename T2> inline T& operator -=(T& a, const T2& b) { a = a - b; return a; }
+template<typename T> inline T& operator++(T &v) { v += 1; return v;}
+template<typename T> inline T operator++(T &v, int) { T old(v); v += 1; return old; }
+template<typename T> inline T& operator--(T &v) { v -= 1; return v; }
+template<typename T> inline T operator--(T &v, int) { T old(v); v -= 1; return old; }
+template<typename T> inline T operator-(const T &x) { return 0 - x; } // unitary minus
+#endif
+
+#if 0
+// DO NOT REDEFINE BUILT-IN OPERATORS!!!!! INFINITE RECURSION HELL
+// DO NOT DEFINE BINARTY OPERATORS FROM UNITARY USING TEMPLATE FUNCTIONS. COMPLILER DOES NOT
+// TRY USING IMPLICIT CONVERSION TO FIT PARAMETER TYPES
+// USE TEMPLATE CLASS FRIEND FUNCTIONS - THEY ARE SYMMETRIC AND COMPILER TRIES
+// IMPLICIT CONVERSIONS
+// LIKE THIS: for template<typename type> class T:
+// beginning of examble
+#define CLASS xxxxx
+#define BINARY_OP_FROM_SELF(op) \
+  inline friend CLASS operator op (const CLASS &x1, const CLASS &x2) { return CLASS(x1) op##= x2; }
+
+BINARY_OP_FROM_SELF(-)
+BINARY_OP_FROM_SELF(+)
+BINARY_OP_FROM_SELF(*)
+BINARY_OP_FROM_SELF(/)
+BINARY_OP_FROM_SELF(&)
+BINARY_OP_FROM_SELF(|)
+#undef BINARY_OP_FROM_SELF
+
+inline friend bool operator==(CLASS const &v1, CLASS const &v2) { return equal(v1,v2); }
+inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 == v2); }
+
+#endif  // end of example
+#if 0
 /*
 Why is this important? Well when a macro is scanned and expanding, it creates a disabling context.
 This disabling context will cause a token, that refers to the currently expanding macro, to be painted blue.
@@ -138,55 +187,6 @@ macros from becoming painted blue. We will just need to apply more scans to the 
 #define CHECK_AFTER_ 0/// deferred expressions#define EMPTY()#define DEFER(id) id EMPTY()#define OBSTRUCT(...) __VA_ARGS__ DEFER(EMPTY)()#define EXPAND(...) __VA_ARGS__/// repeat#define REPEAT(count, macro, ...) \    WHEN(count) \    ( \        OBSTRUCT(REPEAT_INDIRECT) () \        ( \            DEC(count), macro, __VA_ARGS__ \        ) \        OBSTRUCT(macro) \        ( \            DEC(count), __VA_ARGS__ \        ) \    )#define REPEAT_INDIRECT() REPEAT//An example of using this macro//#define M(i, _) i//EVAL(REPEAT(8, M, ~)) // generates - 0 1 2 3 4 5 6 7
 
 #endif
-
-/// creates a class to be precise alias of another class
-#define PURE_CHILD(class_name,parent) \
-struct class_name: public parent { \
-    template<typename... Types> \
-    class_name(Types... args) : parent(args...) {}  \
-};
-
-/// corresponding binary operator should be defined in advance
-/// first macro parameter is class name, second one is "+" or "-"
-#define CLASS_PLUS_MINUS_BLOCK(cl,op) \
-  template<typename T2> cl &operator op##=(const T2& b) { *this = *this op b; return *this; } \
-cl& operator op##op() { *this op##= 1; return *this;} \
-cl operator op##op(int) { cl old(*this); *this op##= 1; return old; } \
-
-#if 0 // following are operators which can be universaly derived from otherstemplate<typename T, typename T2> inline T& operator +=(T& a, const T2& b) { a = a + b; return a; }
-template<typename T, typename T2> inline T& operator -=(T& a, const T2& b) { a = a - b; return a; }
-template<typename T> inline T& operator++(T &v) { v += 1; return v;}
-template<typename T> inline T operator++(T &v, int) { T old(v); v += 1; return old; }
-template<typename T> inline T& operator--(T &v) { v -= 1; return v; }
-template<typename T> inline T operator--(T &v, int) { T old(v); v -= 1; return old; }
-template<typename T> inline T operator-(const T &x) { return 0 - x; } // unitary minus
-#endif
-
-#if 0
-// DO NOT REDEFINE BUILT-IN OPERATORS!!!!! INFINITE RECURSION HELL
-// DO NOT DEFINE BINARTY OPERATORS FROM UNITARY USING TEMPLATE FUNCTIONS. COMPLILER DOES NOT
-// TRY USING IMPLICIT CONVERSION TO FIT PARAMETER TYPES
-// USE TEMPLATE CLASS FRIEND FUNCTIONS - THEY ARE SYMMETRIC AND COMPILER TRIES
-// IMPLICIT CONVERSIONS
-// LIKE THIS: for template<typename type> class T:
-// beginning of examble
-#define CLASS xxxxx
-#define BINARY_OP_FROM_SELF(op) \
-  inline friend CLASS operator op (const CLASS &x1, const CLASS &x2) { return CLASS(x1) op##= x2; }
-
-BINARY_OP_FROM_SELF(-)
-BINARY_OP_FROM_SELF(+)
-BINARY_OP_FROM_SELF(*)
-BINARY_OP_FROM_SELF(/)
-BINARY_OP_FROM_SELF(&)
-BINARY_OP_FROM_SELF(|)
-#undef BINARY_OP_FROM_SELF
-
-inline friend bool operator==(CLASS const &v1, CLASS const &v2) { return equal(v1,v2); }
-inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 == v2); }
-
-#endif  // end of example#define ALWAYS_INLINE __attribute__(( always_inline )) static inline
-
 
 
 #endif /* MACROS_H_INCLUDED */
