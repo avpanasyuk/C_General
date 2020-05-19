@@ -8,7 +8,7 @@
 #define TIME_H_INCLUDED
 
 #include <stdint.h>
-
+#include "General.h"
 namespace avp {
   //! @tparam T should be unsigned!
   template<uint32_t (*pTickFunction)(), typename T=uint32_t>
@@ -26,7 +26,7 @@ namespace avp {
       }
       /// just checks whether TimePeriod had passed, does not do reset
       /// if there is no Reset for too long the counter may wrap over
-      bool JustCheck() const { return (T((*pTickFunction)()) - NextTime) < ((~T(0))/2); }
+      bool JustCheck() const { return unsigned_is_smaller(NextTime,T((*pTickFunction)())); }
 
       /// if TimePeriod had passed does reset to start a new TimePeriod
       bool Expired() {
