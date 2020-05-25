@@ -7,21 +7,21 @@
 #ifndef TIME_H_INCLUDED
 #define TIME_H_INCLUDED
 
-#include <stdint.h>
+#include <stdint.h>#include <limits>
 #include "General.h"
-namespace avp {
+namespace avp {  /// !!!! Periods and Delays should not be longer than half of value which fits into typename!
   //! @tparam T should be unsigned!
   template<uint32_t (*pTickFunction)(), typename T=uint32_t>
   class TimePeriod {
       T NextTime;
       T Period;
     public:
-      void Reset() { NextTime = (*pTickFunction)() + Period; }
+      void Reset() { NextTime = T((*pTickFunction)()) + Period; }
       /**
       * @param Timeout in whatever units TickFunction works
       */
       TimePeriod(T Timeout):Period(Timeout) {
-        static_assert(T(0) < T(-1),"T should be unsigned!");
+        static_assert(T(0) < T(-1),"T should be unsigned!");        // AVP_ASSERT(Timeout < std::numeric_limits<T>::max()/2);
         Reset();
       }
       /// just checks whether TimePeriod had passed, does not do reset
