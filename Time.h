@@ -7,26 +7,26 @@
 #ifndef TIME_H_INCLUDED
 #define TIME_H_INCLUDED
 
-#include <stdint.h>
-
-namespace avp {
+#include <stdint.h>#include <limits>
+#include "General.h"
+namespace avp {  /// !!!! Periods and Delays should not be longer than half of value which fits into typename!
   //! @tparam T should be unsigned!
   template<uint32_t (*pTickFunction)(), typename T=uint32_t>
   class TimePeriod {
       T NextTime;
       T Period;
     public:
-      void Reset() { NextTime = (*pTickFunction)() + Period; }
+      void Reset() { NextTime = T((*pTickFunction)()) + Period; }
       /**
       * @param Timeout in whatever units TickFunction works
       */
       TimePeriod(T Timeout):Period(Timeout) {
-        static_assert(T(0) < T(-1),"T should be unsigned!");
+        static_assert(T(0) < T(-1),"T should be unsigned!");        // AVP_ASSERT(Timeout < std::numeric_limits<T>::max()/2);
         Reset();
       }
       /// just checks whether TimePeriod had passed, does not do reset
       /// if there is no Reset for too long the counter may wrap over
-      bool JustCheck() const { return (T((*pTickFunction)()) - NextTime) < ((~T(0))/2); }
+      bool JustCheck() const { return unsigned_is_smaller(NextTime,T((*pTickFunction)())); }
 
       /// if TimePeriod had passed does reset to start a new TimePeriod
       bool Expired() {
@@ -38,7 +38,7 @@ namespace avp {
       operator T&() { return Period; }
 
       /// Pause with an internal loop
-      static void Pause(T Delay, void (*LoopFunc)() /* = []() {} */) {
+      static void Pause(T Delay, void (*LoopFunc)()) {
         TimePeriod Timer(Delay);
         while(!Timer.Expired()) (*LoopFunc)();
       } // Pause
@@ -70,9 +70,9 @@ namespace avp {
 
 // following functions should be defined elsewhere and return microseconds and milliseconds
 extern uint32_t millis();
-extern uint32_t micros();
-
+extern uint32_t micros();
 typedef class avp::TimePeriod<millis> Millisec;
 typedef class avp::TimePeriod<micros> Microsec;
+// typedef class avp::TimePeriod<CPU_Ticks> CPU_Tick;
 
 #endif /* TIME_H_INCLUDED */
