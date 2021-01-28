@@ -22,7 +22,7 @@ namespace avp {
     static struct Link {
       union {
         const IDtype ID; ///< command ID is just its ASCII name converted to IDtype
-        const char Name[];
+        const char Name[sizeof(IDtype)];
       };
       const CommandFunc_ pFunc;
       const uint8_t NumParamBytes;
@@ -49,7 +49,7 @@ namespace avp {
     static struct InputBytes_ {
       union {
         IDtype ID;
-        uint8_t Name[];
+        uint8_t Name[sizeof(IDtype)];
       };
       uint8_t Params[MaxNumParamBytes+1]; ///< one byte is left for CS,
       /// actually checksum is in Params[pCur->NumParamBytes]
