@@ -39,7 +39,6 @@ template<uint8_t MaxNumParamBytes = 255>
         /// COMMAND BYTE == 0 is NOOP command
         IGNORE_WARNING(-Warray-bounds)
         Input.Bytes[InputI++] = b;
-        STOP_IGNORING_WARNING
 
         if(InputI == 1) { // b is a CurCommand.ID
           if(b != 0) { // it is not a NOOP command
@@ -73,6 +72,7 @@ template<uint8_t MaxNumParamBytes = 255>
   template<uint8_t MaxNumParamBytes> uint8_t CommandTable<MaxNumParamBytes>::InputI = 0; 
 } // namespace avp
 
+STOP_IGNORING_WARNING
 
 #endif /* COMMANDTABLE_H_INCLUDED */
 
