@@ -29,7 +29,7 @@ namespace avp {
       return *this;
     }
 
-    const Complex &conj() { Imag = - Imag; return *this; }
+    const Complex &conj() { Imag = - Imag; return *this; }
     T abs_sqr() const { return Real*Real + Imag*Imag; }
 
     const Complex &operator+= (const Complex &a2) {
