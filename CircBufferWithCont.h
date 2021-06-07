@@ -13,6 +13,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "CircBuffer.h"
 
 /** Circular Buffer of elements of class T. One reader and one writer may work in parallel. Reader is using
   * only BeingRead index, and writer only BeingWritten, so index can be screwed-up ONLY when cross-used,
@@ -23,126 +24,45 @@
   * NULLPTR. Call LeftTo... function beforehand
   * NOTE: the size of CircBuffer is powers of 2 to avoid conditional rollovers (when we compare
   * index with an end of buffer all the time
-  * @tparam tSize - type of size variable, if sizeLog2 is not specified determines the size of buffer, which
-  * is maximum value which can fit into this type
-  * @tparam sizeLog2 - Log2 of desired size in bytes. Capacity of this buffer is 2^sizeLog2 - 1
+  * @tparam BitsInCounter - size of counters in bits, defines size and maximum size which fits. for 8.16 or 32
+  * the class is specially fast
   */
-template <typename T, typename tSize=uint8_t, uint8_t sizeLog2 = sizeof(tSize)*8>
-struct CircBufferWithCont {
-  static_assert(sizeof(tSize)*8 >= sizeLog2,"CircBuffer:Size variable is too small to hold size!");
-
-  // *********** General functions
-  CircBufferWithCont() { BeingWritten = 0; Clear(); }
-  void Clear()  {  BeingRead = BeingWritten; LastReadSize = 0;}
-  static constexpr tSize GetCapacity() { return (1UL << sizeLog2) - 1; };
-
-  //************* Writer functions *************************************************
-  tSize LeftToWrite() const  { return (BeingRead - 1 - BeingWritten) & Mask; }
-
-  T *GetSlotToWrite() { return &Buffer[BeingWritten]; }
-
-  void FinishedWriting() { BeingWritten = (BeingWritten + 1) & Mask; }
-
-  void Write_(T const &d) { *GetSlotToWrite() = d; FinishedWriting(); }
-
-  bool Write(T const &d) {
-    if(LeftToWrite() == 0) return false;
-    else { Write_(d); return true; }
-  } // safe Write
-
-  // It is risky function because if there is no place to write it modifies BeingRead index, so interferes with reading function. E.g
-  // if read is in progress and this function is called from the interrupt (or vise versa) things may get screwed up.
-  // The function never fails
-  T *ForceSlotToWrite()  {
-    if(LeftToWrite() == 0) { // we will free some space
-      if(LastReadSize == 0) LastReadSize = 1; // when no read is on progress we still have to move pointer
-      FinishedReading();
-    }
-    return GetSlotToWrite();
-  } // ForceSlotToWrite
+template <typename T, uint8_t BitsInCounter>
+struct CircBufferWithCont: public CircBufferPWR2<T,BitsInCounter> {
+  CircBufferWithCont() { Clear(); }
+  void Clear() {  CircBufferPWR2<T,BitsInCounter>::Clear(); LastReadSize = 0;}
 
   // It is marginally safer function because it moves BeingRead index only when no read is in progress. Interrupts may still screw things up
   // if racing condition occurs. Fails and returns NULL is reading is in progress
   T *SaferForceSlotToWrite()  {
-    if(LeftToWrite() == 0) { // we will try to free some space
-      if(LastReadSize == 0) BeingRead = (BeingRead + 1) & Mask; // move read pointer if no read is in progress
+    if(CircBufferPWR2<T,BitsInCounter>::LeftToWrite() == 0) { // we will try to free some space
+      if(LastReadSize == 0) ++CircBufferPWR2<T,BitsInCounter>::BeingRead; // move read pointer if no read is in progress
       else return nullptr; // will fail but not overwrite data being read
     }
     // debug_printf("%hu/%hu ",BeingRead, BeingWritten);
-    return GetSlotToWrite();
+    return CircBufferPWR2<T,BitsInCounter>::GetSlotToWrite();
   } // ForceSlotToWrite
 
-
-  //************* Reader functions ***************************************
-  tSize LeftToRead() const  { return (BeingWritten - BeingRead) & Mask; }
-
   //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
-  T const *GetSlotToRead() { LastReadSize = 1; return &Buffer[BeingRead]; }
+  T const *GetSlotToRead() { LastReadSize = 1; return CircBufferPWR2<T,BitsInCounter>::GetSlotToRead(); }
 
-  void FinishedReading() { BeingRead = (BeingRead + LastReadSize) & Mask; LastReadSize = 0; }
-
-  T Read_() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
-
-  bool Read(T* Dst) {
-    if(LeftToRead() == 0) return false;
-    else { *Dst = Read_(); return true; }
-  } // safer Read
+  void FinishedReading() { CircBufferPWR2<T,BitsInCounter>::BeingRead += LastReadSize; LastReadSize = 0; }
 
   // ************* Continous block reading functions
   /** instead of a single entry marks for reading a continuous block.
   * Use GetSizeToRead to determine size of the block to read
   */
   T const *GetContinousBlockToRead() {
-    if(BeingRead > BeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
-      LastReadSize = GetCapacity() + 1 - BeingRead; // BeingRead is at least 1 here
-    } else  LastReadSize = LeftToRead();
-    return &Buffer[BeingRead];
+    if(CircBufferPWR2<T,BitsInCounter>::BeingRead > CircBufferPWR2<T,BitsInCounter>::BeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
+      LastReadSize = CircBufferPWR2<T,BitsInCounter>::GetCapacity() + 1 - CircBufferPWR2<T,BitsInCounter>::BeingRead; // BeingRead is at least 1 here
+    } else  LastReadSize = CircBufferPWR2<T,BitsInCounter>::LeftToRead();
+    return &CircBufferPWR2<T,BitsInCounter>::Buffer[CircBufferPWR2<T,BitsInCounter>::BeingRead];
   } // GetContinousBlockToRead
 
-  tSize GetSizeToRead() { return LastReadSize; }
+  size_t GetSizeToRead() const { return LastReadSize; }
 
-  // ************* two Continous block reading functions
-  #ifdef TWO_BLOCKS
-  /**
-   * when BeingWritten pointer is wrapped over the data to read consist of two continuous blocks. Following is
-   * at the same time to return both of them
-  */
-  struct TwoBlocks_ {
-      T const *pBlock[2];
-      tSize Size[2];
-  }; // TwoBlocks
-
- TwoBlocks_ GetContinousBlockToRead() {
-     TwoBlocks_ Out;
-
-     LastReadSize = LeftToRead();
-     Out.pBlock[1] = &Buffer[BeingRead];
-
-    if(BeingRead > BeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
-      Out.Size[1] = GetCapacity() + 1 - BeingRead;
-      Out.pBlock[2] = &Buffer[0];
-      Out.Size[2] = BeingWritten;
-    } else {
-      Out.Size[1] = LastReadSize;
-      Out.pBlock[2] = nullptr;
-      Out.Size[2] = 0;
-    }
-    return Out;
-  } // GetContinousBlockToRead
-
-  #endif
-
-  // ************* service functions
-  // for debugging purposes
-  void GetInternals(tSize *WriteI, tSize *ReadI, tSize *ReadSize) {
-    *WriteI = BeingWritten; *ReadI = BeingRead; *ReadSize = LastReadSize;
-  } // GetInternals
 protected:
-  T Buffer[size_t(GetCapacity())+1]; //!< buffer size is 2^sizeLog2
-  static constexpr tSize Mask = GetCapacity(); //!< marks used bits in index variables
-  // we do not care what happens in upper bits
-  tSize BeingRead, BeingWritten; //!< indexes of buffer currently being ....
-  tSize LastReadSize; //! 0 if no read is in progress, size of the read being in progress otherwise
+  size_t LastReadSize; //! 0 if no read is in progress, size of the read being in progress otherwise
 }; // CircBuffer
 
 #endif /* CIRCBUFFERWITHCONT_H_ */
