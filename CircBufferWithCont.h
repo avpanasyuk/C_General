@@ -38,7 +38,7 @@ struct CircBufferWithCont: public CircBufferPWR2<T, BitsInCounter> {
   // if racing condition occurs. Fails and returns NULL is reading is in progress
   T *SaferForceSlotToWrite()  {
     if(Base::LeftToWrite() == 0) { // we will try to free some space
-      if(LastReadSize == 0) ++Base::BeingRead; // move read pointer if no read is in progress
+      if(LastReadSize == 0) {  Base::BeingRead = (Base::BeingRead + 1) & Base::Mask }; // move read pointer if no read is in progress
       else return nullptr; // will fail but not overwrite data being read
     }
     // debug_printf("%hu/%hu ",BeingRead, BeingWritten);
@@ -48,7 +48,7 @@ struct CircBufferWithCont: public CircBufferPWR2<T, BitsInCounter> {
   //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
   T const *GetSlotToRead() { LastReadSize = 1; return Base::GetSlotToRead(); }
 
-  void FinishedReading() { Base::BeingRead += LastReadSize; LastReadSize = 0; }
+  void FinishedReading() { Base::BeingRead = (Base::BeingRead + LastReadSize) & Base::Mask; LastReadSize = 0; }
 
   // ************* Continous block reading functions
   /** instead of a single entry marks for reading a continuous block.
@@ -56,7 +56,7 @@ struct CircBufferWithCont: public CircBufferPWR2<T, BitsInCounter> {
   */
   T const *GetContinousBlockToRead() {
     if(Base::BeingRead > Base::BeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
-      LastReadSize = Base::GetCapacity() + 1 - Base::BeingRead; // BeingRead is at least 1 here
+      LastReadSize = (Base::GetCapacity() + 1 - Base::BeingRead) & Base::Mask; // BeingRead is at least 1 here
     } else  LastReadSize = Base::LeftToRead();
     return &Base::Buffer[Base::BeingRead];
   } // GetContinousBlockToRead

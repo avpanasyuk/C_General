@@ -44,7 +44,7 @@ struct CircBuffer {
 
     T Read_() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
 
-    /** safe read. Returns false is buffer is  empty.
+    /** safe read. Returns false if the buffer is  empty.
      * @param Dst - pointer to store read data via
      * @return success of operation
      */
@@ -96,7 +96,7 @@ struct CircBuffer {
 template <typename T, uint8_t BitsInCounter, typename CounterType=size_t>
 struct CircBufferPWR2: public CircBuffer<T, size_t(1) << BitsInCounter, CounterType> {
   static_assert(std::numeric_limits<CounterType>::digits >= BitsInCounter,
-      "CounterType is too small to hold size!");
+      "'CounterType' is too small to hold size!");
 
   using Base = CircBuffer<T, size_t(1) << BitsInCounter, CounterType>;
 
