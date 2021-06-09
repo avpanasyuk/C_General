@@ -25,7 +25,7 @@
   * @tparam CounterType - type of size variable
   * @tparam size - size in bytes.
   */
-template <typename T, typename CounterType, CounterType size>
+template <typename T, size_t size, typename CounterType=size_t>
 struct CircBuffer {
     static_assert(std::is_unsigned<CounterType>::value,"'CounterType' has to be unsigned type!");
 
@@ -93,12 +93,12 @@ struct CircBuffer {
  * instead of condition statements, I think it is faster
  * @tparam BitsInCounter determines Buffer size = 1<<BitsInCounter
  */
-template <typename T, typename CounterType, uint8_t BitsInCounter>
-struct CircBufferPWR2: public CircBuffer<T, CounterType, size_t(1) << BitsInCounter> {
+template <typename T, uint8_t BitsInCounter, typename CounterType=size_t>
+struct CircBufferPWR2: public CircBuffer<T, size_t(1) << BitsInCounter, CounterType> {
   static_assert(std::numeric_limits<CounterType>::digits >= BitsInCounter,
       "CounterType is too small to hold size!");
 
-  using Base = CircBuffer<T, CounterType, size_t(1) << BitsInCounter>;
+  using Base = CircBuffer<T, size_t(1) << BitsInCounter, CounterType>;
 
   //************* Writer functions *************************************************
   CounterType LeftToWrite() const  { return (Base::BeingRead - 1 - Base::BeingWritten) & Mask; }
@@ -141,10 +141,10 @@ protected:
  * @tparam BitsInCounter determines Buffer size = 1<<BitsInCounter
  */
 template <typename T, typename CounterType>
-struct CircBufferAutoWrap: public CircBuffer<T, CounterType, size_t(std::numeric_limits<CounterType>::max()) + 1> {
+struct CircBufferAutoWrap: public CircBuffer<T, size_t(std::numeric_limits<CounterType>::max()) + 1, CounterType> {
   static_assert(std::is_unsigned<CounterType>::value,"'CounterType' has to be unsigned type!");
 
-  using Base = CircBuffer<T, CounterType, size_t(std::numeric_limits<CounterType>::max()) + 1>;
+  using Base = CircBuffer<T, size_t(std::numeric_limits<CounterType>::max()) + 1, CounterType>;
 
   //************* Writer functions *************************************************
   CounterType LeftToWrite() const  { return Base::BeingRead - 1 - Base::BeingWritten; }

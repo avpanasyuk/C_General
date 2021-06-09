@@ -28,8 +28,8 @@
   * the class is specially fast
   */
 template <typename T, uint8_t BitsInCounter>
-struct CircBufferWithCont: public CircBufferPWR2<T,size_t,BitsInCounter> {
-  using Base = CircBufferPWR2<T,size_t,BitsInCounter>;
+struct CircBufferWithCont: public CircBufferPWR2<T, BitsInCounter> {
+  using Base = CircBufferPWR2<T, BitsInCounter>;
 
   CircBufferWithCont() { Clear(); }
   void Clear() {  Base::Clear(); LastReadSize = 0;}
