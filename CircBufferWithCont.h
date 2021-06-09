@@ -28,35 +28,37 @@
   * the class is specially fast
   */
 template <typename T, uint8_t BitsInCounter>
-struct CircBufferWithCont: public CircBufferPWR2<T,BitsInCounter> {
+struct CircBufferWithCont: public CircBufferPWR2<T,size_t,BitsInCounter> {
+  using Base = CircBufferPWR2<T,size_t,BitsInCounter>;
+
   CircBufferWithCont() { Clear(); }
-  void Clear() {  CircBufferPWR2<T,BitsInCounter>::Clear(); LastReadSize = 0;}
+  void Clear() {  Base::Clear(); LastReadSize = 0;}
 
   // It is marginally safer function because it moves BeingRead index only when no read is in progress. Interrupts may still screw things up
   // if racing condition occurs. Fails and returns NULL is reading is in progress
   T *SaferForceSlotToWrite()  {
-    if(CircBufferPWR2<T,BitsInCounter>::LeftToWrite() == 0) { // we will try to free some space
-      if(LastReadSize == 0) ++CircBufferPWR2<T,BitsInCounter>::BeingRead; // move read pointer if no read is in progress
+    if(Base::LeftToWrite() == 0) { // we will try to free some space
+      if(LastReadSize == 0) ++Base::BeingRead; // move read pointer if no read is in progress
       else return nullptr; // will fail but not overwrite data being read
     }
     // debug_printf("%hu/%hu ",BeingRead, BeingWritten);
-    return CircBufferPWR2<T,BitsInCounter>::GetSlotToWrite();
+    return Base::GetSlotToWrite();
   } // ForceSlotToWrite
 
   //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
-  T const *GetSlotToRead() { LastReadSize = 1; return CircBufferPWR2<T,BitsInCounter>::GetSlotToRead(); }
+  T const *GetSlotToRead() { LastReadSize = 1; return Base::GetSlotToRead(); }
 
-  void FinishedReading() { CircBufferPWR2<T,BitsInCounter>::BeingRead += LastReadSize; LastReadSize = 0; }
+  void FinishedReading() { Base::BeingRead += LastReadSize; LastReadSize = 0; }
 
   // ************* Continous block reading functions
   /** instead of a single entry marks for reading a continuous block.
   * Use GetSizeToRead to determine size of the block to read
   */
   T const *GetContinousBlockToRead() {
-    if(CircBufferPWR2<T,BitsInCounter>::BeingRead > CircBufferPWR2<T,BitsInCounter>::BeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
-      LastReadSize = CircBufferPWR2<T,BitsInCounter>::GetCapacity() + 1 - CircBufferPWR2<T,BitsInCounter>::BeingRead; // BeingRead is at least 1 here
-    } else  LastReadSize = CircBufferPWR2<T,BitsInCounter>::LeftToRead();
-    return &CircBufferPWR2<T,BitsInCounter>::Buffer[CircBufferPWR2<T,BitsInCounter>::BeingRead];
+    if(Base::BeingRead > Base::BeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
+      LastReadSize = Base::GetCapacity() + 1 - Base::BeingRead; // BeingRead is at least 1 here
+    } else  LastReadSize = Base::LeftToRead();
+    return &Base::Buffer[Base::BeingRead];
   } // GetContinousBlockToRead
 
   size_t GetSizeToRead() const { return LastReadSize; }

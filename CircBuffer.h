@@ -16,19 +16,21 @@
 
 /** Circular Buffer of elements of class T. One reader and one writer may work in parallel. Reader is using
   * only BeingRead index, and writer only BeingWritten, so index can be screwed-up ONLY when cross-used,
-  * like in Clear()
-  * NOTE: When both BeingRead and BeingWritten refer the same block the buffer is empty, as this block is
-  * not written yet, so there is nothing to read
-  * NOTE: Writing and reading function DO NOT CHECK WHETHER THERE IS SPACE! THEY NEVER RETURN
-  * NULLPTR. Call LeftTo... function beforehand
+  * like in Clear(). I do not need to MUTEXes!
+  * @note: When both BeingRead and BeingWritten refer the same block the buffer is empty, as this block is
+  * not written yet, so there is nothing to read, but full buffer to write
+  * @note: Writing and reading function DO NOT CHECK WHETHER THERE IS SPACE! THEY NEVER RETURN
+  * NULLPTR. Call LeftToRead or LeftToWrite functions beforehand
+  * @note: The class does not use virtual functions, so do not monkey with pointers to base classes
   * @tparam CounterType - type of size variable
   * @tparam size - size in bytes.
   */
 template <typename T, typename CounterType, CounterType size>
-struct CircBufferBase {
+struct CircBuffer {
     static_assert(std::is_unsigned<CounterType>::value,"'CounterType' has to be unsigned type!");
+
     // *********** General functions
-    CircBufferBase() { BeingWritten = 0; Clear(); }
+    CircBuffer():BeingWritten(0) { Clear(); }
     void Clear()  {  BeingRead = BeingWritten; }
     static constexpr CounterType GetCapacity() { return size - 1; };
 
@@ -36,12 +38,16 @@ struct CircBufferBase {
     CounterType LeftToRead() const  { return BeingWritten >= BeingRead?BeingWritten - BeingRead:BeingWritten + size - BeingRead; }
 
     //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
-    T const *GetSlotToRead() { return &Buffer[BeingRead]; }
+    const T *GetSlotToRead() const { return &Buffer[BeingRead]; }
 
     void FinishedReading() { if(++BeingRead == size) BeingRead = 0; }
 
     T Read_() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
 
+    /** safe read. Returns false is buffer is  empty.
+     * @param Dst - pointer to store read data via
+     * @return success of operation
+     */
     bool Read(T* Dst) {
       if(LeftToRead() == 0) return false;
       else { *Dst = Read_(); return true; }
@@ -56,6 +62,10 @@ struct CircBufferBase {
 
     void Write_(T const &d) { *GetSlotToWrite() = d; FinishedWriting(); }
 
+    /** safe write. Returns false is buffer is full.
+     * @param Dst - pointer to store read data via
+     * @return success of operation
+     */
     bool Write(T const &d) {
       if(LeftToWrite() == 0) return false;
       else { Write_(d); return true; }
@@ -69,7 +79,7 @@ struct CircBufferBase {
       return GetSlotToWrite();
     } // ForceSlotToWrite
 
-    /// returns previous entry from Write pointer
+    /// returns a preciding entry counting from Write pointer
     /// @param BackIndex - how many entries before, 0 corresponds to current Write pointer
     const T &operator[] (CounterType BackIndex) const {
       return Buffer[BeingWritten >= BackIndex?BeingWritten - BackIndex:BeingWritten + size - BackIndex];
@@ -77,98 +87,96 @@ struct CircBufferBase {
   protected:
     CounterType BeingRead, BeingWritten; //!< indexes of buffer currently being ....
     avp::Vector<T,size> Buffer;
-}; // CircBufferBase
+}; // CircBuffer
 
+/** CircBufferPWR2 is a CircBuffer with size being a power of 2, so for rollovers I can use binary and operation
+ * instead of condition statements, I think it is faster
+ * @tparam BitsInCounter determines Buffer size = 1<<BitsInCounter
+ */
+template <typename T, typename CounterType, uint8_t BitsInCounter>
+struct CircBufferPWR2: public CircBuffer<T, CounterType, size_t(1) << BitsInCounter> {
+  static_assert(std::numeric_limits<CounterType>::digits >= BitsInCounter,
+      "CounterType is too small to hold size!");
 
-template <typename T, size_t size>
-struct CircBuffer: public CircBufferBase<T,size_t,size> {};
-
-template <uint8_t BitsInCounter>
-struct CircBufferCounter {
-  static constexpr size_t GetCapacity() { return (size_t(1) << BitsInCounter) - 1; };
-
-  CircBufferCounter():BeingWritten(0) { Clear(); }
-  void Clear()  {  BeingRead = BeingWritten; }
-
-  //************* Reader functions ***************************************
-  size_t LeftToRead() const  { return BeingWritten - BeingRead; }
-  void FinishedReading() { ++BeingRead; }
+  using Base = CircBuffer<T, CounterType, size_t(1) << BitsInCounter>;
 
   //************* Writer functions *************************************************
-  size_t LeftToWrite() const  { return GetCapacity() - LeftToRead(); }
-  void FinishedWriting() { ++BeingWritten; }
+  CounterType LeftToWrite() const  { return (Base::BeingRead - 1 - Base::BeingWritten) & Mask; }
+
+  void FinishedWriting() { Base::BeingWritten = (Base::BeingWritten + 1) & Mask; }
+
+  void Write_(T const &d) { *Base::GetSlotToWrite() = d; FinishedWriting(); }
+
+  bool Write(T const &d) {
+    if(LeftToWrite() == 0) return false;
+    else { Write_(d); return true; }
+  } // safe Write
+
+  // It is risky function because if there is no place to write it modifies BeingRead index, so interferes with reading function. E.g
+  // if read is in progress and this function is called from the interrupt (or vise versa) things may get screwed up.
+  // The function never fails
+  T *ForceSlotToWrite()  {
+    if(LeftToWrite() == 0) FinishedReading();
+    return Base::GetSlotToWrite();
+  } // ForceSlotToWrite
+
+  //************* Reader functions ***************************************
+  CounterType LeftToRead() const  { return (Base::BeingWritten - Base::BeingRead) & Mask; }
+
+  void FinishedReading() { Base::BeingRead = (Base::BeingRead + 1) & Mask; }
+
+  T Read_() { T temp = *Base::GetSlotToRead(); FinishedReading(); return temp; }
+
+  bool Read(T* Dst) {
+    if(LeftToRead() == 0) return false;
+    else { *Dst = Read_(); return true; }
+  } // safer Read
+
 protected:
-  size_t BeingRead:BitsInCounter;
-  size_t BeingWritten:BitsInCounter;
-}; // CircBufferCounter
+  static constexpr CounterType Mask = Base::GetCapacity(); //!< marks used bits in index variables
+}; // CircBufferPWR2
 
-#define CIRC_BUFFER_SPEC(type) \
-   template <> \
-   struct CircBufferCounter<std::numeric_limits<type>::digits> { \
-   CircBufferCounter():BeingWritten(0) { Clear(); } \
-   void Clear()  {  BeingRead = BeingWritten; } \
-   size_t LeftToRead() const  { return BeingWritten - BeingRead; } \
-   static constexpr type GetCapacity() { return std::numeric_limits<type>::max(); }; \
-   void FinishedReading() { ++BeingRead; } \
-   size_t LeftToWrite() const  { return GetCapacity() - LeftToRead(); } \
-   void FinishedWriting() { ++BeingWritten; } \
-   protected: \
-     type BeingRead, BeingWritten; \
-   } // CircBufferCounter specialization
+/** CircBufferAutoWrap is a CircBuffer with size precisely fitting into one of the numeric types, so for rollovers
+ * I do not have to so a things, they are automatic
+ * @tparam BitsInCounter determines Buffer size = 1<<BitsInCounter
+ */
+template <typename T, typename CounterType>
+struct CircBufferAutoWrap: public CircBuffer<T, CounterType, size_t(std::numeric_limits<CounterType>::max()) + 1> {
+  static_assert(std::is_unsigned<CounterType>::value,"'CounterType' has to be unsigned type!");
 
-CIRC_BUFFER_SPEC(uint8_t);
-CIRC_BUFFER_SPEC(uint16_t);
-CIRC_BUFFER_SPEC(uint32_t);
+  using Base = CircBuffer<T, CounterType, size_t(std::numeric_limits<CounterType>::max()) + 1>;
 
+  //************* Writer functions *************************************************
+  CounterType LeftToWrite() const  { return Base::BeingRead - 1 - Base::BeingWritten; }
 
-/** CircBufferPWR2 is mostly similar to \ref CircBuffer
-  * @note CircBufferPWR2 is simpler/faster than CircBuffer because for all the counters overflows it relies on
-  * automatic type wrap. When BitsInCounter = 8, 16 or 32 it is expecially fast, as it does not have to deal with bit fields
-  * @tparam BitsInCounter - size of counters in bits, defines size and maximum size which fits. for 8.16 or 32
-  * the class is specially fast
-  */
-template <typename T, uint8_t BitsInCounter>
-struct CircBufferPWR2: public CircBufferCounter<BitsInCounter> {
-  // *********** General functions
+  void FinishedWriting() { ++Base::BeingWritten; }
 
+  void Write_(T const &d) { *Base::GetSlotToWrite() = d; FinishedWriting(); }
 
-    //************* Reader functions ***************************************
+  bool Write(T const &d) {
+    if(LeftToWrite() == 0) return false;
+    else { Write_(d); return true; }
+  } // safe Write
 
-    //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
-    T const *GetSlotToRead() { return &Buffer[CircBufferCounter<BitsInCounter>::BeingRead]; }
+  // It is risky function because if there is no place to write it modifies BeingRead index, so interferes with reading function. E.g
+  // if read is in progress and this function is called from the interrupt (or vise versa) things may get screwed up.
+  // The function never fails
+  T *ForceSlotToWrite()  {
+    if(LeftToWrite() == 0) FinishedReading();
+    return Base::GetSlotToWrite();
+  } // ForceSlotToWrite
 
-    T Read_() { T temp = *GetSlotToRead(); CircBufferCounter<BitsInCounter>::FinishedReading(); return temp; }
+  //************* Reader functions ***************************************
+  CounterType LeftToRead() const  { return Base::BeingWritten - Base::BeingRead; }
 
-    bool Read(T* Dst) {
-      if(CircBufferCounter<BitsInCounter>::LeftToRead() == 0) return false;
-      else { *Dst = Read_(); return true; }
-    } // safer Read
+  void FinishedReading() { ++Base::BeingRead; }
 
-    //************* Writer functions *************************************************
-    T *GetSlotToWrite() { return &Buffer[CircBufferCounter<BitsInCounter>::BeingWritten]; }
+  T Read_() { T temp = *Base::GetSlotToRead(); FinishedReading(); return temp; }
 
-    void Write_(T const &d) { *GetSlotToWrite() = d; CircBufferCounter<BitsInCounter>::FinishedWriting(); }
-
-    bool Write(T const &d) {
-      if(CircBufferCounter<BitsInCounter>::LeftToWrite() == 0) return false;
-      else { Write_(d); return true; }
-    } // safe Write
-
-    // It is risky function because if there is no place to write it modifies BeingRead index, so interferes with reading function. E.g
-    // if read is in progress and this function is called from the interrupt (or vise versa) things may get screwed up.
-    // The function never fails
-    T *ForceSlotToWrite()  {
-      if(CircBufferCounter<BitsInCounter>::LeftToWrite() == 0) CircBufferCounter<BitsInCounter>::FinishedReading();
-      return GetSlotToWrite();
-    } // ForceSlotToWrite
-
-    /// returns previous entry from Write pointer
-    /// @param BackIndex - how many entries before, 0 corresponds to current Write pointer
-    const T &operator[] (size_t BackIndex) const {
-      return Buffer[CircBufferCounter<BitsInCounter>::BeingWritten - BackIndex];
-    }
-  protected:
-    avp::Vector<T,size_t(1) << BitsInCounter> Buffer;
-}; // CircBufferBase
+  bool Read(T* Dst) {
+    if(LeftToRead() == 0) return false;
+    else { *Dst = Read_(); return true; }
+  } // safer Read
+}; // CircBufferPWR2
 
 #endif /* CIRCBUFFER_H_ */
