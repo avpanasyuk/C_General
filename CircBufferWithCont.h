@@ -38,7 +38,7 @@ struct CircBufferWithCont: public CircBufferPWR2<T, BitsInCounter> {
   // if racing condition occurs. Fails and returns NULL is reading is in progress
   T *SaferForceSlotToWrite()  {
     if(Base::LeftToWrite() == 0) { // we will try to free some space
-      if(LastReadSize == 0) {  Base::BeingRead = (Base::BeingRead + 1) & Base::Mask }; // move read pointer if no read is in progress
+      if(LastReadSize == 0) {  Base::BeingRead = (Base::BeingRead + 1) & Base::Mask; } // move read pointer if no read is in progress
       else return nullptr; // will fail but not overwrite data being read
     }
     // debug_printf("%hu/%hu ",BeingRead, BeingWritten);
