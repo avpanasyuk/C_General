@@ -68,9 +68,6 @@ namespace avp {  /// !!!! Periods and Delays should not be longer than half of 
 
 }; // namespace avp
 
-// following functions should be defined elsewhere and return microseconds and milliseconds
-extern uint32_t millis();
-extern uint32_t micros();
 typedef class avp::TimePeriod<millis> Millisec;
 typedef class avp::TimePeriod<micros> Microsec;
 // typedef class avp::TimePeriod<CPU_Ticks> CPU_Tick;
