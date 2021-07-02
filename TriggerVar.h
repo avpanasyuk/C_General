@@ -4,15 +4,14 @@
 // #include <AVP_LIBS/General/Macro.h>
 #include "Macros.h"
 
-template<typename T, void (* CallWhenAssigned)()>
+template<typename T, void (* CallWhenAssigned)(const T &NewValue)>
 class TriggerVar {
     T Value;
   public:
     explicit TriggerVar(T x) { Value = x; }
     operator const T&() const { return Value; }
     TriggerVar& operator=(T x) {
-      Value = x;
-      CallWhenAssigned();
+      CallWhenAssigned(Value = x);
       return *this;
     }
     CLASS_PLUS_MINUS_BLOCK(TriggerVar,+)
