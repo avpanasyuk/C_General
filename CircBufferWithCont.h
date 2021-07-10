@@ -34,16 +34,21 @@ struct CircBufferWithCont: public CircBufferPWR2<T, BitsInCounter> {
   CircBufferWithCont() { Clear(); }
   void Clear() {  Base::Clear(); LastReadSize = 0;}
 
+  void ForceFinishedWriting()  {
+    if(Base::LeftToWrite() == 0) FinishedReading();
+    Base::FinishedWriting();
+  } // SaferForceFinishedWriting
+
   // It is marginally safer function because it moves BeingRead index only when no read is in progress. Interrupts may still screw things up
-  // if racing condition occurs. Fails and returns NULL is reading is in progress
-  T *SaferForceSlotToWrite()  {
+  // if racing condition occurs. Fails and returns flase is reading is in progress
+  bool SaferForceFinishedWriting()  {
     if(Base::LeftToWrite() == 0) { // we will try to free some space
       if(LastReadSize == 0) {  Base::BeingRead = (Base::BeingRead + 1) & Base::Mask; } // move read pointer if no read is in progress
-      else return nullptr; // will fail but not overwrite data being read
+      else return false; // will fail but not overwrite data being read
     }
-    // debug_printf("%hu/%hu ",BeingRead, BeingWritten);
-    return Base::GetSlotToWrite();
-  } // ForceSlotToWrite
+    Base::FinishedWriting();
+    return true;
+  } // SaferForceFinishedWriting
 
   //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
   T const *GetSlotToRead() { LastReadSize = 1; return Base::GetSlotToRead(); }
@@ -55,9 +60,8 @@ struct CircBufferWithCont: public CircBufferPWR2<T, BitsInCounter> {
   * Use GetSizeToRead to determine size of the block to read
   */
   T const *GetContinousBlockToRead() {
-    if(Base::BeingRead > Base::BeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
-      LastReadSize = (Base::GetCapacity() + 1 - Base::BeingRead) & Base::Mask; // BeingRead is at least 1 here
-    } else  LastReadSize = Base::LeftToRead();
+    // if true BeingWritten has wrapped
+    LastReadSize = Base::BeingRead > Base::BeingWritten ? (Base::GetCapacity() + 1 - Base::BeingRead) & Base::Mask : Base::LeftToRead();
     return &Base::Buffer[Base::BeingRead];
   } // GetContinousBlockToRead
 
@@ -86,16 +90,21 @@ struct CircBufferAutoWrapWithCont: public CircBufferAutoWrap<T, CounterType> {
   CircBufferAutoWrapWithCont() { Clear(); }
   void Clear() {  Base::Clear(); LastReadSize = 0;}
 
+  void ForceFinishedWriting()  {
+    if(Base::LeftToWrite() == 0) FinishedReading();
+    Base::FinishedWriting();
+  } // SaferForceFinishedWriting
+
   // It is marginally safer function because it moves BeingRead index only when no read is in progress. Interrupts may still screw things up
   // if racing condition occurs. Fails and returns NULL is reading is in progress
-  T *SaferForceSlotToWrite()  {
+  bool SaferForceFinishedWriting()  {
     if(Base::LeftToWrite() == 0) { // we will try to free some space
       if(LastReadSize == 0) {  ++Base::BeingRead; } // move read pointer if no read is in progress
-      else return nullptr; // will fail but not overwrite data being read
+      else return false; // will fail but not overwrite data being read
     }
-    // debug_printf("%hu/%hu ",BeingRead, BeingWritten);
-    return Base::GetSlotToWrite();
-  } // ForceSlotToWrite
+    Base::FinishedWriting();
+    return true;
+  } // SaferForceFinishedWriting
 
   //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
   T const *GetSlotToRead() { LastReadSize = 1; return Base::GetSlotToRead(); }
@@ -107,9 +116,7 @@ struct CircBufferAutoWrapWithCont: public CircBufferAutoWrap<T, CounterType> {
   * Use GetSizeToRead to determine size of the block to read
   */
   T const *GetContinousBlockToRead() {
-    if(Base::BeingRead > Base::BeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
-      LastReadSize = Base::GetCapacity() + 1 - Base::BeingRead; // BeingRead is at least 1 here
-    } else  LastReadSize = Base::LeftToRead();
+    LastReadSize = Base::BeingRead > Base::BeingWritten ? Base::GetCapacity() + 1 - Base::BeingRead : Base::LeftToRead(); // if true BeingWritten has wrapped
     return &Base::Buffer[Base::BeingRead];
   } // GetContinousBlockToRead
 

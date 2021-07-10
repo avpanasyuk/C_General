@@ -74,10 +74,10 @@ struct CircBuffer {
     // It is risky function because if there is no place to write it modifies BeingRead index, so interferes with reading function. E.g
     // if read is in progress and this function is called from the interrupt (or vise versa) things may get screwed up.
     // The function never fails
-    T *ForceSlotToWrite()  {
+    void ForceFinishedWriting()  {
       if(LeftToWrite() == 0) FinishedReading();
-      return GetSlotToWrite();
-    } // ForceSlotToWrite
+      FinishedWriting();
+    } // ForceFinishedWriting
 
     /// returns a preciding entry counting from Write pointer
     /// @param BackIndex - how many entries before, 0 corresponds to current Write pointer
@@ -89,7 +89,7 @@ struct CircBuffer {
     avp::Vector<T,size> Buffer;
 }; // CircBuffer
 
-/** CircBufferPWR2 is a CircBuffer with size being a power of 2, so for rollovers I can use binary and operation
+/** CircBufferPWR2 is a CircBuffer with size being a power of 2, so for rollovers I can use binary AND operation
  * instead of condition statements, I think it is faster
  * @tparam BitsInCounter determines Buffer size = 1<<BitsInCounter
  */
@@ -115,10 +115,10 @@ struct CircBufferPWR2: public CircBuffer<T, size_t(1) << BitsInCounter, CounterT
   // It is risky function because if there is no place to write it modifies BeingRead index, so interferes with reading function. E.g
   // if read is in progress and this function is called from the interrupt (or vise versa) things may get screwed up.
   // The function never fails
-  T *ForceSlotToWrite()  {
+  void ForceFinishedWriting()  {
     if(LeftToWrite() == 0) FinishedReading();
-    return Base::GetSlotToWrite();
-  } // ForceSlotToWrite
+    FinishedWriting();
+  } // ForceFinishedWriting
 
   //************* Reader functions ***************************************
   CounterType LeftToRead() const  { return (Base::BeingWritten - Base::BeingRead) & Mask; }
