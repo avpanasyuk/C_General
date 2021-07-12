@@ -21,7 +21,9 @@
   * not written yet, so there is nothing to read, but full buffer to write
   * @note: Writing and reading function DO NOT CHECK WHETHER THERE IS SPACE! THEY NEVER RETURN
   * NULLPTR. Call LeftToRead or LeftToWrite functions beforehand
-  * @note: The class does not use virtual functions, so do not monkey with pointers to base classes
+  * @note this class is not virtual, so if you override one function in subclass you have to override
+  * every function which relies on it, otherwise superclass versions will be called. VirtCircBuffer.h implements
+  * CircBuffer class with virtual classes
   * @tparam CounterType - type of size variable
   * @tparam size - size in bytes.
   */
@@ -40,7 +42,7 @@ struct CircBuffer {
     //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
     const T *GetSlotToRead() const { return &Buffer[BeingRead]; }
 
-    void FinishedReading() { if(++BeingRead == size) BeingRead = 0; }
+    void FinishedReading() { ++BeingRead; NormalizeReadCounter(); }
 
     T Read_() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
 
@@ -60,7 +62,7 @@ struct CircBuffer {
 
     void FinishedWriting() { if(++BeingWritten == size) BeingWritten = 0; }
 
-    void Write_(T const &d) { *GetSlotToWrite() = d; FinishedWriting(); }
+    void Write_(T const &d, bool Forced = false) { *GetSlotToWrite() = d; if(Forced) ForceFinishedWriting(); else FinishedWriting(); }
 
     /** safe write. Returns false is buffer is full.
      * @param Dst - pointer to store read data via
@@ -87,6 +89,8 @@ struct CircBuffer {
   protected:
     CounterType BeingRead, BeingWritten; //!< indexes of buffer currently being ....
     avp::Vector<T,size> Buffer;
+
+    void NormalizeReadCounter() { if(BeingRead >= size) BeingRead -= size; }
 }; // CircBuffer
 
 /** CircBufferPWR2 is a CircBuffer with size being a power of 2, so for rollovers I can use binary AND operation
@@ -105,7 +109,7 @@ struct CircBufferPWR2: public CircBuffer<T, size_t(1) << BitsInCounter, CounterT
 
   void FinishedWriting() { Base::BeingWritten = (Base::BeingWritten + 1) & Mask; }
 
-  void Write_(T const &d) { *Base::GetSlotToWrite() = d; FinishedWriting(); }
+  void Write_(T const &d, bool Forced = false) { *Base::GetSlotToWrite() = d; if(Forced) ForceFinishedWriting(); else FinishedWriting(); }
 
   bool Write(T const &d) {
     if(LeftToWrite() == 0) return false;
@@ -123,7 +127,7 @@ struct CircBufferPWR2: public CircBuffer<T, size_t(1) << BitsInCounter, CounterT
   //************* Reader functions ***************************************
   CounterType LeftToRead() const  { return (Base::BeingWritten - Base::BeingRead) & Mask; }
 
-  void FinishedReading() { Base::BeingRead = (Base::BeingRead + 1) & Mask; }
+  void FinishedReading() { ++Base::BeingRead; NormalizeReadCounter(); }
 
   T Read_() { T temp = *Base::GetSlotToRead(); FinishedReading(); return temp; }
 
@@ -134,6 +138,8 @@ struct CircBufferPWR2: public CircBuffer<T, size_t(1) << BitsInCounter, CounterT
 
 protected:
   static constexpr CounterType Mask = Base::GetCapacity(); //!< marks used bits in index variables
+
+  void NormalizeReadCounter() { Base::BeingRead &= Mask; }
 }; // CircBufferPWR2
 
 /** CircBufferAutoWrap is a CircBuffer with size precisely fitting into one of the numeric types, so for rollovers
@@ -151,7 +157,11 @@ struct CircBufferAutoWrap: public CircBuffer<T, size_t(std::numeric_limits<Count
 
   void FinishedWriting() { ++Base::BeingWritten; }
 
-  void Write_(T const &d) { *Base::GetSlotToWrite() = d; FinishedWriting(); }
+  void Write_(T const &d, bool Forced = false) {
+    *Base::GetSlotToWrite() = d;
+    if(Forced) ForceFinishedWriting();
+    else FinishedWriting();
+  }
 
   bool Write(T const &d) {
     if(LeftToWrite() == 0) return false;
@@ -161,15 +171,15 @@ struct CircBufferAutoWrap: public CircBuffer<T, size_t(std::numeric_limits<Count
   // It is risky function because if there is no place to write it modifies BeingRead index, so interferes with reading function. E.g
   // if read is in progress and this function is called from the interrupt (or vise versa) things may get screwed up.
   // The function never fails
-  T *ForceSlotToWrite()  {
+  void ForceFinishedWriting()  {
     if(LeftToWrite() == 0) FinishedReading();
-    return Base::GetSlotToWrite();
-  } // ForceSlotToWrite
+    FinishedWriting();
+  } // ForceFinishedWriting
 
   //************* Reader functions ***************************************
   CounterType LeftToRead() const  { return Base::BeingWritten - Base::BeingRead; }
 
-  void FinishedReading() { ++Base::BeingRead; }
+  void FinishedReading() { ++Base::BeingRead; NormalizeReadCounter(); }
 
   T Read_() { T temp = *Base::GetSlotToRead(); FinishedReading(); return temp; }
 
@@ -177,6 +187,8 @@ struct CircBufferAutoWrap: public CircBuffer<T, size_t(std::numeric_limits<Count
     if(LeftToRead() == 0) return false;
     else { *Dst = Read_(); return true; }
   } // safer Read
+protected:
+  void NormalizeReadCounter() { }
 }; // CircBufferPWR2
 
 #endif /* CIRCBUFFER_H_ */

@@ -15,112 +15,53 @@
 #include <stdint.h>
 #include "CircBuffer.h"
 
-/** Circular Buffer of elements of class T. One reader and one writer may work in parallel. Reader is using
-  * only BeingRead index, and writer only BeingWritten, so index can be screwed-up ONLY when cross-used,
-  * like in Clear()
-  * NOTE: When both BeingRead and BeingWritten refer the same block the buffer is empty, as this block is
-  * not written yet, so there is nothing to read
-  * NOTE: Writing and reading function DO NOT CHECK WHETHER THERE IS SPACE! THEY NEVER RETURN
-  * NULLPTR. Call LeftTo... function beforehand
-  * NOTE: the size of CircBuffer is powers of 2 to avoid conditional rollovers (when we compare
-  * index with an end of buffer all the time
-  * @tparam BitsInCounter - size of counters in bits, defines size and maximum size which fits. for 8.16 or 32
-  * the class is specially fast
-  */
-template <typename T, uint8_t BitsInCounter>
-struct CircBufferWithCont: public CircBufferPWR2<T, BitsInCounter> {
-  using Base = CircBufferPWR2<T, BitsInCounter>;
+/**
+ * this is CircBuffer class which allows to read entries by continues blocks. It still writes one by one
+ * @note as CurrentBuffer??? classes this class is not virtual, so if you override one function you have to override
+ * every function which relies on it, otherwise superclass versions will be called. VirtCircBuffer.h implements
+ * CircBuffer class with virtual classes
+ * @tparam CircBufferClass - may be any of CircBuffer??? classes
+ */
 
+
+template <class CircBufferClass>
+struct CircBufferWithCont: public CircBufferClass {
   CircBufferWithCont() { Clear(); }
-  void Clear() {  Base::Clear(); LastReadSize = 0;}
+  void Clear() {  CircBufferClass::Clear(); LastReadSize = 0;}
 
   void ForceFinishedWriting()  {
-    if(Base::LeftToWrite() == 0) FinishedReading();
-    Base::FinishedWriting();
+    if(CircBufferClass::LeftToWrite() == 0) FinishedReading();
+    CircBufferClass::FinishedWriting();
   } // SaferForceFinishedWriting
 
   // It is marginally safer function because it moves BeingRead index only when no read is in progress. Interrupts may still screw things up
   // if racing condition occurs. Fails and returns flase is reading is in progress
   bool SaferForceFinishedWriting()  {
-    if(Base::LeftToWrite() == 0) { // we will try to free some space
-      if(LastReadSize == 0) {  Base::BeingRead = (Base::BeingRead + 1) & Base::Mask; } // move read pointer if no read is in progress
+    if(CircBufferClass::LeftToWrite() == 0) { // we will try to free some space
+      if(LastReadSize == 0) FinishedReading(); // move read pointer if no read is in progress
       else return false; // will fail but not overwrite data being read
     }
-    Base::FinishedWriting();
+    CircBufferClass::FinishedWriting();
     return true;
   } // SaferForceFinishedWriting
 
   //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
-  T const *GetSlotToRead() { LastReadSize = 1; return Base::GetSlotToRead(); }
-
-  void FinishedReading() { Base::BeingRead = (Base::BeingRead + LastReadSize) & Base::Mask; LastReadSize = 0; }
+  auto GetSlotToRead() { LastReadSize = 1; return CircBufferClass::GetSlotToRead(); }
+  void FinishedReading() { CircBufferClass::BeingRead += LastReadSize; CircBufferClass::NormalizeReadCounter(); LastReadSize = 0; }
 
   // ************* Continous block reading functions
   /** instead of a single entry marks for reading a continuous block.
-  * Use GetSizeToRead to determine size of the block to read
+  * Use GetReadSize to determine size of the block to read
   */
-  T const *GetContinousBlockToRead() {
+  auto GetContinousBlockToRead() {
     // if true BeingWritten has wrapped
-    LastReadSize = Base::BeingRead > Base::BeingWritten ? (Base::GetCapacity() + 1 - Base::BeingRead) & Base::Mask : Base::LeftToRead();
-    return &Base::Buffer[Base::BeingRead];
+    LastReadSize = CircBufferClass::BeingRead > CircBufferClass::BeingWritten ?
+        CircBufferClass::GetCapacity() + 1 - CircBufferClass::BeingRead :
+        CircBufferClass::LeftToRead();
+    return &CircBufferClass::Buffer[CircBufferClass::BeingRead];
   } // GetContinousBlockToRead
 
-  size_t GetSizeToRead() const { return LastReadSize; }
-
-protected:
-  size_t LastReadSize; //! 0 if no read is in progress, size of the read being in progress otherwise
-}; // CircBufferWithCont
-
-/** Circular Buffer of elements of class T. One reader and one writer may work in parallel. Reader is using
-  * only BeingRead index, and writer only BeingWritten, so index can be screwed-up ONLY when cross-used,
-  * like in Clear()
-  * NOTE: When both BeingRead and BeingWritten refer the same block the buffer is empty, as this block is
-  * not written yet, so there is nothing to read
-  * NOTE: Writing and reading function DO NOT CHECK WHETHER THERE IS SPACE! THEY NEVER RETURN
-  * NULLPTR. Call LeftTo... function beforehand
-  * NOTE: the size of CircBuffer is powers of 2 to avoid conditional rollovers (when we compare
-  * index with an end of buffer all the time
-  * @tparam BitsInCounter - size of counters in bits, defines size and maximum size which fits. for 8.16 or 32
-  * the class is specially fast
-  */
-template <typename T, typename CounterType>
-struct CircBufferAutoWrapWithCont: public CircBufferAutoWrap<T, CounterType> {
-  using Base = CircBufferAutoWrap<T, CounterType>;
-
-  CircBufferAutoWrapWithCont() { Clear(); }
-  void Clear() {  Base::Clear(); LastReadSize = 0;}
-
-  void ForceFinishedWriting()  {
-    if(Base::LeftToWrite() == 0) FinishedReading();
-    Base::FinishedWriting();
-  } // SaferForceFinishedWriting
-
-  // It is marginally safer function because it moves BeingRead index only when no read is in progress. Interrupts may still screw things up
-  // if racing condition occurs. Fails and returns NULL is reading is in progress
-  bool SaferForceFinishedWriting()  {
-    if(Base::LeftToWrite() == 0) { // we will try to free some space
-      if(LastReadSize == 0) {  ++Base::BeingRead; } // move read pointer if no read is in progress
-      else return false; // will fail but not overwrite data being read
-    }
-    Base::FinishedWriting();
-    return true;
-  } // SaferForceFinishedWriting
-
-  //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
-  T const *GetSlotToRead() { LastReadSize = 1; return Base::GetSlotToRead(); }
-
-  void FinishedReading() { Base::BeingRead += LastReadSize; LastReadSize = 0; }
-
-  // ************* Continous block reading functions
-  /** instead of a single entry marks for reading a continuous block.
-  * Use GetSizeToRead to determine size of the block to read
-  */
-  T const *GetContinousBlockToRead() {
-    LastReadSize = Base::BeingRead > Base::BeingWritten ? Base::GetCapacity() + 1 - Base::BeingRead : Base::LeftToRead(); // if true BeingWritten has wrapped
-    return &Base::Buffer[Base::BeingRead];
-  } // GetContinousBlockToRead
-
-  size_t GetSizeToRead() const { return LastReadSize; }
+  size_t GetReadSize() const { return LastReadSize; }
 
 protected:
   size_t LastReadSize; //! 0 if no read is in progress, size of the read being in progress otherwise
