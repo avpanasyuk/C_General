@@ -30,6 +30,7 @@
 template <typename T, size_t size, typename CounterType = size_t>
 struct CircBufferBase { // abstract class
   static_assert(std::is_unsigned<CounterType>::value,"'CounterType' has to be unsigned type!");
+  using ElementType = T;
 
   // *********** General functions
   explicit CircBufferBase():BeingWritten(0) { Clear(); }
@@ -174,7 +175,7 @@ struct CircBufferWithReadBlock: public CircBufferClass {
   } // SaferForceFinishedWriting
 
   //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
-  virtual const decltype(CircBufferClass::Buffer[0]) *GetSlotToRead() override { LastReadSize = 1; return CircBufferClass::GetSlotToRead(); }
+  virtual const typename CircBufferClass::ElementType *GetSlotToRead() override { LastReadSize = 1; return CircBufferClass::GetSlotToRead(); }
 
   virtual void FinishedReading() override { CircBufferClass::BeingRead += LastReadSize; CircBufferClass::NormalizeReadCounter(); LastReadSize = 0; }
 
@@ -194,6 +195,6 @@ struct CircBufferWithReadBlock: public CircBufferClass {
   size_t GetReadSize() const { return LastReadSize; }
 protected:
   size_t LastReadSize; //! 0 if no read is in progress, size of the read being in progress otherwise
-}; // CircBufferWithCont
+}; // CircBufferWithReadBlock
 
 #endif /* CIRCBUFFER_H_ */

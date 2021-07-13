@@ -25,8 +25,8 @@
 
 
 template <class CircBufferClass>
-struct CircBufferWithCont: public CircBufferClass {
-  CircBufferWithCont() { Clear(); }
+struct CircBufferWithReadBlock: public CircBufferClass {
+  CircBufferWithReadBlock() { Clear(); }
   void Clear() {  CircBufferClass::Clear(); LastReadSize = 0;}
 
   void ForceFinishedWriting()  {
@@ -65,6 +65,6 @@ struct CircBufferWithCont: public CircBufferClass {
 
 protected:
   size_t LastReadSize; //! 0 if no read is in progress, size of the read being in progress otherwise
-}; // CircBufferWithCont
+}; // CircBufferWithReadBlock
 
 #endif /* CIRCBUFFERWITHCONT_H_ */
