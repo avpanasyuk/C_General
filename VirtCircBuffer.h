@@ -110,7 +110,7 @@ struct CircBuffer: public CircBufferBase<T,size,CounterType> {
       return Base::Buffer[Base::BeingWritten >= BackIndex?Base::BeingWritten - BackIndex:Base::BeingWritten + size - BackIndex];
     }
   protected:
-    virtual void NormalizeReadCounter() { if(Base::BeingRead == size) Base::BeingRead = 0; }
+    virtual void NormalizeReadCounter() { if(Base::BeingRead >= size) Base::BeingRead -= size; }
 }; // CircBuffer
 
 /** CircBufferPWR2 is a CircBuffer with size being a power of 2, so for rollovers I can use binary AND operation
