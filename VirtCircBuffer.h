@@ -1,5 +1,5 @@
 /*
-* CircBuffer.h
+* VirtCircBuffer.h
 *
 * Created: 7/27/2013 8:03:10 PM
 *  Author: panasyuk
@@ -16,7 +16,7 @@
 
 /** Circular Buffer of elements of class T. One reader and one writer may work in parallel. Reader is using
   * only BeingRead index, and writer only BeingWritten, so index can be screwed-up ONLY when cross-used,
-  * like in Clear(). I do not need to MUTEXes!
+  * like in Clear(). It does not need MUTEXes!
   * @note: When both BeingRead and BeingWritten refer the same block the buffer is empty, as this block is
   * not written yet, so there is nothing to read, but full buffer to write
   * @note: Writing and reading function DO NOT CHECK WHETHER THERE IS SPACE! THEY NEVER RETURN
@@ -34,6 +34,7 @@ struct CircBufferBase { // abstract class
 
   // *********** General functions
   explicit CircBufferBase():BeingWritten(0) { Clear(); }
+  virtual ~CircBufferBase() {};
 
   virtual void Clear()  {  BeingRead = BeingWritten; }
   static constexpr CounterType GetCapacity() { return size - 1; };
@@ -154,7 +155,7 @@ protected:
 
 
 /**
- * this is CircBuffer class which allows to read entries by continues blocks. It still writes one by one
+ * this is CircBuffer class which allows to read entries by continuous blocks. It still writes one by one
  * @tparam CircBufferClass - may be any of CircBuffer??? classes
  */
 template <class CircBufferClass>
@@ -179,7 +180,7 @@ struct CircBufferWithReadBlock: public CircBufferClass {
 
   virtual void FinishedReading() override { CircBufferClass::BeingRead += LastReadSize; CircBufferClass::NormalizeReadCounter(); LastReadSize = 0; }
 
-  // ************* Continous block reading functions
+  // ************* Continuous block reading functions
   /** instead of a single entry marks for reading a continuous block.
   * Use GetReadSize() to determine size of the block to read
   */
