@@ -34,7 +34,7 @@ extern "C" {
   int debug_vprintf(const char *format, va_list a);
 
   enum MAJOR_FAIL_REASONS_0 {MEMALLOC = 1,NUM_FAIL_REASONS_0};
-  /// @param reason - 1 _MALLOC fail, other are user defined
+
   void major_fail(uint8_t reason); // __attribute__((noreturn));
   void hang_cpu(); //  __attribute__((noreturn));
   void debug_action(); // if we want to debug something in General lib in primitive way
