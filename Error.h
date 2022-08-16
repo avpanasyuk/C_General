@@ -16,9 +16,11 @@
 #define DEBUG_PRINTF debug_printf
 #endif
 
+/// @cond
 #include <stdint.h>
 #include <stddef.h>
 #include <stdarg.h>
+/// @endcond
 #include "Macros.h"
 
 #ifdef __cplusplus
@@ -63,7 +65,7 @@ extern "C" {
 # define AVP_ERROR(code,format,...) do{ major_fail(code); }while(0)
 // we gotta execute exp and args but do nothing else
 /// AVP_ASSERT_WITH_EXPL = AVP_ASSERT_WITH_CODE with additional explanation
-/// @code - numeric code, optional
+/// @param code - numeric code, optional
 /// @param ext_format - additional format string, followed by parameters
 # define AVP_ASSERT_WITH_EXPL(exp,code,ext_format,...) do{ void(exp); void(__VA_ARGS__ + 0); }while(0)
 #endif // DEBUG

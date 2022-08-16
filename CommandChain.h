@@ -5,7 +5,9 @@
 * see Protocol.h for protocol description* @note !!!!!!!!!!!!!!!!!!!!!!!!!!!!! DO NOT USE debug_printf here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 
+/// @cond
 #include <stdint.h>
+/// @endcond
 #include "BitBang.h"#include "MyMath.h"
 #include "Error.h"
 #include "BitBang.h"

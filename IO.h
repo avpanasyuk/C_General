@@ -8,10 +8,12 @@
   * @brief templates of write_byte->write->vprintf->printf hierarhy
   */
 
+/// @cond
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <stdint.h>#include "General.h"
+#include <stdint.h>/// @endcond
+#include "General.h"
 #include "Error.h"
 #include "Time.h"
 

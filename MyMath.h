@@ -5,8 +5,10 @@
   * @file AVP_LIBS/General/MyMath.h
   * @author Alexander Panasyuk
   */
+/// @cond
 #include <stdlib.h>
 #include <stdint.h>
+/// @endcond
 #include "Complex.h"
 
 namespace avp {
