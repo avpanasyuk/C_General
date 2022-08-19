@@ -6,8 +6,10 @@
   @author Alexander Panasyuk
   */
 
+/// @cond
 #include <stdint.h>
 #include <stdlib.h>
+/// @endcond
 
 namespace avp {
   // byte-combining functions

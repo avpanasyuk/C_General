@@ -8,10 +8,12 @@
 #ifndef CIRCBUFFER_H_
 #define CIRCBUFFER_H_
 
+/// @cond
 #include <stddef.h>
 #include <stdint.h>
 #include <type_traits>
 #include "Vector.h"
+/// @endcond
 // #include "Error.h"
 
 /** Circular Buffer of elements of class T. One reader and one writer may work in parallel. Reader is using

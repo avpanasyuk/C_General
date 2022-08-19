@@ -4,8 +4,10 @@
  * Created: 11/11/2013 3:02:38 PM
  *  Author: panasyuk
  */
+/// @cond
 #include <stdlib.h>
 #include <stdio.h>
+/// @endcond
 #include "General.h"
 #include "Error.h"
 

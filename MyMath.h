@@ -5,9 +5,11 @@
   * @file MyMath.h
   * @author Alexander Panasyuk
   */
+/// @cond
 #include <stdlib.h>
 #include <stdint.h>
 #include <type_traits>
+/// @endcond
 #include "Complex.h"
 
 namespace avp {

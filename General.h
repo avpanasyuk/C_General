@@ -8,8 +8,10 @@
 #ifndef GENERAL_H_
 #define GENERAL_H_
 
+/// @cond
 #include <stdint.h>
 #include <stdarg.h>
+/// @endcond
 #if 0 // cause reallu weird errors in c+11 and I think already built-in
 // following are operators which can be universaly derived from others
 template<typename T> inline T operator++(T &v) { return v += 1; }
@@ -65,9 +67,12 @@ namespace avp {
   template<typename T> void unused(T const &) {}
 }
 #ifndef NO_STL
+/// @cond
 #include <string>
 #include <type_traits>
 #include <limits>
+/// @endcond
+
 namespace avp {
   std::string string_vprintf(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
   std::string string_printf(char const *format, ...) __attribute__ ((format (printf, 1, 2)));

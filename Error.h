@@ -16,9 +16,11 @@
 #define DEBUG_PRINTF debug_printf
 #endif
 
+/// @cond
 #include <stdint.h>
 #include <stddef.h>
 #include <stdarg.h>
+/// @endcond
 #include "Macros.h"
 
 #ifdef __cplusplus
@@ -34,7 +36,7 @@ extern "C" {
   int debug_vprintf(const char *format, va_list a);
 
   enum MAJOR_FAIL_REASONS_0 {MEMALLOC = 1,NUM_FAIL_REASONS_0};
-  /// @param reason - 1 _MALLOC fail, other are user defined
+
   void major_fail(uint8_t reason); // __attribute__((noreturn));
   void hang_cpu(); //  __attribute__((noreturn));
   void debug_action(); // if we want to debug something in General lib in primitive way
@@ -63,7 +65,8 @@ extern "C" {
 # define AVP_ERROR(code,format,...) do{ major_fail(code); }while(0)
 // we gotta execute exp and args but do nothing else
 /// AVP_ASSERT_WITH_EXPL = AVP_ASSERT_WITH_CODE with additional explanation
-/// @code - numeric code, optional
+/// @param exp - expression to be asserted
+/// @param code - numeric code, optional
 /// @param ext_format - additional format string, followed by parameters
 # define AVP_ASSERT_WITH_EXPL(exp,code,ext_format,...) do{ void(exp); void(__VA_ARGS__ + 0); }while(0)
 #endif // DEBUG

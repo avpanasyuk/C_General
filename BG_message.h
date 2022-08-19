@@ -17,8 +17,10 @@
 #ifndef BGMESSAGE_H_
 #define BGMESSAGE_H_
 
+/// @cond
 #include <stdlib.h>
 #include <stdarg.h>
+/// @endcond
 #include "IO.h"
 
 namespace avp {

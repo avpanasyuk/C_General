@@ -7,7 +7,9 @@
 #ifndef TIME_H_INCLUDED
 #define TIME_H_INCLUDED
 
+/// @cond
 #include <stdint.h>#include <limits.h>
+/// @endcond
 #include "General.h"
 namespace avp {  /// !!!! Periods and Delays should not be longer than half of value which fits into typename!
   //! @tparam T should be unsigned!
