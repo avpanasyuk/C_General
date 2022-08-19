@@ -65,6 +65,7 @@ extern "C" {
 # define AVP_ERROR(code,format,...) do{ major_fail(code); }while(0)
 // we gotta execute exp and args but do nothing else
 /// AVP_ASSERT_WITH_EXPL = AVP_ASSERT_WITH_CODE with additional explanation
+/// @param exp - expression to be asserted
 /// @param code - numeric code, optional
 /// @param ext_format - additional format string, followed by parameters
 # define AVP_ASSERT_WITH_EXPL(exp,code,ext_format,...) do{ void(exp); void(__VA_ARGS__ + 0); }while(0)
