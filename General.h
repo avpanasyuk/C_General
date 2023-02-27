@@ -79,12 +79,28 @@ namespace avp {
 
   /// this function is for comparison two relatively close unsigned values of the same type in case larger of them  wraps
   /// and we want to consider wrapped value to be still "larger" than the other one. Literal comparison does not work
-  /// in this case.  /// @return true if y > x
+  /// in this case.
+  /// @return true if y > x
   template<typename T1, typename T2> inline bool unsigned_is_smaller(const T1 &x, const T2 &y) {
     static_assert(std::is_same<T1,T2>::value,"Types should be identical!");
     static_assert(std::is_unsigned<T1>::value,"Type should be unsigned!");
     return y - x < std::numeric_limits<T1>::max()/2;
   } // unsigned_is_smaller
+
+/**
+ *@brief restores value of a variable upon getting out of scope
+ * 
+ * @tparam T - variable type
+ */
+  template<typename T>
+  class RestoreOnReturn {
+    T SavedValue; T *p;
+  public:
+    RestoreOnReturn(T &Var): SavedValue(Var), p(&Var) { }
+    ~RestoreOnReturn() { *p = SavedValue; }
+  }; // RestoreOnReturn
+
+#define RESTORE_ON_RETURN(x) avp::RestoreOnReturn<decltype(x)> _##__LINE__(x);
 } // avp
 #endif
 #endif /* GENERAL_H_ */
