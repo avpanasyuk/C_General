@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 #include <stdarg.h>
+#include <sys/time.h>
+
 #if 0 // cause reallu weird errors in c+11 and I think already built-in
 // following are operators which can be universaly derived from others
 template<typename T> inline T operator++(T &v) { return v += 1; }
@@ -80,6 +82,9 @@ namespace avp {
     static_assert(std::is_unsigned<T1>::value,"Type should be unsigned!");
     return y - x < std::numeric_limits<T1>::max()/2;
   } // unsigned_is_smaller
+
+  extern time_t millis();
+  extern time_t micros();
 } // avp
 #endif
 #endif /* GENERAL_H_ */

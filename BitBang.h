@@ -81,6 +81,12 @@ namespace avp {
   template<typename type> inline constexpr type getbits(type x, uint8_t numbits, uint8_t first_bit) {
     return (x >> first_bit) & ((type(1U) << numbits) - 1);
   } // bits
+
+  // CRC16
+  uint16_t Crc16(const uint8_t *pcBlock, uint32_t len, uint16_t start = 0);
+
+  // byteswap
+  inline uint16_t bswap_16(uint16_t w) { return (w << 8) | (w >> 8); }
 } // namespace avp
 
 

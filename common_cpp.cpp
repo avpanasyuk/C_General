@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include "General.h"
 #include "Error.h"
+#include "BitBang.h"
 
 volatile uint8_t FailReason = 0;
 void new_handler() { major_fail(MEMALLOC); }
@@ -28,7 +29,7 @@ __weak int debug_printf(char const *format, ...) {
   va_end(ap);
   return Out?1:-1;
 }
-#ifndef NO_STL
+#ifndef NO_STL
 namespace avp {
   std::string string_vprintf(const char *format, va_list ap) {
     va_list ap_;
@@ -47,6 +48,34 @@ namespace avp {
     va_end(ap);
     return Out;
   } // string_printf
-} // namnespace avp#endif
+#endif
+
+ uint16_t Crc16(const uint8_t *pcBlock, uint32_t len, uint16_t start) {
+   uint16_t crc = start;
+
+   while(len--) {
+     crc ^= uint16_t(*pcBlock++) << 8;
+
+     for(uint8_t i = 0; i < 8; i++)
+       if((crc & 0x8000) != 0)
+         crc = ((crc ^ 0x8810) << 1) + 1;
+       else crc <<= 1;
+   }
+   return crc;
+ } // Crc16
+
+ time_t millis() {
+   struct timeval time_now{};
+   gettimeofday(&time_now, nullptr);
+   return (time_now.tv_sec * time_t(1000)) + (time_now.tv_usec / 1000);
+ } // millis
+
+ time_t micros() {
+   struct timeval time_now{};
+   gettimeofday(&time_now, nullptr);
+   return (time_now.tv_sec * time_t(1000000L)) + time_now.tv_usec;
+ } // micros
+
+} // namnespace avp
 
 
