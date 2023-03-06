@@ -83,7 +83,7 @@ namespace avp {
   } // bits
 
   // CRC16
-  uint16_t Crc16(const uint8_t *pcBlock, uint32_t len, uint16_t start = 0);
+  uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t start = 0);
 
   // byteswap
   inline uint16_t bswap_16(uint16_t w) { return (w << 8) | (w >> 8); }

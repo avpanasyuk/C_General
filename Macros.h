@@ -37,7 +37,8 @@ Why is this important? Well when a macro is scanned and expanding, it creates a 
 This disabling context will cause a token, that refers to the currently expanding macro, to be painted blue.
 Thus, once its painted blue, the macro will no longer expand. This is why macros don't expand recursively.
 However, a disabling context only exists during one scan, so by deferring an expansion we can prevent our
-macros from becoming painted blue. We will just need to apply more scans to the expression. We can do that using this EVAL macro:
+macros from becoming painted blue. We will just need to apply more scans to the expression. We can do that
+using this EVAL macro:
 */
 
 #define EVAL(...)  EVAL1(EVAL1(EVAL1(__VA_ARGS__)))
@@ -62,7 +63,13 @@ macros from becoming painted blue. We will just need to apply more scans to the 
 #define INC_7 8
 #define INC_8 9
 #define INC_9 10
-#define INC_10 11#define INC_11 12#define INC_12 13#define INC_13 14#define INC_14 15#define INC_15 16#define INC_16 17
+#define INC_10 11
+#define INC_11 12
+#define INC_12 13
+#define INC_13 14
+#define INC_14 15
+#define INC_15 16
+#define INC_16 17
 #define DEC(x) PRIMITIVE_CAT(DEC_, x)
 #define DEC_0 0
 #define DEC_1 0
@@ -134,9 +141,68 @@ macros from becoming painted blue. We will just need to apply more scans to the 
   /**/
 #define IS_EMPTY_NON_FUNCTION_C() ()
 
-#define IS_EMPTY(x) IIF(BOOL(PRIMITIVE_CAT(CHECK_AFTER_,x)))
-#define CHECK_AFTER_ 0/// deferred expressions#define EMPTY()#define DEFER(id) id EMPTY()#define OBSTRUCT(...) __VA_ARGS__ DEFER(EMPTY)()#define EXPAND(...) __VA_ARGS__/// repeat#define REPEAT(count, macro, ...) \    WHEN(count) \    ( \        OBSTRUCT(REPEAT_INDIRECT) () \        ( \            DEC(count), macro, __VA_ARGS__ \        ) \        OBSTRUCT(macro) \        ( \            DEC(count), __VA_ARGS__ \        ) \    )#define REPEAT_INDIRECT() REPEAT//An example of using this macro//#define M(i, _) i//EVAL(REPEAT(8, M, ~)) // generates - 0 1 2 3 4 5 6 7
+// #define IS_EMPTY(x) IIF(BOOL(PRIMITIVE_CAT(CHECK_AFTER_,x)))
+#define CHECK_AFTER_ 0/// deferred expressions
+#define EMPTY()
+#define DEFER(id) id EMPTY()
+#define OBSTRUCT(...) __VA_ARGS__ DEFER(EMPTY)()
+#define EXPAND(...) __VA_ARGS__
+/// repeat
+#define REPEAT(count, macro, ...) \
+  WHEN(count) \
+  ( \
+  OBSTRUCT(REPEAT_INDIRECT) () \
+  ( \
+  DEC(count), macro, __VA_ARGS__ \
+  ) \
+  OBSTRUCT(macro) \
+  ( \
+  DEC(count), __VA_ARGS__ \
+  ) \
+  )
+#define REPEAT_INDIRECT() REPEAT
+//An example of using this macro
+//#define M(i, _) i
+//EVAL(REPEAT(8, M, ~))
+// generates - 0 1 2 3 4 5 6 7
 
+// Accept any number of args >= N, but expand to just the Nth one. The macro
+// that calls us still only supports 4 args, but the set of values we might
+// need to return is 1 larger, so we increase N to 6.
+#define _GET_NTH_ARG(_1, _2, _3, _4, _5, N, ...) N
+
+// Count how many args are in a variadic macro. We now use GCC/Clang's extension to
+// handle the case where … expands to nothing. We must add a placeholder arg before
+// ##__VA_ARGS__ (its value is totally irrelevant, but it's necessary to preserve
+// the shifting offset we want). In addition, we must add 0 as a valid value to be in
+// the N position.
+#define COUNT_VARARGS(...) _GET_NTH_ARG("ignored", ##__VA_ARGS__, 4, 3, 2, 1, 0)
+
+#endif
+
+// creating STRING __LINE__ so we can concat it with strings
+#define STRINGIZE(x) STRINGIZE2(x)
+#define STRINGIZE2(x) #x
+#define __LINE_STR__ STRINGIZE(__LINE__)
+
+// following is for counting a number of macro arguments
+#define SELECT_from9(_1,_2,_3,_4,_5,_6,_7,_8,_9,num,...) num
+#define HAS_MORE_THAN_ONE(...)  SELECT_from9(~,##__VA_ARGS__,1,1,1,1,1,1,1,0,0)
+#define IS_EMPTY(...)  SELECT_from9(~,##__VA_ARGS__,0,0,0,0,0,0,0,0,1)
+
+#if 0 // EXAMPLE OF USE OF THE MACROS ABOVE. Here we add ": " only if there is first __VA_ARGS__ argument,
+and .arg(...) if there are two and more.
+#define ARG_IF_NOT_EMPTY_0(...) .arg(__VA_ARGS__)
+#define ARG_IF_NOT_EMPTY_1(...)
+#define COL_IF_NOT_EMPTY_0(...) ": " __VA_ARGS__
+#define COL_IF_NOT_EMPTY_1(...)
+
+#define ADD_ARG_IF_NOT_EMPTY(...) CAT(ARG_IF_NOT_EMPTY_,IS_EMPTY(__VA_ARGS__))(__VA_ARGS__)
+#define ADD_COL_IF_NOT_EMPTY(...) CAT(COL_IF_NOT_EMPTY_,IS_EMPTY(__VA_ARGS__))(__VA_ARGS__)
+#define ERROR_PLACE " '" + __PRETTY_FUNCTION__ + "' in file " __BASE_FILE__ " at line " __LINE_STR__
+
+#define RETURN_ERROR(...) do{ return (QString("Error in") + ERROR_PLACE \
+  ADD_COL_IF_NOT_EMPTY(SPLIT(0,__VA_ARGS__)))ADD_ARG_IF_NOT_EMPTY(SPLIT(1,__VA_ARGS__)); }while(0)
 #endif
 
 /// creates a class to be precise alias of another class
@@ -145,45 +211,6 @@ struct class_name: public parent { \
     template<typename... Types> \
     class_name(Types... args) : parent(args...) {}  \
 };
-
-/// corresponding binary operator should be defined in advance/// first macro parameter is class name, second one is "+" or "-"#define CLASS_PLUS_MINUS_BLOCK(cl,op) \template<typename T2> cl &operator op##=(const T2& b) { *this = *this op b; return *this; } \
-cl& operator op##op() { *this op##= 1; return *this;} \
-cl operator op##op(int) { cl old(*this); *this op##= 1; return old; } \
-
-#if 0 // following are operators which can be universaly derived from otherstemplate<typename T, typename T2> inline T& operator +=(T& a, const T2& b) { a = a + b; return a; }
-template<typename T, typename T2> inline T& operator -=(T& a, const T2& b) { a = a - b; return a; }
-template<typename T> inline T& operator++(T &v) { v += 1; return v;}
-template<typename T> inline T operator++(T &v, int) { T old(v); v += 1; return old; }
-template<typename T> inline T& operator--(T &v) { v -= 1; return v; }
-template<typename T> inline T operator--(T &v, int) { T old(v); v -= 1; return old; }
-template<typename T> inline T operator-(const T &x) { return 0 - x; } // unitary minus
-#endif
-
-#if 0
-// DO NOT REDEFINE BUILT-IN OPERATORS!!!!! INFINITE RECURSION HELL
-// DO NOT DEFINE BINARTY OPERATORS FROM UNITARY USING TEMPLATE FUNCTIONS. COMPLILER DOES NOT
-// TRY USING IMPLICIT CONVERSION TO FIT PARAMETER TYPES
-// USE TEMPLATE CLASS FRIEND FUNCTIONS - THEY ARE SYMMETRIC AND COMPILER TRIES
-// IMPLICIT CONVERSIONS
-// LIKE THIS: for template<typename type> class T:
-// beginning of examble
-#define CLASS xxxxx
-#define BINARY_OP_FROM_SELF(op) \
-  inline friend CLASS operator op (const CLASS &x1, const CLASS &x2) { return CLASS(x1) op##= x2; }
-
-BINARY_OP_FROM_SELF(-)
-BINARY_OP_FROM_SELF(+)
-BINARY_OP_FROM_SELF(*)
-BINARY_OP_FROM_SELF(/)
-BINARY_OP_FROM_SELF(&)
-BINARY_OP_FROM_SELF(|)
-#undef BINARY_OP_FROM_SELF
-
-inline friend bool operator==(CLASS const &v1, CLASS const &v2) { return equal(v1,v2); }
-inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 == v2); }
-
-#endif  // end of example
-
 
 
 #endif /* MACROS_H_INCLUDED */

@@ -50,7 +50,7 @@ namespace avp {
   } // string_printf
 #endif
 
- uint16_t Crc16(const uint8_t *pcBlock, uint32_t len, uint16_t start) {
+ uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t start) {
    uint16_t crc = start;
 
    while(len--) {
