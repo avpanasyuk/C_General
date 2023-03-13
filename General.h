@@ -94,7 +94,7 @@ namespace avp {
  */
   template<typename T>
   class RestoreOnReturn {
-    T SavedValue; T *p;
+    const T SavedValue; T *p;
   public:
     RestoreOnReturn(T &Var): SavedValue(Var), p(&Var) { }
     ~RestoreOnReturn() { *p = SavedValue; }
