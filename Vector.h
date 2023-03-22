@@ -22,7 +22,7 @@ class Vector {
   Vector(const Vector<T1, Length> &rhs) { for(size_t i; i < Length; ++i) Data[i] = rhs[i]; }
   
  // following functions are to ab able to use this class in range-for loop
- template<typename Q>
+ template<typename Q> // we need a template because Q can be T or "const T"
  class Iterator {
   Q* p;
   public:
@@ -33,20 +33,20 @@ class Vector {
     return p != rhs.p;
   }
   void operator ++() { ++p; }
- };
+ }; // class Iterator
+ 
  Iterator<const T> const begin() const { // const version
    return Iterator<const T>(Data);
  }
  Iterator<const T> const end() const { // const version
   return Iterator<const T>(Data + Length);
  }
- Iterator<T>  begin()  { // const version
+ Iterator<T> begin()  { // const version
    return Iterator<T>(Data);
  }
  Iterator<T> end()  { // const version
   return Iterator<T>(Data + Length);
  }
-
 
 #define SELF_OP_V(Class, ...)                                                              \
   template <typename T1 = T>                                                               \
@@ -77,10 +77,7 @@ class Vector {
     return Data[i];
   }
 
-  constexpr size_t N() const { return Length; }
-
-  const T *get_ptr() const { return Data; }
-  const T *after_last() const { return Data + Length; }
+  static constexpr size_t N() { return Length; }
 
   inline friend bool operator!=(Vector const &v1, Vector const &v2) {
     if (&v1 == &v2) return false;
