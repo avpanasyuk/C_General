@@ -8,12 +8,16 @@
 #define TIME_H_INCLUDED
 
 /// @cond
+  // millis() and micros() should defined beforehand and return microseconds and milliseconds
+
 #include <stdint.h>#include <limits.h>
 /// @endcond
 #include "General.h"
 namespace avp {  /// !!!! Periods and Delays should not be longer than half of value which fits into typename!
+  typedef decltype(micros()) Time_t;
+  
   //! @tparam T should be unsigned!
-  template<uint32_t (*pTickFunction)(), typename T=uint32_t>
+  template<Time_t (*pTickFunction)(), typename T=Time_t>
   class TimePeriod {
       T NextTime;
       T Period;
@@ -49,7 +53,7 @@ namespace avp {  /// !!!! Periods and Delays should not be longer than half of 
   }; // TimePeriod
 
   //! @tparam T should be unsigned!
-  template<uint32_t (*TickFunction)(), typename T=uint32_t>
+  template<Time_t (*TickFunction)(), typename T=Time_t>
   class TimeOut: public TimePeriod<TickFunction,T> {
     public:
       TimeOut(T Timeout):TimePeriod<TickFunction,T>(Timeout)  {}
@@ -57,18 +61,19 @@ namespace avp {  /// !!!! Periods and Delays should not be longer than half of 
   }; // TimeOut
 
   /// RunPeriodically may be static class because Func and Period make all of them different
-  template<uint32_t (*TickFunction)(), void (*Func)(), uint32_t Period>
+  template<Time_t (*TickFunction)(), void (*Func)(), Time_t Period>
   class RunPeriodically {
-      static TimePeriod<TickFunction, uint32_t> TP;
+      static TimePeriod<TickFunction, Time_t> TP;
     public:
       static void cycle() { if(TP.Expired()) (*Func)(); } // cycle
       static void Reset() { TP.Reset(); }
   }; // RunPeriodically
 
-  template<uint32_t (*TickFunction)(), void (*Func)(), uint32_t Period>
-  TimePeriod<TickFunction, uint32_t> RunPeriodically<TickFunction,Func,Period>::TP(Period);
+  template<Time_t (*TickFunction)(), void (*Func)(), Time_t Period>
+  TimePeriod<TickFunction, Time_t> RunPeriodically<TickFunction,Func,Period>::TP(Period);
 
 }; // namespace avp
+
 
 typedef class avp::TimePeriod<millis> Millisec;
 typedef class avp::TimePeriod<micros> Microsec;
