@@ -26,7 +26,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+  #if !defined(debug_printf) 
   int debug_printf(const char *format, ...);
+  #endif
 
   extern volatile uint8_t FailReason;
   typedef void (*failfunc_type)(uint8_t reason); //  __attribute__((noreturn));
@@ -49,8 +52,10 @@ extern "C" {
 
 // IGNORE_WARNING(-Wunused-value)
 
-// ************************* ASSERT/ERROR macros **********************
-// #ifndef RELEASE#ifdef DEBUG
+// ************************* ASSERT/ERROR macros **********************
+
+// #ifndef RELEASE
+#ifdef DEBUG
 # define AVP_ERROR(code,format, ...) do{ \
     DEBUG_PRINTF("Error in %s in file " __FILE__ ", line %d: " format, \
                  __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); major_fail(code);\
@@ -70,7 +75,8 @@ extern "C" {
 /// @param ext_format - additional format string, followed by parameters
 # define AVP_ASSERT_WITH_EXPL(exp,code,ext_format,...) do{ void(exp); void(__VA_ARGS__ + 0); }while(0)
 #endif // DEBUG
-#define AVP_ASSERT_WITH_CODE(exp,code) AVP_ASSERT_WITH_EXPL(exp,code,"")
+
+#define AVP_ASSERT_WITH_CODE(exp,code) AVP_ASSERT_WITH_EXPL(exp,code,"")
 #define AVP_ASSERT(exp,...) AVP_ASSERT_WITH_CODE(exp,__VA_ARGS__ + 0)
 #define ASSERT_BEING_0(exp) AVP_ASSERT((exp) == 0)
 
