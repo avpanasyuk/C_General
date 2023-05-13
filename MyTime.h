@@ -4,8 +4,7 @@
   *
   */
 
-#ifndef TIME_H_INCLUDED
-#define TIME_H_INCLUDED
+#pragma once
 
   /// @cond
     // millis() and micros() should defined beforehand and return microseconds and milliseconds
@@ -97,4 +96,3 @@ namespace avp {
   // typedef class avp::TimePeriod<CPU_Ticks> CPU_Tick;
 }; // namespace avp
 
-#endif /* TIME_H_INCLUDED */
