@@ -37,6 +37,7 @@ extern "C" {
   /// defined in General library as weak, sending stuff to ::vprintf
   /// may be redefined
   int debug_vprintf(const char *format, va_list a);
+  int debug_puts(const char *s);
 
   enum MAJOR_FAIL_REASONS_0 {MEMALLOC = 1,NUM_FAIL_REASONS_0};
 
