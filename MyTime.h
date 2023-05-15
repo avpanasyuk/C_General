@@ -63,6 +63,15 @@ namespace avp {
     static void Pause(T Delay) { Pause(Delay, []() { }); }
   }; // TimePeriod
 
+  /**
+   *@brief we Run called in loop executes function with a given period
+   * Example:
+void loop() {
+  avp::Periodically<SendData>::Run(1000);
+}
+   *
+   * @tparam (*Func)() 
+   */
   template<void (*Func)(), Time_t(*TickFunction)() = millis>
   class Periodically {
     static Time_t NextTime;
