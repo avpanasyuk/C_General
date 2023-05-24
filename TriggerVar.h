@@ -1,7 +1,7 @@
 #ifndef TRIGGERINGVAR_H_INCLUDED
 #define TRIGGERINGVAR_H_INCLUDED
 
-// #include <AVP_LIBS/General/Macro.h>
+// #include "Macro.h"
 #include "Macros.h"
 
 template<typename T, void (* CallWhenAssigned)(const T &NewValue)>

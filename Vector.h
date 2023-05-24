@@ -2,7 +2,9 @@
 #define VECTOR_H_
 
 /// @cond
-#include <stdint.h>
+#include <cstdint>
+#include <cmath>
+
 /// @endcond
 #include "Error.h"
 #include "General.h"
