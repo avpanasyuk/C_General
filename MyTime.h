@@ -18,13 +18,17 @@ namespace avp {
   /// !!!! Periods and Delays should not be longer than half of value which fits into typename!
   typedef decltype(millis()) Time_t;
 
-  //! @tparam T should be unsigned!
+  
+  /**
+   * Using: avp::Timeout<> t; while(something) { if(t) { error('Timed out!); break; }}
+   * @tparam T should be unsigned!
+   */
   template<typename T = Time_t, T(*TickFunction)() = millis>
   class TimeOut {
     const T When;
   public:
     TimeOut(T Timeout) : When(TickFunction() + Timeout) { }
-    operator bool() const { return unsigned_is_smaller(When, TickFunction()); }
+    operator bool() const { return unsigned_is_smaller(When, TickFunction()); } // true when expired
   }; // TimeOut
 
   //! @tparam T should be unsigned!
