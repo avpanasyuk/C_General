@@ -4,7 +4,7 @@
 /// @cond
 #include <cstdint>
 #include <cmath>
-
+#include <initializer_list>
 /// @endcond
 #include "Error.h"
 #include "General.h"
@@ -18,6 +18,12 @@ class Vector {
 
  public:
   Vector() {}
+  Vector(const std::initializer_list<T> &t) {
+    // static_assert(t.size() <= Length, ": Initializer list too long!");
+    std::copy(t.begin(), t.end(), Data);
+    // T *p;
+    // for(auto &i = t.begin(), p = Data; i < t.end(); ++i, ++p) *p = *i ;
+  }
   Vector(const T &rhs) { *this = rhs; }
 
   template <typename T1 = T>
@@ -122,6 +128,7 @@ class ArithVector : public Vector<T, Length> {
   typedef Vector<T, Length> Vector_t;
 
   ArithVector() {}
+  ArithVector(std::initializer_list<T> t):Vector_t{t} {}
   ArithVector(const T &rhs) : Vector<T, Length>(rhs) {}
 
   template <typename T1 = T>

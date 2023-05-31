@@ -37,12 +37,12 @@ extern "C" {
   /// defined in General library as weak, sending stuff to ::vprintf
   /// may be redefined
   int debug_vprintf(const char *format, va_list a);
-  int debug_puts(const char *s);
+  int debug_puts(const char *s, free_func_t free_func);
 
   enum MAJOR_FAIL_REASONS_0 {MEMALLOC = 1,NUM_FAIL_REASONS_0};
 
-  void major_fail(uint8_t reason); // __attribute__((noreturn));
-  void hang_cpu(); //  __attribute__((noreturn));
+  void major_fail(uint8_t reason) __attribute__((noreturn));
+  void hang_cpu() __attribute__((noreturn));
   void debug_action(); // if we want to debug something in General lib in primitive way
   // we can redefine this function (it is defined in common_cpp as a __weak  empty function)
   // and call it from everywhere.
