@@ -58,29 +58,22 @@ extern "C" {
 
 // #ifndef RELEASE
 #ifdef DEBUG
-# define AVP_ERROR(code,format, ...) do{ \
+# define AVP_ERROR(format, ...) do{ \
     DEBUG_PRINTF("Error in %s in file " __FILE__ ", line %d: " format, \
-                 __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); major_fail(code);\
+                 __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); hang_cpu();\
   }while(0)
 /// AVP_ASSERT_WITH_EXPL = AVP_ASSERT_WITH_CODE with additional explanation
 /// @code - numeric code, optional
 /// @param ext_format - additional format string, followed by parameters
-# define AVP_ASSERT_WITH_EXPL(exp,code,ext_format,...) do{ if(!(exp)) \
-    { AVP_ERROR(code+0,"Expression \"" #exp "\" is false: " ext_format "!\n", \
-                          ##__VA_ARGS__); }}while(0)
 #else // RELEASE
 # define AVP_ERROR(code,format,...) do{ major_fail(code); }while(0)
-// we gotta execute exp and args but do nothing else
-/// AVP_ASSERT_WITH_EXPL = AVP_ASSERT_WITH_CODE with additional explanation
-/// @param exp - expression to be asserted
-/// @param code - numeric code, optional
-/// @param ext_format - additional format string, followed by parameters
-# define AVP_ASSERT_WITH_EXPL(exp,code,ext_format,...) do{ void(exp); void(__VA_ARGS__ + 0); }while(0)
+// # define AVP_ASSERT(exp,format,...) do{ void(exp); void(__VA_ARGS__ + 0); }while(0)
 #endif // DEBUG
 
-#define AVP_ASSERT_WITH_CODE(exp,code) AVP_ASSERT_WITH_EXPL(exp,code,"")
-#define AVP_ASSERT(exp,...) AVP_ASSERT_WITH_CODE(exp,__VA_ARGS__ + 0)
-#define ASSERT_BEING_0(exp) AVP_ASSERT((exp) == 0)
+#define AVP_ASSERT(exp,format,...) do{ if(!(exp)) \
+    { AVP_ERROR("Expression \"" #exp "\" is false: " format "!\n", \
+                          ##__VA_ARGS__); }}while(0)
 
+#define ASSERT_BEING_0(exp,...) AVP_ASSERT((exp) == 0, ##__VA_ARGS__)
 
 #endif /* ERROR_H_INCLUDED */
