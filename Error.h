@@ -27,6 +27,8 @@
 extern "C" {
 #endif
 
+  typedef void (*free_func_t)(void *);
+
   #if !defined(debug_printf) 
   int debug_printf(const char *format, ...);
   #endif
