@@ -8,9 +8,10 @@
 #ifndef GENERAL_H_
 #define GENERAL_H_
 
-/// @cond
+ /// @cond
 #include <stdint.h>
 #include <stdarg.h>
+#include <string.h>
 /// @endcond
 #if 0 // cause reallu weird errors in c+11 and I think already built-in
 // following are operators which can be universaly derived from others
@@ -36,12 +37,12 @@ template<typename T> inline T operator-(const T &x) { return 0 - x; } // unitary
 BINARY_OP_FROM_SELF(-)
 BINARY_OP_FROM_SELF(+)
 BINARY_OP_FROM_SELF(*)
-BINARY_OP_FROM_SELF(/)
+BINARY_OP_FROM_SELF(/ )
 BINARY_OP_FROM_SELF(&)
-BINARY_OP_FROM_SELF(|)
+BINARY_OP_FROM_SELF(| )
 #undef BINARY_OP_FROM_SELF
 
-inline friend bool operator==(CLASS const &v1, CLASS const &v2) { return equal(v1,v2); }
+inline friend bool operator==(CLASS const &v1, CLASS const &v2) { return equal(v1, v2); }
 inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 == v2); }
 
 #endif  // end of example
@@ -61,10 +62,10 @@ inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 ==
     return Out; }
 
 namespace avp {
-// to suppress unused-variable or unused-value
-// volatile auto x = (unused-value-expression);
-// avp::unused(x)
-  template<typename T> void unused(T const &) {}
+  // to suppress unused-variable or unused-value
+  // volatile auto x = (unused-value-expression);
+  // avp::unused(x)
+  template<typename T> void unused(T const &) { }
 }
 #ifndef NO_STL
 /// @cond
@@ -74,33 +75,64 @@ namespace avp {
 /// @endcond
 
 namespace avp {
-  std::string string_vprintf(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
-  std::string string_printf(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
+  std::string string_vprintf(const char *format, va_list a) __attribute__((format(printf, 1, 0)));
+  std::string string_printf(char const *format, ...) __attribute__((format(printf, 1, 2)));
 
   /// this function is for comparison two relatively close unsigned values of the same type in case larger of them  wraps
   /// and we want to consider wrapped value to be still "larger" than the other one. Literal comparison does not work
   /// in this case.
   /// @return true if y > x
   template<typename T1, typename T2> inline bool unsigned_is_smaller(const T1 &x, const T2 &y) {
-    static_assert(std::is_same<T1,T2>::value,"Types should be identical!");
-    static_assert(std::is_unsigned<T1>::value,"Type should be unsigned!");
-    return y - x < std::numeric_limits<T1>::max()/2;
+    static_assert(std::is_same<T1, T2>::value, "Types should be identical!");
+    static_assert(std::is_unsigned<T1>::value, "Type should be unsigned!");
+    return y - x < std::numeric_limits<T1>::max() / 2;
   } // unsigned_is_smaller
 
 /**
  *@brief restores value of a variable upon getting out of scope
- * 
+ *
  * @tparam T - variable type
  */
   template<typename T>
   class RestoreOnReturn {
     const T SavedValue; T *p;
   public:
-    RestoreOnReturn(T &Var): SavedValue(Var), p(&Var) { }
+    RestoreOnReturn(T &Var) : SavedValue(Var), p(&Var) { }
     ~RestoreOnReturn() { *p = SavedValue; }
   }; // RestoreOnReturn
 
 #define RESTORE_ON_RETURN(x) avp::RestoreOnReturn<decltype(x)> _##__LINE__(x);
+
+  template<int Length>
+  class Log {
+    char Text[Length + 1];
+    ptrdiff_t L;
+    const char *Br;
+    const size_t BrL;
+  public:
+    Log(const char *Break = "<br>") : Text { 0 }, L(0), Br(Break), BrL(strlen(Br)) { }
+    const char *Get() const { return Text; }
+    void Add(const char *s, bool NoBreak = false) {
+      size_t N = strlen(s);
+      size_t SpaceForBreak = NoBreak ? 0 : BrL;
+
+      if(N + SpaceForBreak > Length) Add("New entry is too big!");
+      else {
+        auto Shift = L + N + SpaceForBreak - Length;
+
+        if(Shift > 0) { // overran Length, got to shift
+          const char *pBr = strstr(Text + Shift, Br) + BrL; // find next break after Shift
+
+          if(pBr != nullptr) {
+            L = Text + L - pBr;
+            for(char *p = Text; p <= Text + L; ++pl, ++pBr) *p = *pBr;
+          } else L = 0;
+        }
+        strcpy(Text + L, s); L += N;
+        if(!NoBreak) strcpy(Text + L, BrL); L += BrL;
+      }
+    } // Add
+  } // class Log
 } // avp
 #endif
 #endif /* GENERAL_H_ */
