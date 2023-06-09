@@ -15,28 +15,6 @@
 
 volatile uint8_t FailReason = 0;
 
-extern "C" {
-  void new_handler() { major_fail(MEMALLOC); }
-  __weak int debug_vprintf(const char *format, va_list a) { return debug_puts(avp::string_vprintf(format, a).c_str()); }
-  __weak int debug_puts(const char *s) { return puts(s); }
-  __weak void debug_action() { };
-
-  __weak int debug_printf(char const *format, ...) {
-    va_list ap;
-    va_start(ap, format);
-    bool Out = debug_vprintf(format, ap) >= 0;
-    va_end(ap);
-    return Out ? 1 : -1;
-  }
-  __weak void hang_cpu() { while(1); }
-
-  __weak void major_fail(uint8_t reason) {
-    FailReason = reason;
-    hang_cpu();
-  }
-}
-
-
 #ifndef NO_STL
 namespace avp {
   std::string string_vprintf(const char *format, va_list ap) {

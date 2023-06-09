@@ -11,6 +11,8 @@
 /// @cond
 #include <stdint.h>
 #include <stdarg.h>
+#include "General_C.h"
+
 /// @endcond
 #if 0 // cause reallu weird errors in c+11 and I think already built-in
 // following are operators which can be universaly derived from others

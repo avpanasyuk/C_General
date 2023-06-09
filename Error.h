@@ -49,7 +49,7 @@ extern "C" {
   void debug_action(); // if we want to debug something in General lib in primitive way
   // we can redefine this function (it is defined in common_cpp as a __weak  empty function)
   // and call it from everywhere.
-  void new_handler(); // NOTE! got to be installed on startup with std::set_new_handler(avp::new_handler);
+  void new_handler()  __attribute__((noreturn)); // NOTE! got to be installed on startup with std::set_new_handler(avp::new_handler);
 #ifdef __cplusplus
 }
 #endif
