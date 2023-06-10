@@ -11,7 +11,7 @@
  /// @cond
 #include <stdint.h>
 #include <stdarg.h>
-#include <string.h>
+#include "General_C.h"
 /// @endcond
 #if 0 // cause reallu weird errors in c+11 and I think already built-in
 // following are operators which can be universaly derived from others
@@ -52,14 +52,6 @@ inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 ==
 #define __weak   __attribute__((weak,noinline))
 #endif /* __weak */
 #endif /* __GNUC__ */
-
-/// creates printf-type function named "func_name" out of vprintf-type function named "vprinf_func"
-/// usage: PRINTF_WRAPPER_BOOL(printf,vprintf)
-#define PRINTF_WRAPPER(func_name, vprintf_func) \
-  inline  __attribute__((format (printf, 1, 2))) bool func_name(char const *format, ...) \
-  { va_list ap; va_start(ap,format); \
-    bool Out =  vprintf_func(format,ap); va_end(ap); \
-    return Out; }
 
 namespace avp {
   // to suppress unused-variable or unused-value
@@ -106,33 +98,37 @@ namespace avp {
   template<int Length>
   class Log {
     char Text[Length + 1];
-    ptrdiff_t L;
-    const char *Br;
-    const size_t BrL;
+    int L; 
+    const char * const Br;
+    const int BrL;
   public:
     Log(const char *Break = "<br>") : Text { 0 }, L(0), Br(Break), BrL(strlen(Br)) { }
+
     const char *Get() const { return Text; }
+
     void Add(const char *s, bool NoBreak = false) {
-      size_t N = strlen(s);
-      size_t SpaceForBreak = NoBreak ? 0 : BrL;
+      int N = strlen(s);
+      int SpaceForBreak = NoBreak ? 0 : BrL;
 
       if(N + SpaceForBreak > Length) Add("New entry is too big!");
       else {
-        auto Shift = L + N + SpaceForBreak - Length;
+        int Shift = L + N + SpaceForBreak - Length;
 
         if(Shift > 0) { // overran Length, got to shift
-          const char *pBr = strstr(Text + Shift, Br) + BrL; // find next break after Shift
+          const char *pBr = strstr(Text + Shift, Br); // find next break after Shift
 
           if(pBr != nullptr) {
+            pBr += BrL; // step over the last break, we do not need to copy it
             L = Text + L - pBr;
-            for(char *p = Text; p <= Text + L; ++pl, ++pBr) *p = *pBr;
+            for(char *p = Text; p <= Text + L; ++p, ++pBr) *p = *pBr;
           } else L = 0;
         }
         strcpy(Text + L, s); L += N;
-        if(!NoBreak) strcpy(Text + L, BrL); L += BrL;
+        if(!NoBreak) { strcpy(Text + L, Br); L += BrL; }
       }
     } // Add
-  } // class Log
+
+  }; // class Log
 } // avp
 #endif
 #endif /* GENERAL_H_ */

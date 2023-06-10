@@ -15,28 +15,6 @@
 
 volatile uint8_t FailReason = 0;
 
-extern "C" {
-  void new_handler() { major_fail(MEMALLOC); }
-  __weak int debug_vprintf(const char *format, va_list a) { return debug_puts(avp::string_vprintf(format, a).c_str()); }
-  __weak int debug_puts(const char *s) { return puts(s); }
-  __weak void debug_action() { };
-
-  __weak int debug_printf(char const *format, ...) {
-    va_list ap;
-    va_start(ap, format);
-    bool Out = debug_vprintf(format, ap) >= 0;
-    va_end(ap);
-    return Out ? 1 : -1;
-  }
-  __weak void hang_cpu() { while(1); }
-
-  __weak void major_fail(uint8_t reason) {
-    FailReason = reason;
-    hang_cpu();
-  }
-}
-
-
 #ifndef NO_STL
 namespace avp {
   std::string string_vprintf(const char *format, va_list ap) {
@@ -49,28 +27,9 @@ namespace avp {
     return std::string(Buffer, Size); // we do not write ending 0 byte
   } // string_vprintf
 
-  std::string string_printf(char const *format, ...) {
-    va_list ap;
-    va_start(ap, format);
-    std::string Out = string_vprintf(format, ap);
-    va_end(ap);
-    return Out;
-  } // string_printf
+  PRINTF_WRAPPER(std::string, string_printf, string_vprintf)
+    
 #endif
-
-  uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t start) {
-    uint16_t crc = start;
-
-    while(len--) {
-      crc ^= uint16_t(*pcBlock++) << 8;
-
-      for(uint8_t i = 0; i < 8; i++)
-        if((crc & 0x8000) != 0)
-          crc = ((crc ^ 0x8810) << 1) + 1;
-        else crc <<= 1;
-    }
-    return crc;
-  } // Crc16
 
 #if __linux__
 
