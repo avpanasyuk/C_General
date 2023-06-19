@@ -49,10 +49,10 @@ class Vector {
  Iterator<const T> const end() const { // const version
   return Iterator<const T>(Data + Length);
  }
- Iterator<T> begin()  { // const version
+ Iterator<T> begin()  { // non-const version
    return Iterator<T>(Data);
  }
- Iterator<T> end()  { // const version
+ Iterator<T> end()  { // non-const version
   return Iterator<T>(Data + Length);
  }
 

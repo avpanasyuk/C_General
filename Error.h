@@ -68,13 +68,12 @@ extern "C" {
 /// @code - numeric code, optional
 /// @param ext_format - additional format string, followed by parameters
 #else // RELEASE
-# define AVP_ERROR(code,format,...) do{ major_fail(code); }while(0)
+# define AVP_ERROR(format,...) do{ hang_cpu(); }while(0)
 // # define AVP_ASSERT(exp,format,...) do{ void(exp); void(__VA_ARGS__ + 0); }while(0)
 #endif // DEBUG
 
-#define AVP_ASSERT(exp,format,...) do{ if(!(exp)) \
-    { AVP_ERROR("Expression \"" #exp "\" is false: " format "!\n", \
-                          ##__VA_ARGS__); }}while(0)
+#define AVP_ASSERT(exp) do{ if(!(exp)) \
+    { AVP_ERROR(#exp " is false!\n"); }}while(0)
 
 #define ASSERT_BEING_0(exp,...) AVP_ASSERT((exp) == 0, ##__VA_ARGS__)
 
