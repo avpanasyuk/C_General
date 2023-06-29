@@ -167,7 +167,7 @@ namespace avp {
           if(b == ESC_code) { // except when it is a special code
             // dealing with a special case here, either block or byte with ESC_Code value
             // in either case there should be BlockInfo allocated in the BlockInfoBufTX
-            AVP_ASSERT(BlockInfoBufTX.LeftToRead(),"GetBlockToSend: something should be here!"); // We place block into BlockInfoBufTX first, before putting ESC_code into BufferTX,
+            AVP_ASSERT(BlockInfoBufTX.LeftToRead()); // We place block into BlockInfoBufTX first, before putting ESC_code into BufferTX,
             // so this should never happen
             const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead();
             if(pCurBlock->Size == 0) { // there is no really a block to send, just a byte with ESC_code value,

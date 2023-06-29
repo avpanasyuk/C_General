@@ -68,7 +68,7 @@ namespace avp {
     public:
       //! does not do any immediate writing to a serial port, so does not call bg_loop
       static bool vAppend(const char *format, va_list ap) { return Buffer[CurBuffer].vAppend(format,ap); }
-      static PRINTF_WRAPPER(printf,vAppend);
+      static PRINTF_WRAPPER(bool,printf,vAppend);
 
       static void WriteOut() { Buffer[1 - (CurBuffer = 1 - CurBuffer)].WriteOut(); } // switches buffers as well
   }; // class BG_message
