@@ -29,7 +29,7 @@ extern "C" {
 
   typedef void (*free_func_t)(void *);
 
-  #if !defined(debug_printf) 
+  #if !defined(debug_printf)
   int debug_printf(const char *format, ...);
   #endif
 
@@ -74,6 +74,9 @@ extern "C" {
 
 #define AVP_ASSERT(exp) do{ if(!(exp)) \
     { AVP_ERROR(#exp " is false!\n"); }}while(0)
+
+#define AVP_ASSERT_WITH_EXPL(exp, format, ...) do{ if(!(exp)) \
+    { AVP_ERROR(#exp " is false: " format "\n", ##__VA_ARGS__); }}while(0)
 
 #define ASSERT_BEING_0(exp,...) AVP_ASSERT((exp) == 0, ##__VA_ARGS__)
 
