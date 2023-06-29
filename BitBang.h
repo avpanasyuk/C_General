@@ -2,7 +2,7 @@
 #define BITBANG_H_INCLUDED
 
 /**
-  @file AVP_LIBS/General/BitBang.h
+  @file C_General/BitBang.h
   @author Alexander Panasyuk
   */
 
