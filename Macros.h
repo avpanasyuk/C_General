@@ -52,6 +52,8 @@ using this EVAL macro:
 #define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
 #define PRIMITIVE_CAT(a, ...) a ## __VA_ARGS__
 
+
+#if 0
 #define INC(x) PRIMITIVE_CAT(INC_, x)
 #define INC_0 1
 #define INC_1 2
@@ -89,6 +91,7 @@ using this EVAL macro:
 #define DEC_15 14
 #define DEC_16 15
 #define DEC_17 16
+#endif
 
 // LOGIC
 /*

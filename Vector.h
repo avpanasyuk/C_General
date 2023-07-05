@@ -2,6 +2,7 @@
 #define VECTOR_H_
 
 #include <stdint.h>
+#include <stdlib.h>
 #include "General.h"
 #include "Error.h"
 
@@ -50,6 +51,13 @@ namespace avp {
         return false;
       } // operator!=
       inline friend bool operator==(Vector const &v1, Vector const &v2) { return !(v1 != v2); }
+
+      void qsort() {
+        std::qsort(Data, Length, sizeof(T), [](const void *a, const void*b) {
+          return *(const T *)a > *(const T *)b ? 1 :
+            *(const T *)a < *(const T *)b ? -1 : 0;  });
+      } // qsort
+
       // SELF_OP_V(Vector) // this is default operation=
   }; // class Vector
 
