@@ -24,7 +24,7 @@
 //            foo(b);                       /* no diagnostic for this one */
 //          #pragma GCC diagnostic pop
 
-#define IGNORE(x) _Pragma ("GCC diagnostic push") \
+#define IGNORE_WARNING(x) _Pragma ("GCC diagnostic push") \
   DO_PRAGMA(GCC diagnostic ignored #x)
 #define STOP_IGNORING _Pragma ("GCC diagnostic pop")
 
