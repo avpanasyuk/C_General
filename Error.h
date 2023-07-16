@@ -19,7 +19,17 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include "Macros.h"
+
+#ifndef AVP_ERROR_MSG_BUFFER_SZ
+#define AVP_ERROR_MSG_BUFFER_SZ 2000
+#endif
+
+extern char AVP_ErrorMsgBuffer[AVP_ERROR_MSG_BUFFER_SZ];
+#define AVP_ERROR_STR(format,...) (snprintf(AVP_ErrorMsgBuffer, AVP_ERROR_MSG_BUFFER_SZ, \
+  "In '%s', file '" __FILE__ "', line %u: " ## format, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__) < 0? \
+  "Failed to snprintf error message in '" __FILE__ "'!":AVP_ErrorMsgBuffer)
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,6 +53,13 @@ extern "C" {
   void new_handler(); // NOTE! got to be installed on startup with std::set_new_handler(avp::new_handler);
 #ifdef __cplusplus
 }
+
+#if defined(USE_EXCEPTIONS) && USE_EXCEPTIONS != 0
+
+#define THROW(exception,format,...) do{ throw exception(AVP_ERROR_STR(format,  ##__VA_ARGS__)); while(0)
+
+#endif
+
 #endif
 
 IGNORE_WARNING(-Wunused-value)
@@ -66,6 +83,7 @@ IGNORE_WARNING(-Wunused-value)
 #define AVP_ASSERT_WITH_CODE(exp,code) AVP_ASSERT_WITH_EXPL(exp,code,"")
 #define AVP_ASSERT(exp,...) AVP_ASSERT_WITH_CODE(exp,__VA_ARGS__ + 0)
 #define ASSERT_BEING_0(exp) AVP_ASSERT((exp) == 0)
+
 
 
 #endif /* ERROR_H_INCLUDED */

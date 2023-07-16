@@ -10,8 +10,11 @@
 #include "Error.h"
 #include "BitBang.h"
 
+char AVP_ErrorMsgBuffer[AVP_ERROR_MSG_BUFFER_SZ];
+
 volatile uint8_t FailReason = 0;
 void new_handler() { major_fail(MEMALLOC); }
+
 
 __weak int debug_vprintf(const char *format, va_list a) { return ::vprintf(format,a); }
 __weak void hang_cpu() { while(1); }
