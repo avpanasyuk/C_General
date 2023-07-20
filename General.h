@@ -73,7 +73,8 @@ namespace avp {
   /// this function is for comparison two relatively close unsigned values of the same type in case larger of them  wraps
   /// and we want to consider wrapped value to be still "larger" than the other one. Literal comparison does not work
   /// in this case.
-  /// @return true if y > x
+  /// @note we use T1 and T2 instead of a single T to detect cases when parameter types are different 
+  /// @return true if y > x even if y is wrapped
   template<typename T1, typename T2> inline bool unsigned_is_smaller(const T1 &x, const T2 &y) {
     static_assert(std::is_same<T1, T2>::value, "Types should be identical!");
     static_assert(std::is_unsigned<T1>::value, "Type should be unsigned!");
