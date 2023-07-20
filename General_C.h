@@ -17,6 +17,8 @@
 #ifndef __weak
 #define __weak   __attribute__((weak,noinline))
 #endif /* __weak */
+#else
+#define __attribute__(...) 
 #endif /* __GNUC__ */
 
 /// creates printf-type function named "func_name" out of vprintf-type function named "vprinf_func"

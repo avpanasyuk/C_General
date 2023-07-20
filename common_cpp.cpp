@@ -39,9 +39,9 @@ namespace avp {
   std::string string_vprintf(const char *format, va_list ap) {
     va_list ap_;
     va_copy(ap_,ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
-    int Size = vsnprintf(nullptr,0,format,ap_);
+    const int Size = vsnprintf(nullptr,0,format,ap_);
     if(Size < 0) return "string_vprintf: format is wrong!";
-    char Buffer[Size+1]; // +1 to include ending zero byte
+    char *Buffer = (char *)_alloca(Size+1); // +1 to include ending zero byte
     vsprintf(Buffer,format,ap);
     return std::string(Buffer,Size); // we do not write ending 0 byte
   } // string_vprintf

@@ -41,13 +41,21 @@ struct class_name: public parent { \
 
 /// corresponding binary operator should be defined in advance
 /// first macro parameter is class name, second one is "+" or "-"
-#define CLASS_PLUS_MINUS_BLOCK(cl,op) \
-  template<typename T2> cl &operator op##=(const T2& b) { *this = *this op b; return *this; } \
-cl& operator op##op() { *this op##= 1; return *this;} \
-cl operator op##op(int) { cl old(*this); *this op##= 1; return old; } \#define ALWAYS_INLINE __attribute__(( always_inline )) static inline#define ON_SCOPE_EXIT(exp)   struct _ { ~_() { do{ exp; }while(0); }} __; // executes code when going out of function scope in any way
-
-// ********************************************** CONFUSING MACROS I DO NOT CURRENTLY USE **************************************
-#if 0 // following are operators which can be universaly derived from otherstemplate<typename T, typename T2> inline T& operator +=(T& a, const T2& b) { a = a + b; return a; }
+#define CLASS_PLUS_MINUS_BLOCK(cl,op_) \
+  template<typename T2> cl &operator op_##=(const T2& b) { *this = *this op_ b; return *this; } \
+cl& operator op##op_() { *this op_##= 1; return *this;} \
+cl operator op##op_(int) { cl old(*this); *this op_##= 1; return old; } \
+
+#define ALWAYS_INLINE __attribute__(( always_inline )) static inline
+
+#define ON_SCOPE_EXIT(exp)   struct _ { ~_() { do{ exp; }while(0); }} __; // executes code when going out of function scope in any way
+
+
+
+// ********************************************** CONFUSING MACROS I DO NOT CURRENTLY USE **************************************
+
+#if 0 // following are operators which can be universaly derived from others
+template<typename T, typename T2> inline T& operator +=(T& a, const T2& b) { a = a + b; return a; }
 template<typename T, typename T2> inline T& operator -=(T& a, const T2& b) { a = a - b; return a; }
 template<typename T> inline T& operator++(T &v) { v += 1; return v;}
 template<typename T> inline T operator++(T &v, int) { T old(v); v += 1; return old; }
@@ -79,7 +87,8 @@ BINARY_OP_FROM_SELF(|)
 inline friend bool operator==(CLASS const &v1, CLASS const &v2) { return equal(v1,v2); }
 inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 == v2); }
 
-#endif  // end of example
+#endif  // end of example
+
 #if 0
 /*
 Why is this important? Well when a macro is scanned and expanding, it creates a disabling context.
