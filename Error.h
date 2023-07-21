@@ -29,9 +29,16 @@
 #endif
 
 extern char AVP_ErrorMsgBuffer[AVP_ERROR_MSG_BUFFER_SZ];
+
+#if defined(_MSC_VER) && defined(_DEBUG) || defined(__GNUC__) && defined(DEBUG)
 #define AVP_ERROR_STR(format,...) (snprintf(AVP_ErrorMsgBuffer, AVP_ERROR_MSG_BUFFER_SZ, \
   "In '%s', file '" __FILE__ "', line %u: " ## format, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__) < 0? \
   "Failed to snprintf error message in '" __FILE__ "'!":AVP_ErrorMsgBuffer)
+#else
+#define AVP_ERROR_STR(format,...) (snprintf(AVP_ErrorMsgBuffer, AVP_ERROR_MSG_BUFFER_SZ, \
+  format, ##__VA_ARGS__) < 0? \
+  "Failed to snprintf error message, format = " format " !":AVP_ErrorMsgBuffer)
+#endif
 
 #ifdef __GNUC__
 #ifdef __cplusplus
