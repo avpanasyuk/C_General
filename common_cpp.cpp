@@ -28,7 +28,7 @@ namespace avp {
   } // string_vprintf
 
   PRINTF_WRAPPER(std::string, string_printf, string_vprintf)
-    
+} // namnespace avp
 #endif
 
 #if __linux__
@@ -45,6 +45,4 @@ namespace avp {
     return (time_now.tv_sec * time_t(1000000L)) + time_now.tv_usec;
   } // micros
 #endif
-} // namnespace avp
-
 
