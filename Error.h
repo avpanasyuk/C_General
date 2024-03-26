@@ -27,12 +27,13 @@
 extern "C" {
 #endif
 
-  #if !defined(debug_printf) 
+  #if !defined(debug_printf)
   int debug_printf(const char *format, ...);
   #endif
 
   extern volatile uint8_t FailReason;
   typedef void (*failfunc_type)(uint8_t reason); //  __attribute__((noreturn));
+  typedef void (*free_func_t)(void);
 
   /// defined in General library as weak, sending stuff to ::vprintf
   /// may be redefined
