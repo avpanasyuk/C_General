@@ -12,17 +12,35 @@
 #ifndef ERROR_H_INCLUDED
 #define ERROR_H_INCLUDED
 
-#ifndef DEBUG_PRINTF
-#define DEBUG_PRINTF debug_printf
-#endif
-
 /// @cond
 #include <stdint.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include <stdio.h>
 /// @endcond
 #include "Macros.h"
 
+#ifdef _MSC_VER 
+#define __PRETTY_FUNCTION__ __FUNCSIG__ 
+#endif
+
+#ifndef AVP_ERROR_MSG_BUFFER_SZ
+#define AVP_ERROR_MSG_BUFFER_SZ 2000
+#endif
+
+extern char AVP_ErrorMsgBuffer[AVP_ERROR_MSG_BUFFER_SZ];
+
+#if defined(_MSC_VER) && defined(_DEBUG) || defined(__GNUC__) && defined(DEBUG)
+#define AVP_ERROR_STR(format,...) (snprintf(AVP_ErrorMsgBuffer, AVP_ERROR_MSG_BUFFER_SZ, \
+  "In '%s', file '" __FILE__ "', line %u: " ## format, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__) < 0? \
+  "Failed to snprintf error message in '" __FILE__ "'!":AVP_ErrorMsgBuffer)
+#else
+#define AVP_ERROR_STR(format,...) (snprintf(AVP_ErrorMsgBuffer, AVP_ERROR_MSG_BUFFER_SZ, \
+  format, ##__VA_ARGS__) < 0? \
+  "Failed to snprintf error message, format = " format " !":AVP_ErrorMsgBuffer)
+#endif
+
+#ifdef __GNUC__
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -53,10 +71,8 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-// IGNORE_WARNING(-Wunused-value)
-
-// ************************* ASSERT/ERROR macros **********************
+#ifndef DEBUG_PRINTF
+#define DEBUG_PRINTF debug_printf
 
 // #ifndef RELEASE
 #ifdef DEBUG
@@ -79,5 +95,19 @@ extern "C" {
     { AVP_ERROR(#exp " is false: " format "\n", ##__VA_ARGS__); }}while(0)
 
 #define ASSERT_BEING_0(exp,...) AVP_ASSERT((exp) == 0, ##__VA_ARGS__)
+#endif
+IGNORE_WARNING(-Wunused - value)
+#endif // __GNUC__
+
+#if defined(USE_EXCEPTIONS) && USE_EXCEPTIONS != 0
+
+#define AVP_THROW(exception,format,...) do{ throw exception(AVP_ERROR_STR(format,  ##__VA_ARGS__)); } while(0)
+
+#endif
+
+
+
+// ************************* ASSERT/ERROR macros **********************
+
 
 #endif /* ERROR_H_INCLUDED */
