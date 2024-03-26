@@ -53,6 +53,7 @@ namespace avp {
     va_end(ap);
     return Out;
   } // string_printf
+} // namnespace avp
 #endif
 
  uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t start) {
@@ -85,6 +86,6 @@ namespace avp {
 
 #endif
 
-} // namnespace avp
+
 
 
