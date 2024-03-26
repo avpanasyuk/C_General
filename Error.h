@@ -26,10 +26,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-  #if !defined(debug_printf)
   int debug_printf(const char *format, ...);
-  #endif
 
   extern volatile uint8_t FailReason;
   typedef void (*failfunc_type)(uint8_t reason); //  __attribute__((noreturn));
