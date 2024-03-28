@@ -28,7 +28,7 @@ class Vector {
 
   template <typename T1 = T>
   Vector(const Vector<T1, Length> &rhs) { for(size_t i; i < Length; ++i) Data[i] = rhs[i]; }
-  
+
  // following functions are to ab able to use this class in range-for loop
  template<typename Q> // we need a template because Q can be T or "const T"
  class Iterator {
@@ -42,7 +42,7 @@ class Vector {
   }
   void operator ++() { ++p; }
  }; // class Iterator
- 
+
  Iterator<const T> const begin() const { // const version
    return Iterator<const T>(Data);
  }
@@ -133,7 +133,7 @@ class ArithVector : public Vector<T, Length> {
 
   template <typename T1 = T>
   ArithVector(const Vector<T1, Length> &rhs):Vector<T, Length>(rhs) { }
- 
+
   // SELF_OP_T(ArithVector) // it is  inherited
   SELF_OP_T(ArithVector, +)
   SELF_OP_T(ArithVector, -)

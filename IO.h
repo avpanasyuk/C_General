@@ -12,7 +12,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <stdint.h>/// @endcond
+#include <stdint.h>
+/// @endcond
 #include "General.h"
 #include "Error.h"
 #include "MyTime.h"
@@ -86,10 +87,14 @@ namespace avp {
   // ******************** FUNCTION TEMPLATES, I DO NOT KNOW HOW USEFUL THEY ARE
   template<write_type_func write>
   bool vprintf(char const *format, va_list ap) { return write_buffered<write>::vprintf(format,ap); }
-  template<write_byte_func write_byte, size_t (*space_left)() = nullptr>
+
+  template<write_byte_func write_byte, size_t (*space_left)() = nullptr>
   bool vprintf(char const *format, va_list ap) { return vprintf<write<write_byte,space_left>>(format, ap); }
-  template<vprintf_type_func vprintf> PRINTF_WRAPPER(bool,printf,vprintf)
-  template<write_type_func write> PRINTF_WRAPPER(bool,printf,vprintf<write>)
+
+  template<vprintf_type_func vprintf> PRINTF_WRAPPER(bool,printf,vprintf)
+
+  template<write_type_func write> PRINTF_WRAPPER(bool,printf,vprintf<write>)
+
   template<write_byte_func write_byte, size_t (*space_left)() = nullptr>
   PRINTF_WRAPPER(bool,printf,SINGLE_ARG(vprintf<write_byte,space_left>))
 } // namespace avp
