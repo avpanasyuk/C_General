@@ -18,15 +18,15 @@
 #define __weak   __attribute__((weak,noinline))
 #endif /* __weak */
 #else
-#define __attribute__(...) 
+#define __attribute__(...)
 #endif /* __GNUC__ */
 
 /// creates printf-type function named "func_name" out of vprintf-type function named "vprinf_func"
-/// usage: return_type PRINTF_WRAPPER_BOOL(printf,vprintf)
-#define PRINTF_WRAPPER(return_type, func_name, vprintf_func) \
-    __attribute__((format (printf, 1, 2))) return_type func_name(char const *format, ...) \
+/// usage: return_type PRINTF_WRAPPER(_BOOL(printf,vprintf))
+#define PRINTF_WRAPPER(func_name,vprintf_func) \
+    __attribute__((format (printf, 1, 2))) decltype(vprintf_func()) func_name(char const *format, ...) \
     { va_list ap; va_start(ap,format); \
-    return_type Out =  vprintf_func(format,ap); va_end(ap); \
+    decltype(vprintf_func()) Out =  vprintf_func(format,ap); va_end(ap); \
     return Out; }
 
 /// @cond

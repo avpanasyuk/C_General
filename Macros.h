@@ -41,10 +41,10 @@ struct class_name: public parent { \
 
 /// corresponding binary operator should be defined in advance
 /// first macro parameter is class name, second one is "+" or "-"
-#define CLASS_PLUS_MINUS_BLOCK(cl,op_) \
-  template<typename T2> cl &operator op_##=(const T2& b) { *this = *this op_ b; return *this; } \
-cl& operator op##op_() { *this op_##= 1; return *this;} \
-cl operator op##op_(int) { cl old(*this); *this op_##= 1; return old; } \
+#define CLASS_PLUS_MINUS_BLOCK(cl,op) \
+  template<typename T2> cl &operator op##=(const T2& b) { *this = *this op b; return *this; } \
+cl& operator op##op() { *this op##= 1; return *this;} \
+cl operator op##op(int) { cl old(*this); *this op##= 1; return old; } \
 
 #define ALWAYS_INLINE __attribute__(( always_inline )) static inline
 

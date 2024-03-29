@@ -20,8 +20,8 @@
 /// @endcond
 #include "Macros.h"
 
-#ifdef _MSC_VER 
-#define __PRETTY_FUNCTION__ __FUNCSIG__ 
+#ifdef _MSC_VER
+#define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
 
 #ifndef AVP_ERROR_MSG_BUFFER_SZ
@@ -94,7 +94,7 @@ extern "C" {
 
 #define ASSERT_BEING_0(exp,...) AVP_ASSERT((exp) == 0, ##__VA_ARGS__)
 #endif
-IGNORE_WARNING(-Wunused - value)
+IGNORE_WARNING(-Wunused-value)
 #endif // __GNUC__
 
 #if defined(USE_EXCEPTIONS) && USE_EXCEPTIONS != 0
