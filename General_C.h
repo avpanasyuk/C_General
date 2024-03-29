@@ -1,5 +1,5 @@
 /*!
- * @file AVP_LIBS/General/General.h
+ * @file AVP_LIBS/General/General_C.h
  *
  * Created: 7/28/2013 10:37:52 AM
  *  Author: panasyuk
@@ -23,10 +23,10 @@
 
 /// creates printf-type function named "func_name" out of vprintf-type function named "vprinf_func"
 /// usage: return_type PRINTF_WRAPPER(_BOOL(printf,vprintf))
-#define PRINTF_WRAPPER(func_name,vprintf_func) \
-    __attribute__((format (printf, 1, 2))) decltype(vprintf_func()) func_name(char const *format, ...) \
+#define PRINTF_WRAPPER(return_type,func_name,vprintf_func) \
+    __attribute__((format (printf, 1, 2))) return_type func_name(char const *format, ...) \
     { va_list ap; va_start(ap,format); \
-    decltype(vprintf_func()) Out =  vprintf_func(format,ap); va_end(ap); \
+    return_type Out =  vprintf_func(format,ap); va_end(ap); \
     return Out; }
 
 /// @cond
