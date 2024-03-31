@@ -69,19 +69,19 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-#ifndef DEBUG_PRINTF
-#define DEBUG_PRINTF debug_printf
+// #ifndef DEBUG_PRINTF
+//  #define DEBUG_PRINTF debug_printf
 
 // #ifndef RELEASE
 #ifdef DEBUG
 # define AVP_ERROR(format, ...) do{ \
-    DEBUG_PRINTF("Error in %s in file " __FILE__ ", line %d: " format, \
+    debug_printf("Error in %s in file " __FILE__ ", line %d: " format, \
                  __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); hang_cpu();\
   }while(0)
 /// AVP_ASSERT_WITH_EXPL = AVP_ASSERT_WITH_CODE with additional explanation
 /// @code - numeric code, optional
 /// @param ext_format - additional format string, followed by parameters
-#else // RELEASE
+#else // DEBUG
 # define AVP_ERROR(format,...) do{ hang_cpu(); }while(0)
 // # define AVP_ASSERT(exp,format,...) do{ void(exp); void(__VA_ARGS__ + 0); }while(0)
 #endif // DEBUG
@@ -93,7 +93,7 @@ extern "C" {
     { AVP_ERROR(#exp " is false: " format "\n", ##__VA_ARGS__); }}while(0)
 
 #define ASSERT_BEING_0(exp,...) AVP_ASSERT((exp) == 0, ##__VA_ARGS__)
-#endif
+// #endif
 IGNORE_WARNING(-Wunused-value)
 #endif // __GNUC__
 

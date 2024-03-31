@@ -38,11 +38,11 @@ namespace avp {
       /// @param pFirst - pointger to the first link in the chain, current Link will be inserted in front
       Link(const char *Name_, CommandFunc_ pFunc_, uint8_t NumParamBytes_, Link *pFirst):
         ID(Chars2type<IDtype>(Name_)), pFunc(pFunc_), NumParamBytes(NumParamBytes_), pNext(pFirst) {
-        AVP_ASSERT_WITH_EXPL((ID & 0xFF) != 0,2,"Byte  0 is reserved for NOOP pseudo-command.");
+        AVP_ASSERT_WITH_EXPL((ID & 0xFF) != 0,"Byte  0 is reserved for NOOP pseudo-command.");
         AVP_ASSERT_WITH_EXPL(NumParamBytes == VAR_PARAM_NUM ||
-                             NumParamBytes <= MaxNumParamBytes,3,
+                             NumParamBytes <= MaxNumParamBytes,
                              "Modify MaxNumParamBytes to accommodate %hu bytes.",NumParamBytes);
-        AVP_ASSERT_WITH_EXPL(pFunc != nullptr,4,"We do not do useless commands.");
+        AVP_ASSERT_WITH_EXPL(pFunc != nullptr,"We do not do useless commands.");
       } //  constructor
       bool IsIt(IDtype ID_) const { return ID_ == ID; }
     } *pFirst;  ///< pointer to the first command in chain -----------------------
@@ -87,7 +87,7 @@ namespace avp {
     @param pFunc - callback function to call when command arrives
     */
     static void AddCommand(const char Name[sizeof(IDtype)], CommandFunc_ pFunc, uint8_t NumParamBytes) {
-      AVP_ASSERT_WITH_EXPL(FindByID(Chars2type<IDtype>(Name)) == nullptr,1,
+      AVP_ASSERT_WITH_EXPL(FindByID(Chars2type<IDtype>(Name)) == nullptr,
                            "A command with this ID already exists."); // check whether we have this command name already
       AVP_ASSERT(NumParamBytes == VAR_PARAM_NUM || NumParamBytes <= MaxNumParamBytes);
       pFirst = new Link(Name,pFunc,NumParamBytes,pFirst);

@@ -65,7 +65,7 @@ namespace avp {
 
     static bool vprintf(char const *format, va_list ap) {
       int Size = vsnprintf(NULL,0,format,ap);
-      AVP_ASSERT_WITH_EXPL(Size >= 0,FORMAT,"vprintf: Format %s is bad!",format);
+      AVP_ASSERT_WITH_EXPL(Size >= 0,"vprintf: Format %s is bad!",format);
       uint8_t Buffer[Size+1]; // +1 to include ending zero byte
       vsprintf((char *)Buffer,format,ap);
       return write_((const uint8_t *)Buffer,Size); // we do not write ending 0 byte

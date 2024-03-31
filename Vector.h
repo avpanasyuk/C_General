@@ -86,6 +86,9 @@ class Vector {
   }
 
   static constexpr size_t N() { return Length; }
+  const T* get_ptr() const { return Data; }
+  const T* after_last() const { return Data + Length; }
+
 
   inline friend bool operator!=(Vector const &v1, Vector const &v2) {
     if (&v1 == &v2) return false;
