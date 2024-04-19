@@ -41,7 +41,11 @@ namespace avp {
     va_copy(ap_,ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
     const int Size = vsnprintf(nullptr,0,format,ap_);
     if(Size < 0) return "string_vprintf: format is wrong!";
+#ifdef _WIN32
     char *Buffer = (char *)_alloca(Size+1); // +1 to include ending zero byte
+#else
+    char *Buffer = (char *)alloca(Size+1); // +1 to include ending zero byte
+#endif
     vsprintf(Buffer,format,ap);
     return std::string(Buffer,Size); // we do not write ending 0 byte
   } // string_vprintf
