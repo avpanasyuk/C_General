@@ -99,7 +99,7 @@ struct CircBufferWithCont {
     return &Buffer[BeingRead];
   } // GetContinousBlockToRead
 
-  tSize GetSizeToRead() { return LastReadSize; }
+  tSize GetLastReadSize() { return LastReadSize; }
 
   // ************* two Continous block reading functions
   #ifdef TWO_BLOCKS
