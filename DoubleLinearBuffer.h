@@ -10,7 +10,7 @@
 #ifndef DOUBLELINEARBUFFER_H_INCLUDED
 #define DOUBLELINEARBUFFER_H_INCLUDED
 
-#include <AVP_LIBS/General/Error.h>
+#include "Error.h"
 
 template<typename T, size_t Size> class DoubleLinearBuffer {
 protected:

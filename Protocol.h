@@ -76,7 +76,7 @@
 
 namespace avp {
   /**
-  @tparam Port static class defined by template in AVP_LIBS/General/Port.h. We should call
+  @tparam Port static class defined by template in C_General/Port.h. We should call
   proper avp::Port::Init() function
   @tparam InputParser - class which provides ParseByte and Flush commands. Former parses input byte stream,
   finding commands and parameters and executing them and latter flushes it if something goes wrong.

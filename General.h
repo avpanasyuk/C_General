@@ -1,5 +1,5 @@
 /*!
- * @file AVP_LIBS/General/General.h
+ * @file C_General/General.h
  *
  * Created: 7/28/2013 10:37:52 AM
  *  Author: panasyuk

@@ -2,7 +2,7 @@
 #define MATH_H_INCLUDED
 
 /**
-  * @file AVP_LIBS/General/Math.h
+  * @file C_General/Math.h
   * @author Alexander Panasyuk
   */
 #include <stdlib.h>

@@ -2,7 +2,7 @@
 #define IO_H_INCLUDED
 
 /**
-  * @file AVP_LIBS/General/IO.h
+  * @file C_General/IO.h
   * @author Alexander Panasyuk
   * Generic functions for output.
   * @brief templates of write_byte->write->vprintf->printf hierarhy

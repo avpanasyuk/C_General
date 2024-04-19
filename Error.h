@@ -1,5 +1,5 @@
 /**
-  * @file AVP_LIBS/General/Error.h
+  * @file C_General/Error.h
   * @author Alexander Panasyuk
   * @note - to use MACROS you have to properly implement "avp::debug_vprintf".
   * it is weakly linked in service.c as an output to stderr which often does
