@@ -2,18 +2,21 @@
 #define IO_H_INCLUDED
 
 /**
-  * @file C_General/IO.h
+  * @file AVP_LIBS/General/IO.h
   * @author Alexander Panasyuk
   * Generic functions for output.
   * @brief templates of write_byte->write->vprintf->printf hierarhy
   */
 
+/// @cond
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <stdint.h>#include "General.h"
+#include <stdint.h>
+/// @endcond
+#include "General.h"
 #include "Error.h"
-#include "Time.h"
+#include "MyTime.h"
 
 namespace avp {
 //! @note ALL IO FUNCTIONS HAVE atomic output - either they write or not,
@@ -62,7 +65,7 @@ namespace avp {
 
     static bool vprintf(char const *format, va_list ap) {
       int Size = vsnprintf(NULL,0,format,ap);
-      AVP_ASSERT_WITH_EXPL(Size >= 0,FORMAT,"vprintf: Format %s is bad!",format);
+      AVP_ASSERT_WITH_EXPL(Size >= 0,"vprintf: Format %s is bad!",format);
       uint8_t Buffer[Size+1]; // +1 to include ending zero byte
       vsprintf((char *)Buffer,format,ap);
       return write_((const uint8_t *)Buffer,Size); // we do not write ending 0 byte
@@ -84,10 +87,14 @@ namespace avp {
   // ******************** FUNCTION TEMPLATES, I DO NOT KNOW HOW USEFUL THEY ARE
   template<write_type_func write>
   bool vprintf(char const *format, va_list ap) { return write_buffered<write>::vprintf(format,ap); }
-  template<write_byte_func write_byte, size_t (*space_left)() = nullptr>
+
+  template<write_byte_func write_byte, size_t (*space_left)() = nullptr>
   bool vprintf(char const *format, va_list ap) { return vprintf<write<write_byte,space_left>>(format, ap); }
-  template<vprintf_type_func vprintf> PRINTF_WRAPPER(printf,vprintf)
-  template<write_type_func write> PRINTF_WRAPPER(printf,vprintf<write>)
+
+  template<vprintf_type_func vprintf> PRINTF_WRAPPER(printf,vprintf)
+
+  template<write_type_func write> PRINTF_WRAPPER(printf,vprintf<write>)
+
   template<write_byte_func write_byte, size_t (*space_left)() = nullptr>
   PRINTF_WRAPPER(printf,SINGLE_ARG(vprintf<write_byte,space_left>))
 } // namespace avp

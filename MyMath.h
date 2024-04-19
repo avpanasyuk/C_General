@@ -1,12 +1,15 @@
-#ifndef MATH_H_INCLUDED
-#define MATH_H_INCLUDED
+#ifndef MYMATH_H_INCLUDED
+#define MYMATH_H_INCLUDED
 
 /**
-  * @file C_General/Math.h
+  * @file MyMath.h
   * @author Alexander Panasyuk
   */
+/// @cond
 #include <stdlib.h>
 #include <stdint.h>
+#include <type_traits>
+/// @endcond
 #include "Complex.h"
 
 namespace avp {
@@ -24,7 +27,9 @@ namespace avp {
   { return Tout(a)*Tout(a); }
 
   // template<typename type> uint8_t log2(type x) { uint8_t out=0; while(x>>=1) out++; return out; }
-  template<typename type> constexpr int8_t log2(type x) { return x?log2<type>(x>>1)+1:-1; }
+  template<typename type> constexpr int8_t log2(type x) {
+    return std::is_integral<type>::value?(x?log2<type>(x>>1)+1:-1):log2(uint32_t(x));
+  }
   // 1<<CurValue/x ? x/(1<<(Curvalue-1)), (1<<(2*CurValue -1) ? x^2)
   template<typename type> constexpr int8_t ceil_log2(type x) { return log2<type>(x-1)+1; }
 
@@ -48,7 +53,7 @@ namespace avp {
     return ceil_log2(CeilRatio(numer,denom));
   }
 
-  template<typename out_type, typename in_type> out_type IntSqrt(in_type y) {
+  template<typename out_type, typename in_type = out_type> out_type IntSqrt(in_type y) {
     in_type x = 1, old_x, y_=y;
     while(y_>>=2) x <<= 1; // rough estimate
     do {
@@ -58,7 +63,7 @@ namespace avp {
     return x;
   } // IntSqrt
 
-  template<typename OutType, typename ElType>
+  template<typename OutType, typename ElType = OutType>
   OutType sum(const ElType *p_, size_t size = sizeof(ElType)) {
     OutType out = 0;
     const uint8_t *p = (const uint8_t *)p_;
@@ -103,4 +108,4 @@ namespace avp {
 
 } // namespace avp
 
-#endif /* MATH_H_INCLUDED */
+#endif /* MYMATH_H_INCLUDED */

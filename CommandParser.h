@@ -1,7 +1,9 @@
 #ifndef COMMANDPARSER_H_INCLUDED
 #define COMMANDPARSER_H_INCLUDED
 
+/// @cond
 #include <stdint.h>
+/// @endcond
 
 namespace avp {
   typedef void (*CommandFunc_)(const uint8_t Params[]);

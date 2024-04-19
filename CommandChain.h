@@ -5,8 +5,10 @@
 * see Protocol.h for protocol description* @note !!!!!!!!!!!!!!!!!!!!!!!!!!!!! DO NOT USE debug_printf here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 
+/// @cond
 #include <stdint.h>
-#include "BitBang.h"
+/// @endcond
+#include "BitBang.h"#include "MyMath.h"
 #include "Error.h"
 #include "BitBang.h"
 #include "CommandParser.h"
@@ -22,7 +24,7 @@ namespace avp {
     static struct Link {
       union {
         const IDtype ID; ///< command ID is just its ASCII name converted to IDtype
-        const char Name[];
+        const char Name[sizeof(IDtype)];
       };
       const CommandFunc_ pFunc;
       const uint8_t NumParamBytes;
@@ -36,11 +38,11 @@ namespace avp {
       /// @param pFirst - pointger to the first link in the chain, current Link will be inserted in front
       Link(const char *Name_, CommandFunc_ pFunc_, uint8_t NumParamBytes_, Link *pFirst):
         ID(Chars2type<IDtype>(Name_)), pFunc(pFunc_), NumParamBytes(NumParamBytes_), pNext(pFirst) {
-        AVP_ASSERT_WITH_EXPL((ID & 0xFF) != 0,2,"Byte  0 is reserved for NOOP pseudo-command.");
+        AVP_ASSERT_WITH_EXPL((ID & 0xFF) != 0,"Byte  0 is reserved for NOOP pseudo-command.");
         AVP_ASSERT_WITH_EXPL(NumParamBytes == VAR_PARAM_NUM ||
-                             NumParamBytes <= MaxNumParamBytes,3,
+                             NumParamBytes <= MaxNumParamBytes,
                              "Modify MaxNumParamBytes to accommodate %hu bytes.",NumParamBytes);
-        AVP_ASSERT_WITH_EXPL(pFunc != nullptr,4,"We do not do useless commands.");
+        AVP_ASSERT_WITH_EXPL(pFunc != nullptr,"We do not do useless commands.");
       } //  constructor
       bool IsIt(IDtype ID_) const { return ID_ == ID; }
     } *pFirst;  ///< pointer to the first command in chain -----------------------
@@ -49,7 +51,7 @@ namespace avp {
     static struct InputBytes_ {
       union {
         IDtype ID;
-        uint8_t Name[];
+        uint8_t Name[sizeof(IDtype)];
       };
       uint8_t Params[MaxNumParamBytes+1]; ///< one byte is left for CS,
       /// actually checksum is in Params[pCur->NumParamBytes]
@@ -85,7 +87,7 @@ namespace avp {
     @param pFunc - callback function to call when command arrives
     */
     static void AddCommand(const char Name[sizeof(IDtype)], CommandFunc_ pFunc, uint8_t NumParamBytes) {
-      AVP_ASSERT_WITH_EXPL(FindByID(Chars2type<IDtype>(Name)) == nullptr,1,
+      AVP_ASSERT_WITH_EXPL(FindByID(Chars2type<IDtype>(Name)) == nullptr,
                            "A command with this ID already exists."); // check whether we have this command name already
       AVP_ASSERT(NumParamBytes == VAR_PARAM_NUM || NumParamBytes <= MaxNumParamBytes);
       pFirst = new Link(Name,pFunc,NumParamBytes,pFirst);
@@ -116,7 +118,7 @@ namespace avp {
         if(pInputByte == InputBytes.Params + ParamNum + 1)  { // got everything: command,parameters and checksum
           uint8_t DataCS = sum<uint8_t>(InputBytes.Name,sizeof(IDtype) + ParamNum),
                   SentCS = InputBytes.Params[ParamNum];
-          if(DataCS == SentCS) {            debug_printf("Got command %.4s\n",InputBytes.Name);
+          if(DataCS == SentCS) {            // debug_printf("Got command %.4s\n",InputBytes.Name);
             pCur->pFunc(InputBytes.Params); // executing command
             pInputByte = InputBytes.Name; ///< get ready for new command
             ++Count;

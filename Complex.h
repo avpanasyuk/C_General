@@ -29,7 +29,7 @@ namespace avp {
       return *this;
     }
 
-    const Complex &conj() { Imag = - Imag; return *this; }
+    const Complex &conj() { Imag = - Imag; return *this; }
     T abs_sqr() const { return Real*Real + Imag*Imag; }
 
     const Complex &operator+= (const Complex &a2) {
@@ -74,7 +74,7 @@ inline friend Complex operator op (const Complex &x1, const Complex &x2) \
     bool IsFinite() { return isfinite(Real) && isfinite(Imag); }
     bool IsNormal() { return isnormal(Real) && isnormal(Imag); }
     // isnormal and isfinite are defined as macro, so no overloading
-  }; // Complex
+  }; // Complex  // template<typename T = float>  // T abs(const Complex<T> &a) { return ::sqrt(a.abs_sqr()); }
 } // namespace avp
 
 #endif /* AVP_COMPLEX_H_ */

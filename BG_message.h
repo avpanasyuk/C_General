@@ -17,8 +17,10 @@
 #ifndef BGMESSAGE_H_
 #define BGMESSAGE_H_
 
+/// @cond
 #include <stdlib.h>
 #include <stdarg.h>
+/// @endcond
 #include "IO.h"
 
 namespace avp {
@@ -33,7 +35,7 @@ namespace avp {
 
           Buffer_(): FilledBytes(0) {}
 
-          IGNORE(-Wsign-compare)
+          IGNORE_WARNING(-Wsign-compare)
           bool vAppend(const char *format, va_list ap) {
             size_t Space = BufferSize-FilledBytes; // space for text and ending 0, we will replace 0 with OverrunIndicator there
             // to indicate overrun
@@ -48,7 +50,7 @@ namespace avp {
             }
             return true;
           } // vAppend
-          STOP_IGNORING
+          STOP_IGNORING_WARNING
 
 
           /**
