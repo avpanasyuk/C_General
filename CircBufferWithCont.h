@@ -33,7 +33,7 @@ struct CircBufferWithCont {
 
   // *********** General functions
   CircBufferWithCont() { BeingWritten = 0; Clear(); }
-  void Clear()  {  BeingRead = BeingWritten; LastReadSize = 0;}
+  void Clear()  {  BeingRead = BeingWritten; LastBlockSize = 0;}
   static constexpr tSize GetCapacity() { return (1UL << sizeLog2) - 1; };
 
   //************* Writer functions *************************************************
@@ -55,7 +55,7 @@ struct CircBufferWithCont {
   // The function never fails
   T *ForceSlotToWrite()  {
     if(LeftToWrite() == 0) { // we will free some space
-      if(LastReadSize == 0) LastReadSize = 1; // when no read is on progress we still have to move pointer
+      if(LastBlockSize == 0) LastBlockSize = 1; // when no read is on progress we still have to move pointer
       FinishedReading();
     }
     return GetSlotToWrite();
@@ -65,7 +65,7 @@ struct CircBufferWithCont {
   // if racing condition occurs. Fails and returns NULL is reading is in progress
   T *SaferForceSlotToWrite()  {
     if(LeftToWrite() == 0) { // we will try to free some space
-      if(LastReadSize == 0) BeingRead = (BeingRead + 1) & Mask; // move read pointer if no read is in progress
+      if(LastBlockSize == 0) BeingRead = (BeingRead + 1) & Mask; // move read pointer if no read is in progress
       else return nullptr; // will fail but not overwrite data being read
     }
     // debug_printf("%hu/%hu ",BeingRead, BeingWritten);
@@ -77,9 +77,9 @@ struct CircBufferWithCont {
   tSize LeftToRead() const  { return (BeingWritten - BeingRead) & Mask; }
 
   //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
-  T const *GetSlotToRead() { LastReadSize = 1; return &Buffer[BeingRead]; }
+  T const *GetSlotToRead() { LastBlockSize = 1; return &Buffer[BeingRead]; }
 
-  void FinishedReading() { BeingRead = (BeingRead + LastReadSize) & Mask; LastReadSize = 0; }
+  void FinishedReading() { BeingRead = (BeingRead + LastBlockSize) & Mask; LastBlockSize = 0; }
 
   T Read_() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
 
@@ -94,12 +94,12 @@ struct CircBufferWithCont {
   */
   T const *GetContinousBlockToRead() {
     if(BeingRead > BeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
-      LastReadSize = GetCapacity() + 1 - BeingRead; // BeingRead is at least 1 here
-    } else  LastReadSize = LeftToRead();
+      LastBlockSize = GetCapacity() + 1 - BeingRead; // BeingRead is at least 1 here
+    } else  LastBlockSize = LeftToRead();
     return &Buffer[BeingRead];
   } // GetContinousBlockToRead
 
-  tSize GetLastReadSize() { return LastReadSize; }
+  tSize GetSizeToRead() { return LastBlockSize; }
 
   // ************* two Continous block reading functions
   #ifdef TWO_BLOCKS
@@ -115,7 +115,7 @@ struct CircBufferWithCont {
  TwoBlocks_ GetContinousBlockToRead() {
      TwoBlocks_ Out;
 
-     LastReadSize = LeftToRead();
+     LastBlockSize = LeftToRead();
      Out.pBlock[1] = &Buffer[BeingRead];
 
     if(BeingRead > BeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
@@ -123,7 +123,7 @@ struct CircBufferWithCont {
       Out.pBlock[2] = &Buffer[0];
       Out.Size[2] = BeingWritten;
     } else {
-      Out.Size[1] = LastReadSize;
+      Out.Size[1] = LastBlockSize;
       Out.pBlock[2] = nullptr;
       Out.Size[2] = 0;
     }
@@ -135,14 +135,14 @@ struct CircBufferWithCont {
   // ************* service functions
   // for debugging purposes
   void GetInternals(tSize *WriteI, tSize *ReadI, tSize *ReadSize) {
-    *WriteI = BeingWritten; *ReadI = BeingRead; *ReadSize = LastReadSize;
+    *WriteI = BeingWritten; *ReadI = BeingRead; *ReadSize = LastBlockSize;
   } // GetInternals
 protected:
   T Buffer[size_t(GetCapacity())+1]; //!< buffer size is 2^sizeLog2
   static constexpr tSize Mask = GetCapacity(); //!< marks used bits in index variables
   // we do not care what happens in upper bits
   tSize BeingRead, BeingWritten; //!< indexes of buffer currently being ....
-  tSize LastReadSize; //! 0 if no read is in progress, size of the read being in progress otherwise
+  tSize LastBlockSize; //! 0 if no read is in progress, size of the read being in progress otherwise
 }; // CircBuffer
 
 #endif /* CIRCBUFFERWITHCONT_H_ */
