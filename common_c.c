@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 /// @endcond
-#include "../C_General/General_C.h"
-#include "../C_General/Error.h"
+#include "General_C.h"
+#include "Error.h"
 
 __weak int debug_vprintf(const char *format, va_list a) {
   return debug_puts(svprintf_static(format, a));
