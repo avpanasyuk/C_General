@@ -31,6 +31,7 @@ namespace avp {
 
     const Complex &conj() { Imag = - Imag; return *this; }
     T abs_sqr() const { return Real*Real + Imag*Imag; }
+    T abs() const { return sqrt(abs_sqr()); }
 
     const Complex &operator+= (const Complex &a2) {
       Real += a2.Real;
