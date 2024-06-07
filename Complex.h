@@ -9,7 +9,7 @@
 #ifndef AVP_COMPLEX_H_
 #define AVP_COMPLEX_H_
 
-// #include <math.h>
+#include <arm_math.h>
 
 namespace avp {
   template<typename T = float>
@@ -31,7 +31,7 @@ namespace avp {
 
     const Complex &conj() { Imag = - Imag; return *this; }
     T abs_sqr() const { return Real*Real + Imag*Imag; }
-    T abs() const { return sqrt(abs_sqr()); }
+    T abs() const { float32_t t; arm_sqrt_f32(abs_sqr(), &t); return t;}
 
     const Complex &operator+= (const Complex &a2) {
       Real += a2.Real;
