@@ -141,6 +141,13 @@ namespace avp {
     } // Add
 
   }; // class Log
+  /**
+  *
+  */
+  template<typename T>
+  inline void shift_array_left(T *To, std::size_t N, std::size_t By = 1) {
+    while(N--) { *To = *(To + By); ++To; }
+  } // shift_array_left
 } // avp
 #endif
 #endif /* GENERAL_H_ */
