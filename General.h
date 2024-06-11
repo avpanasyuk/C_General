@@ -18,6 +18,10 @@
 #undef PRINTF_WRAPPER
 #endif
 
+/**
+* USAGE
+static PRINTF_WRAPPER( info_printf, vprintf)
+*/
 #define PRINTF_WRAPPER(func_name,vprintf_func) \
     __attribute__((format (printf, 1, 2))) auto func_name(char const *format, ...) \
     { va_list ap; va_start(ap,format); \
