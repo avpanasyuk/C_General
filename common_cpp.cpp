@@ -34,6 +34,10 @@ __weak int debug_printf(char const *format, ...) {
 }
 #endif
 
+#if !DEBUG
+ int debug_printf(char const *, ...) {}
+#endif
+
 #ifndef NO_STL
 namespace avp {
   std::string string_vprintf(const char *format, va_list ap) {
