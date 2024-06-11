@@ -63,13 +63,19 @@ namespace avp {
     return x;
   } // IntSqrt
 
-  template<typename OutType, typename ElType = OutType>
-  OutType sum(const ElType *p_, size_t size = sizeof(ElType)) {
-    OutType out = 0;
-    const uint8_t *p = (const uint8_t *)p_;
+  template<typename T>
+  T sum(const T *p, size_t size) {
+    T out = 0;
     while(size--) out += *(p++);
     return out;
   } // sum
+
+  template<typename T>
+  T* min(T *p_, int size) {
+    T *p = p_;  T Min = *p;
+    while(--size > 0) if(Min > *(++p)) Min = *p;
+    return p;
+  } // min
 
   template<typename Type>
   Type XOR(const Type *p, size_t size) {
