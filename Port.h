@@ -246,8 +246,8 @@ namespace avp {
 
       //! Write a single element of type T
       template<typename T>
-      static bool write(const T *Ptr) {
-        return write((const uint8_t *)Ptr, sizeof(T));
+      static bool write(const T &x) {
+        return write((const uint8_t *)&x, sizeof(x));
       } // write
 
       static bool write_str(const char *s) { return write((const uint8_t *)s,strlen(s)); }
@@ -260,7 +260,13 @@ namespace avp {
         HW_IO_::TryToSend();
         return Res;
       } // write_unbuffered
-      //! @}
+
+      template<typename T>
+      static bool write_unbuffered(const T &x, tReleaseFunc pReleaseFunc = nullptr) {
+        return write_unbuffered((const uint8_t *)&x, sizeof(x), pReleaseFunc);
+      } // write
+
+     //! @}
 
       static uint8_t GetRCS() { return RunningCS; } ///< get current running checksum
       static uint16_t GetNtransmitted() { return BytesTransmitted; } ///< get number of transmitted bytes since beginning of session

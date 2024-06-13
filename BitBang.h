@@ -99,6 +99,11 @@ namespace avp {
   // CRC16
   uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t start = 0);
 
+  template<typename T>
+  uint16_t Crc16_obj(const T &pcBlock, uint16_t start = 0) {
+    return  Crc16((const uint8_t *)&pcBlock, sizeof(pcBlock), start);
+  }
+
   // byteswap
   inline uint16_t bswap_16(uint16_t w) { return (w << 8) | (w >> 8); }
 } // namespace avp
