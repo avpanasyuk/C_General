@@ -61,10 +61,7 @@ namespace avp {
     va_end(ap);
     return Out;
   } // string_printf
-} // namnespace avp
-#endif
-
- uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t start) {
+uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t start) {
    uint16_t crc = start;
 
    while(len--) {
@@ -77,8 +74,10 @@ namespace avp {
    }
    return crc;
  } // Crc16
+} // namnespace avp
+#endif
 
-#ifdef __linux__
+ #ifdef __linux__
 
  time_t millis() {
    struct timeval time_now{};
