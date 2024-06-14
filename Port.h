@@ -277,9 +277,23 @@ namespace avp {
       static bool SomethingToTX() { return BufferTX.LeftToRead() != 0; }
 
 // *************** RECEPTION FUNCTIONS **************************
-      static bool read(uint8_t *pd) { return BufferRX.Read(pd); } // SomethingToRX should be checked first
+      /*
+      * @retval false if nothing to read
+      */
+      static bool read(uint8_t *pd) {
+        bool out  =  BufferRX.Read(pd);
+        // debug_printf("x%hx.%hu\n",*pd,out);
+        return out;
+      }
+
       static bool SomethingToRX() { return BufferRX.LeftToRead() != 0; }
-      static uint8_t GetByte() { uint8_t out; read(&out); return out; } // SomethingToRX should be checked first
+
+      /*
+      * this function does not check if buffer is empty and the return is undefined
+      * @note !!!!! ALWAYS CHECK "SomethingToRX" FIRST
+      */
+      static uint8_t GetByte() { uint8_t out; read(&out); return out; }
+
       static bool GetBytes(uint8_t *p, uint32_t size, uint32_t timeout_ms) {
         while(size--) {
           uint32_t tickstart = HAL_GetTick();
