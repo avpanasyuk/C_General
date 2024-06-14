@@ -26,17 +26,13 @@ __weak void major_fail(uint8_t reason) {
 __weak void debug_action() {};
 #endif
 
-#ifdef DEBUG
-int debug_printf(char const *format, ...) {
+__weak int debug_printf(char const *format, ...) {
   va_list ap;
   va_start(ap,format);
   bool Out = debug_vprintf(format,ap) >= 0;
   va_end(ap);
   return Out?1:-1;
 }
-#else
-int debug_printf(char const *, ...) {}
-#endif
 
 
 #ifndef NO_STL
