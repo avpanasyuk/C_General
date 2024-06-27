@@ -24,7 +24,6 @@ __weak void major_fail(uint8_t reason) {
   hang_cpu();
 }
 __weak void debug_action() {};
-#endif
 
 __weak int debug_printf(char const *format, ...) {
   va_list ap;
@@ -33,6 +32,8 @@ __weak int debug_printf(char const *format, ...) {
   va_end(ap);
   return Out?1:-1;
 }
+
+#endif
 
 
 #ifndef NO_STL
