@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 /// @endcond
-#include "General_C.h"
-#include "Error.h"
+#include "../C_General/General_C.h"
+#include "../C_General/Error.h"
 
 __weak int debug_vprintf(const char *format, va_list a) {
   return debug_puts(svprintf_static(format, a));
@@ -45,7 +45,7 @@ char *svprintf_alloc(const char *format, va_list ap) {
   return out; // we do not write ending 0 byte
 } // svprintf_alloc
 
-PRINTF_WRAPPER( sprintf_alloc, svprintf_alloc)
+PRINTF_WRAPPER(char *, sprintf_alloc, svprintf_alloc)
 
 char *svprintf_static(const char *format, va_list ap) {
   va_list ap_;
@@ -60,7 +60,7 @@ char *svprintf_static(const char *format, va_list ap) {
   return out; // we do not write ending 0 byte
 } // string_vprintf
 
-PRINTF_WRAPPER( sprintf_static, svprintf_static)
+PRINTF_WRAPPER(char *, sprintf_static, svprintf_static)
 
 uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t start) {
   uint16_t crc = start;
