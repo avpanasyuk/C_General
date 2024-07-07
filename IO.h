@@ -26,10 +26,10 @@ namespace avp {
   typedef bool (*vprintf_type_func)(char const *format, va_list ap);
   typedef bool (*printf_type_func)(char const *format, ...);
 
+  typedef bool (*tGetByteToSend)(const uint8_t *p);  typedef bool (*tGetBlockToSend)(const uint8_t **p, size_t *pSz);  typedef bool (*tStoreReceivedByte)(uint8_t b);
   enum IO_ERROR_CODES {FORMAT=1,TIMEOUT};
 
-  /** @note about following  functions - they should be used with BLOCKED write which
-  * returns only after data pointed by Ptr are used. Or it should make a copy.
+  /**
   * @note functions do not write string-ending 0 !!!!!
   */
 
@@ -54,8 +54,9 @@ namespace avp {
     return true;
   } // write_with_timeout
 
-  /*! object to create misc output functions - very convenient to use with typedef which we can not do
-   *! with function templates
+  /** object to create misc output functions - very convenient to use with typedef which we can not do
+      with function templates
+      @tparam write_ - buffered write function bool write(const uint8_t *p, size_t sz)
    */
   template<write_type_func write_>
   struct write_buffered {

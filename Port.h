@@ -8,22 +8,6 @@
 * There are two types of HW_IO class - one can transmit only by bytes, another by block (via DMA, e.g)
 * template Port should not be instantiated - use either PortByteTX or PortBlockTX, depending on capability
 *
-* -# should be static
-* -# member functions:
-*    - static void SetCallBacks(tStoreReceivedByte pStoreReceivedByte_,  tGetBlockToSend pGetBlockToSend_), or
-*    - static void SetCallBacks(tStoreReceivedByte pStoreReceivedByte_,  tGetByteToSend pGetByteToSend_), depending on class capability
-*    (whether it can send by blocks, via, e.g. DMA), where
-*      - bool StoreReceivedByte(uint8_t b)
-*      - bool GetByteToSend(uint8_t *p)
-*      - bool GetBlockToSend(uint8_t **p, size_t *pSz)
-* -# static void TryToSend(); - this class calls it to let HW_IO_ know that there are
-*    new data in buffer to transmit. This function may be called at the end of all primary "write"
-*    functions, from the interrupt indicating end of previous transfer, or from the "cycle" loop
-*    just in case. It should maintain locks when necessary.
-* -# HW_IO_ should call StoreReceivedByte supplied to it by SetCallBacks call when it received a byte
-* -# HW_IO_ should call GetBlockToSend or GetByteToSend when it is ready to send new data
-* -# should provide static void FlushRX();
-*
 * To avoid needless data copying  there are two transmit buffers - one for bytes which buffers data
 * and one for blocks which buffers only pointers,
 * data themselves are unbuffered!
@@ -59,254 +43,283 @@
 #define AVP_PORT_DEF_BLK_BUF_SIZE 4
 
 namespace avp {
-  //! @note this template should not be instatiated - use either PortByteTX or PortBlockTX
-  //! @tparam HW_IO_ - hardware communication class which provides this as in the header description above
-  //! @tparam tSize - type of CircBufferPWR2 counter, should be big enough to fit all buffer sizes.
-  //! @tparam ESC_code - this is special byte code placed in BufferTX to indicate that we
-  //! should transmit block here. If next byte is ESC_code we have to transmit block. If it is 0 we transmit just ECS_code
-  //! the value is random, selected so it is not ASCII and there is nothing special about it
 # define __PORT_TEMPLATE__ template<class HW_IO_, uint8_t Log2_TX_Buf_size=AVP_PORT_DEF_TX_BUF_SIZE, \
                                     uint8_t Log2_TX_BlockBufSize=AVP_PORT_DEF_BLK_BUF_SIZE, \
                                     uint8_t Log2_RX_Buf_Size=AVP_PORT_DEF_RX_BUF_SIZE, \
                                     typename tSize=uint8_t, uint8_t ESC_code = 224 /* random value */>
 
+  /** @note this template should not be instantiated - use either PortByteTX or PortBlockTX
+   @tparam HW_IO_: hardware communication class which provides this as in the header description above
+      -# should be static
+      -# static void TryToSend(); - this class calls it to let HW_IO_ know that there are
+        new data in buffer to transmit. This function may be called at the end of all primary "write"
+        functions, from the interrupt indicating end of previous transfer, or from the "cycle" loop
+        just in case. It should maintain locks when necessary.
+      -# should provide static void FlushRX();
+      -# should provide const char *GetError();
+      -# should provide RX_Byte_IT() to restart RX if it stalled
+   @tparam tSize: type of CircBufferPWR2 counter, should be big enough to fit all buffer sizes.
+   @tparam ESC_code - this is special byte code placed in BufferTX to indicate that we
+    should transmit block here. If next byte is ESC_code we have to transmit block. If it is 0 we transmit just ECS_code
+    the value is random, selected so it is not ASCII and there is nothing special about it
+   */
   __PORT_TEMPLATE__ struct  Port: public HW_IO_ {
-      struct BlockInfo;
-      typedef void (* tReleaseFunc)();
-      struct BlockInfo {
-        const uint8_t *Ptr;
-        size_t Size;
-        tReleaseFunc pReleaseFunc; //!< data pointed by Ptr should not get corrupted until this function is called
-      }; // BlockInfo
-      static uint8_t RunningCS;
-      static uint16_t BytesTransmitted;
-    protected:
-      static CircBufferPWR2<uint8_t, Log2_TX_Buf_size, tSize> BufferTX; // byte transmit buffer
+    struct BlockInfo;
+    typedef void (* tReleaseFunc)();
+    struct BlockInfo {
+      const uint8_t *Ptr;
+      size_t Size;
+      tReleaseFunc pReleaseFunc; //!< data pointed by Ptr should not get corrupted until this function is called
+    }; // BlockInfo
+    static uint8_t RunningCS;
+    static uint16_t BytesTransmitted;
+   protected:
+    static CircBufferPWR2<uint8_t, Log2_TX_Buf_size, tSize> BufferTX; // byte transmit buffer
 
-      // ***************  data for unbuffered block transmit buffer
-      static CircBufferPWR2<BlockInfo, Log2_TX_BlockBufSize, tSize> BlockInfoBufTX; // Block transmit buffer
-      // *************** things for receive buffer
-      static CircBufferPWR2<uint8_t, Log2_RX_Buf_Size, tSize> BufferRX; //  receive buffer ( we receive by byte only )
-      static const uint8_t *pCurByteInBlock; //!< when we are currently reading from block it is read pointer
+    // ***************  data for unbuffered block transmit buffer
+    static CircBufferPWR2<BlockInfo, Log2_TX_BlockBufSize, tSize> BlockInfoBufTX; // Block transmit buffer
+    // *************** things for receive buffer
+    static CircBufferPWR2<uint8_t, Log2_RX_Buf_Size, tSize> BufferRX; //  receive buffer ( we receive by byte only )
+    static const uint8_t *pCurByteInBlock; //!< when we are currently reading from block it is read pointer
 
-      /// @{
-      /// @brief these are a callback functions which Port supplies to HW_IO class.
+    /// @{
+    /// @brief these are a callback functions which Port supplies to HW_IO class.
 
-      //! this function is called from HW_IO interrupt handler to store received byte in the RX Circular buffer
-      static bool StoreReceivedByte(uint8_t b) {
-        if(!BufferRX.LeftToWrite()) return false;
-        BufferRX.Write(b);
-        return true;
-      } // StoreReceivedByte
+    //! this function is called from HW_IO interrupt handler to store received byte in the RX Circular buffer
+    static bool StoreReceivedByte(uint8_t b) {
+      if(!BufferRX.LeftToWrite()) return false;
+      BufferRX.Write(b);
+      return true;
+    } // StoreReceivedByte
 
 
-      /// This function is called from HW_IO interrupt handler to get byte from Circular buffer to send
-      /// @note WRITING TO *p may immediately send byte, so do it ONLY ONCE !
-      /// because this function may read both from byte buffer and block buffer it is
-      /// complicated
-      /// @param[out] p - pointer supplied by HW_IO to write the byte to
-      static bool GetByteToSend(uint8_t *p) {
-        // debug_action();
+    /// This function is called from HW_IO interrupt handler to get byte from Circular buffer to send
+    /// @note WRITING TO *p may immediately send byte, so do it ONLY ONCE !
+    /// because this function may read both from byte buffer and block buffer it is
+    /// complicated
+    /// @param[out] p - pointer supplied by HW_IO to write the byte to
+    static bool GetByteToSend(uint8_t *p) {
+      // debug_action();
 
-        if(pCurByteInBlock != nullptr) { //  we are reading from block currently
-          const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead();
+      if(pCurByteInBlock != nullptr) { //  we are reading from block currently
+        const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead();
 
-          if(++pCurByteInBlock == pCurBlock->Ptr + pCurBlock->Size) { // we are done with this block
-            if(pCurBlock->pReleaseFunc != nullptr) (*pCurBlock->pReleaseFunc)();
-            BlockInfoBufTX.FinishedReading();
-            pCurByteInBlock = nullptr;
-          } else {
-            *p = *pCurByteInBlock; // send next byte from the block
-            return true;
-          }
-        }
-        if(!BufferTX.LeftToRead()) return false;
-        else {
-          uint8_t b = BufferTX.Read_(); // can not write to *p here, it will be transmitted at once, but
-          // we gotta check for escape code first
-          if(b != ESC_code) *p = b;
-          else {
-            // dealing with a special case here, either block or byte with ESC_Code value
-            const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead();
-            if(pCurBlock->Size == 0) { // it is not really a block send, just a byte with ESC_code value
-              BlockInfoBufTX.FinishedReading();
-              *p = ESC_code;
-            } else *p = *(pCurByteInBlock = BlockInfoBufTX.GetSlotToRead()->Ptr); // start sending block
-          }
-        }
-        return true;
-      } //  GetByteToSend
-
-      /** @brief HW_IO class uses this function to request data to write
-          @note If HW_IO is capable to send data by blocks (say via DMA) we can use this function
-          @note This function uses static variables - care should be taken to avoid this function being reentered!!!!!
-          @note This is the only function reading BlockInfoBufTX and BufferTX
-       *
-       * @param[out] pp - pointer to pointer from where to send data. Pointer returned  by this parameter should be
-          persistant enough to keep oin existing while HW_IO sends it out
-       * @param[out] pSz - to return block size.
-       * @return bool - whether there is anything to send
-       *
-       */
-      static bool GetBlockToSend(const uint8_t **pp, size_t *pSz) {
-        static bool LastSentIsBlock = false;  // if we got a block to send last time we've got to
-        // do FinishedReading
-
-        if(LastSentIsBlock) { // finalize after previous block
-          const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead(); // returns the same slot as last time
+        if(++pCurByteInBlock == pCurBlock->Ptr + pCurBlock->Size) { // we are done with this block
           if(pCurBlock->pReleaseFunc != nullptr) (*pCurBlock->pReleaseFunc)();
           BlockInfoBufTX.FinishedReading();
-          LastSentIsBlock = false;
+          pCurByteInBlock = nullptr;
+        } else {
+          *p = *pCurByteInBlock; // send next byte from the block
+          return true;
         }
-
-        if(!BufferTX.LeftToRead()) return false;
+      }
+      if(!BufferTX.LeftToRead()) return false;
+      else {
+        uint8_t b = BufferTX.Read_(); // can not write to *p here, it will be transmitted at once, but
+        // we gotta check for escape code first
+        if(b != ESC_code) *p = b;
         else {
-          static uint8_t b; // pointer to this variable is sent outside of this function, make sure it does not disappear
-          b = BufferTX.Read_();
-          *pp = &b; *pSz = 1; // by default it is just a byte to send
-          if(b == ESC_code) { // except when it is a special code
-            // dealing with a special case here, either block or byte with ESC_Code value
-            // in either case there should be BlockInfo allocated in the BlockInfoBufTX
-            AVP_ASSERT(BlockInfoBufTX.LeftToRead()); // We place block into BlockInfoBufTX first, before putting ESC_code into BufferTX,
-            // so this should never happen
-            const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead();
-            if(pCurBlock->Size == 0) { // there is no really a block to send, just a byte with ESC_code value,
-              // so we are done with this BlockInfo
-              BlockInfoBufTX.FinishedReading();
-            } else { //  and here is really a block
-              *pp = BlockInfoBufTX.GetSlotToRead()->Ptr; // start sending block
-              *pSz = BlockInfoBufTX.GetSlotToRead()->Size;
-              LastSentIsBlock = true;
-            }
-          }
+          // dealing with a special case here, either block or byte with ESC_Code value
+          const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead();
+          if(pCurBlock->Size == 0) { // it is not really a block send, just a byte with ESC_code value
+            BlockInfoBufTX.FinishedReading();
+            *p = ESC_code;
+          } else *p = *(pCurByteInBlock = BlockInfoBufTX.GetSlotToRead()->Ptr); // start sending block
         }
-        return true;
-      } //  GetBlockToSend
+      }
+      return true;
+    } //  GetByteToSend
 
-      ///@}
+    /** @brief HW_IO class uses this function to request data to write
+        @note If HW_IO is capable to send data by blocks (say via DMA) we can use this function
+        @note This function uses static variables - care should be taken to avoid this function being reentered!!!!!
+        @note This is the only function reading BlockInfoBufTX and BufferTX
+     *
+     * @param[out] pp - pointer to pointer from where to send data. Pointer returned  by this parameter should be
+        persistant enough to keep oin existing while HW_IO sends it out
+     * @param[out] pSz - to return block size.
+     * @return bool - whether there is anything to send
+     *
+     */
+    static bool GetBlockToSend(const uint8_t **pp, size_t *pSz) {
+      static bool LastSentIsBlock = false;  // if we got a block to send last time we've got to
+      // do FinishedReading
 
-      ///@{
-      /// Functions for writing
-      /// @{
-      /// Low level functions all output goes through
-
-      /**
-       unbuffered unsafe write - no BufferTX check, no interrupt reenable
-       @param Ptr - pointer to data block. data should keep on existing until function finishes sending them out and call pReleaseFunc
-       @param Size - block size. Size == 0 is a special case, we create a fake BlockInfo entry,
-        it just mean that we have to transmit ESC_code-valued byte
-       @param pReleaseFunc - function to call when data are sent and may be released
-      */
-      static bool write_unbuffered_(const uint8_t *Ptr, size_t Size, tReleaseFunc pReleaseFunc = nullptr) {
-        if(!BlockInfoBufTX.LeftToWrite()) return false;
-        BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToWrite();
-        if((pCurBlock->Size = Size) != 0) { // BlockInfo is real, not fake
-          pCurBlock->Ptr = Ptr;
-          pCurBlock->pReleaseFunc = pReleaseFunc;
-        }
-        BlockInfoBufTX.FinishedWriting();
-        BufferTX.Write_(ESC_code); // do this afterwards, so transmit callback does not find ESC_code without block being in place
-        RunningCS += avp::sum<uint8_t>(Ptr,Size);
-        BytesTransmitted += Size;
-        return true;
-      } // write_unbuffered_
-
-      //! unsafe write - no BufferTX check, no interrupt reenable
-      /// @param d - byte to send
-      static bool write_byte_(uint8_t d) {
-        if(d == ESC_code) return write_unbuffered_(nullptr,0);
-        BufferTX.Write_(d);
-        RunningCS += d;
-        BytesTransmitted++;
-        return true;
-      } // write_byte_
-      /// @}
-
-    public:
-      // *************** TRANSMISSION FUNCTIONS ********************
-      // ALL write function return false if buffer is overrun and true if OK
-      //! safe writeBufferRX.
-      static bool write_byte(uint8_t d) {
-        if(!BufferTX.LeftToWrite()) return false;
-        bool Res = write_byte_(d);
-        HW_IO_::TryToSend(); // got something to transmit, reenable interrupt
-        return Res;
-      } // write_byte
-
-      static bool write_char(int8_t d) { return write_byte((uint8_t)d); }
-
-      //! buffered safe write
-      static bool write(const uint8_t *Ptr, size_t Size) {
-        if(Size == 0) return true; // that was easy
-        if(Size > BufferTX.LeftToWrite()) return false;
-        while(Size--) if(!write_byte_(*(Ptr++))) return false;
-        HW_IO_::TryToSend(); // got something to transmit, reenable interrupt
-        return true;
-      }  // write
-
-      //! Write a single element of type T
-      template<typename T>
-      static bool write(const T &x) {
-        return write((const uint8_t *)&x, sizeof(x));
-      } // write
-
-      static bool write_str(const char *s) { return write((const uint8_t *)s,strlen(s)); }
-
-      // unbuffered safe write. Content of Ptr should be preserved until pReleaseFunc is called
-      static bool write_unbuffered(const uint8_t *Ptr, size_t Size, tReleaseFunc pReleaseFunc = nullptr) {
-        if(Size == 0) return true;
-        if(!BufferTX.LeftToWrite()) return false;
-        bool Res = write_unbuffered_(Ptr,Size,pReleaseFunc);
-        HW_IO_::TryToSend();
-        return Res;
-      } // write_unbuffered
-
-      template<typename T>
-      static bool write_unbuffered(const T &x, tReleaseFunc pReleaseFunc = nullptr) {
-        return write_unbuffered((const uint8_t *)&x, sizeof(x), pReleaseFunc);
-      } // write
-
-     //! @}
-
-      static uint8_t GetRCS() { return RunningCS; } ///< get current running checksum
-      static uint16_t GetNtransmitted() { return BytesTransmitted; } ///< get number of transmitted bytes since beginning of session
-
-      // ********************************** RECEPTION *********************
-      //! stores character by pointer pd, returns true if there is really a character to read
-      static void FlushRX() { HW_IO_::FlushRX();  BufferRX.Clear(); }
-      static bool SomethingToTX() { return BufferTX.LeftToRead() != 0; }
-
-// *************** RECEPTION FUNCTIONS **************************
-      /*
-      * @retval false if nothing to read
-      */
-      static bool read(uint8_t *pd) {
-        bool out  =  BufferRX.Read(pd);
-        // debug_printf("x%hx.%hu\n",*pd,out);
-        return out;
+      if(LastSentIsBlock) { // finalize after previous block
+        const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead(); // returns the same slot as last time
+        if(pCurBlock->pReleaseFunc != nullptr) (*pCurBlock->pReleaseFunc)();
+        BlockInfoBufTX.FinishedReading();
+        LastSentIsBlock = false;
       }
 
-      static bool SomethingToRX() { return BufferRX.LeftToRead() != 0; }
-
-      /*
-      * this function does not check if buffer is empty and the return is undefined
-      * @note !!!!! ALWAYS CHECK "SomethingToRX" FIRST
-      */
-      static uint8_t GetByte() { uint8_t out; read(&out); return out; }
-
-      static bool GetBytes(uint8_t *p, uint32_t size, uint32_t timeout_ms) {
-        while(size--) {
-          uint32_t tickstart = HAL_GetTick();
-          while(!SomethingToRX()) {
-            if(avp::unsigned_is_smaller(tickstart + timeout_ms, HAL_GetTick())) {
-               debug_printf("Last size = %lu\n",size);
-               return false;
-            }
+      if(!BufferTX.LeftToRead()) return false;
+      else {
+        static uint8_t b; // pointer to this variable is sent outside of this function, make sure it does not disappear
+        b = BufferTX.Read_();
+        *pp = &b;
+        *pSz = 1; // by default it is just a byte to send
+        if(b == ESC_code) { // except when it is a special code
+          // dealing with a special case here, either block or byte with ESC_Code value
+          // in either case there should be BlockInfo allocated in the BlockInfoBufTX
+          AVP_ASSERT(BlockInfoBufTX.LeftToRead()); // We place block into BlockInfoBufTX first, before putting ESC_code into BufferTX,
+          // so this should never happen
+          const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead();
+          if(pCurBlock->Size == 0) { // there is no really a block to send, just a byte with ESC_code value,
+            // so we are done with this BlockInfo
+            BlockInfoBufTX.FinishedReading();
+          } else { //  and here is really a block
+            *pp = BlockInfoBufTX.GetSlotToRead()->Ptr; // start sending block
+            *pSz = BlockInfoBufTX.GetSlotToRead()->Size;
+            LastSentIsBlock = true;
           }
-          *(p++) = BufferRX.Read_();
         }
-        return true;
-      } // GetBytes
+      }
+      return true;
+    } //  GetBlockToSend
+
+    ///@}
+
+    ///@{
+    /// Functions for writing
+    /// @{
+    /// Low level functions all output goes through
+
+    /**
+     unbuffered unsafe write - no BufferTX check, no interrupt reenable
+     @param Ptr - pointer to data block. data should keep on existing until function finishes sending them out and call pReleaseFunc
+     @param Size - block size. Size == 0 is a special case, we create a fake BlockInfo entry,
+      it just mean that we have to transmit ESC_code-valued byte
+     @param pReleaseFunc - function to call when data are sent and may be released
+    */
+    static bool write_unbuffered_(const uint8_t *Ptr, size_t Size, tReleaseFunc pReleaseFunc = nullptr) {
+      if(!BlockInfoBufTX.LeftToWrite()) return false;
+      BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToWrite();
+      if((pCurBlock->Size = Size) != 0) { // BlockInfo is real, not fake
+        pCurBlock->Ptr = Ptr;
+        pCurBlock->pReleaseFunc = pReleaseFunc;
+      }
+      BlockInfoBufTX.FinishedWriting();
+      BufferTX.Write_(ESC_code); // do this afterwards, so transmit callback does not find ESC_code without block being in place
+      RunningCS += avp::sum<uint8_t>(Ptr,Size);
+      BytesTransmitted += Size;
+      return true;
+    } // write_unbuffered_
+
+    //! unsafe write - no BufferTX check, no interrupt reenable
+    /// @param d - byte to send
+    static bool write_byte_(uint8_t d) {
+      if(d == ESC_code) return write_unbuffered_(nullptr,0);
+      BufferTX.Write_(d);
+      RunningCS += d;
+      BytesTransmitted++;
+      return true;
+    } // write_byte_
+    /// @}
+
+   public:
+    // *************** TRANSMISSION FUNCTIONS ********************
+    // ALL write function return false if buffer is overrun and true if OK
+    //! safe writeBufferRX.
+    static bool write_byte(uint8_t d) {
+      if(!BufferTX.LeftToWrite()) return false;
+      bool Res = write_byte_(d);
+      HW_IO_::TryToSend(); // got something to transmit, reenable interrupt
+      return Res;
+    } // write_byte
+
+    static bool write_char(int8_t d) {
+      return write_byte((uint8_t)d);
+    }
+
+    //! buffered safe write
+    static bool write(const uint8_t *Ptr, size_t Size) {
+      if(Size == 0) return true; // that was easy
+      if(Size > BufferTX.LeftToWrite()) return false;
+      while(Size--) if(!write_byte_(*(Ptr++))) return false;
+      HW_IO_::TryToSend(); // got something to transmit, reenable interrupt
+      return true;
+    }  // write
+
+    //! Write a single element of type T
+    template<typename T>
+    static bool write(const T &x) {
+      return write((const uint8_t *)&x, sizeof(x));
+    } // write
+
+    static bool write_str(const char *s) {
+      return write((const uint8_t *)s,strlen(s));
+    }
+
+    // unbuffered safe write. Content of Ptr should be preserved until pReleaseFunc is called
+    static bool write_unbuffered(const uint8_t *Ptr, size_t Size, tReleaseFunc pReleaseFunc = nullptr) {
+      if(Size == 0) return true;
+      if(!BufferTX.LeftToWrite()) return false;
+      bool Res = write_unbuffered_(Ptr,Size,pReleaseFunc);
+      HW_IO_::TryToSend();
+      return Res;
+    } // write_unbuffered
+
+    template<typename T>
+    static bool write_unbuffered(const T &x, tReleaseFunc pReleaseFunc = nullptr) {
+      return write_unbuffered((const uint8_t *)&x, sizeof(x), pReleaseFunc);
+    } // write
+
+    //! @}
+
+    static uint8_t GetRCS() {
+      return RunningCS;  ///< get current running checksum
+    }
+    static uint16_t GetNtransmitted() {
+      return BytesTransmitted;  ///< get number of transmitted bytes since beginning of session
+    }
+
+    // ********************************** RECEPTION *********************
+    //! stores character by pointer pd, returns true if there is really a character to read
+    static void FlushRX() {
+      HW_IO_::FlushRX();
+      BufferRX.Clear();
+    }
+    static bool SomethingToTX() {
+      return BufferTX.LeftToRead() != 0;
+    }
+
+// *************** RECEPTION FUNCTIONS **************************
+    /*
+    * @retval false if nothing to read
+    */
+    static bool read(uint8_t *pd) {
+      bool out  =  BufferRX.Read(pd);
+      // debug_printf("x%hx.%hu\n",*pd,out);
+      return out;
+    }
+
+    static bool SomethingToRX() {
+      return BufferRX.LeftToRead() != 0;
+    }
+
+    /*
+    * this function does not check if buffer is empty and the return is undefined
+    * @note !!!!! ALWAYS CHECK "SomethingToRX" FIRST
+    */
+    static uint8_t GetByte() {
+      uint8_t out;
+      read(&out);
+      return out;
+    }
+
+    static bool GetBytes(uint8_t *p, uint32_t size, uint32_t timeout_ms) {
+      while(size--) {
+        uint32_t tickstart = HAL_GetTick();
+        while(!SomethingToRX()) {
+          if(avp::unsigned_is_smaller(tickstart + timeout_ms, HAL_GetTick())) {
+            debug_printf("Last size = %lu\n",size);
+            return false;
+          }
+        }
+        *(p++) = BufferRX.Read_();
+      }
+      return true;
+    } // GetBytes
   }; // Port
 
 // following defines are just to make static variables initiation code readable, no point in using them elsewhere
@@ -323,18 +336,34 @@ namespace avp {
   _TEMPLATE_DECL_ uint8_t _TEMPLATE_SPEC_::RunningCS;
   _TEMPLATE_DECL_ uint16_t _TEMPLATE_SPEC_::BytesTransmitted = 0;
 
-  /*! Port template for HW_IO which transmits by byte
-   *!
+  /**
+    @tparam HW_IO_: see "Port" description
+      -# additional member functions:
+        - static void SetCallBacks(tStoreReceivedByte pStoreReceivedByte_,  tGetByteToSend pGetByteToSend_)
+        - bool StoreReceivedByte(uint8_t b)
+        - bool GetByteToSend(uint8_t *p)
+      -# HW_IO_ should call StoreReceivedByte supplied to it by SetCallBacks call when it received a byte
+      -# HW_IO_ should call GetByteToSend when it is ready to send new data
    */
   __PORT_TEMPLATE__ struct  PortByteTX: public _TEMPLATE_SPEC_ {
-    static void Init() { HW_IO_::SetCallBacks(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetByteToSend); }
+    static void Init() {
+      HW_IO_::SetCallBacks(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetByteToSend);
+    }
   }; //  PortByteTX
 
-  /*! Port template for HW_IO which transmits by block
-   *!
+  /**
+    @tparam HW_IO_: see "Port" description
+      -# additional member functions:
+        - static void SetCallBacks(tStoreReceivedByte pStoreReceivedByte_,  tGetBlockToSend pGetBlockToSend_)
+        - bool StoreReceivedByte(uint8_t b)
+        - bool GetBlockToSend(uint8_t **p, size_t *pSz)
+      -# HW_IO_ should call StoreReceivedByte supplied to it by SetCallBacks call when it received a byte
+      -# HW_IO_ should call GetBlockToSend when it is ready to send new data
    */
   __PORT_TEMPLATE__ struct  PortBlockTX: public _TEMPLATE_SPEC_ {
-    static void Init() { HW_IO_::SetCallBacks(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetBlockToSend); }
+    static void Init() {
+      HW_IO_::SetCallBacks(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetBlockToSend);
+    }
   }; //  PortBlockTX
 
 #undef _TEMPLATE_DECL_

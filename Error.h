@@ -45,27 +45,27 @@ extern char AVP_ErrorMsgBuffer[AVP_ERROR_MSG_BUFFER_SZ];
 extern "C" {
 #endif
 
-  typedef void (*free_func_t)(void *);
+typedef void (*free_func_t)(void *);
 
-   int debug_printf(const char *format, ...);
+int debug_printf(const char *format, ...);
 
-  extern volatile uint8_t FailReason;
-  typedef void (*failfunc_type)(uint8_t reason); //  __attribute__((noreturn));
+extern volatile uint8_t FailReason;
+typedef void (*failfunc_type)(uint8_t reason); //  __attribute__((noreturn));
 
-  /// defined in General library as weak, sending stuff to ::vprintf
-  /// may be redefined
-  int debug_vprintf(const char *format, va_list a);
-  int debug_puts(const char *s);
- int debug_puts_free(const char *s, free_func_t free_func);
+/// defined in General library as weak, sending stuff to ::vprintf
+/// may be redefined
+int debug_vprintf(const char *format, va_list a);
+int debug_puts(const char *s);
+int debug_puts_free(const char *s, free_func_t free_func);
 
-  enum MAJOR_FAIL_REASONS_0 {MEMALLOC = 1,NUM_FAIL_REASONS_0};
+enum MAJOR_FAIL_REASONS_0 {MEMALLOC = 1,NUM_FAIL_REASONS_0};
 
-  void major_fail(uint8_t reason) __attribute__((noreturn));
-  void hang_cpu() __attribute__((noreturn));
-  void debug_action(); // if we want to debug something in General lib in primitive way
-  // we can redefine this function (it is defined in common_cpp as a __weak  empty function)
-  // and call it from everywhere.
-  void new_handler()  __attribute__((noreturn)); // NOTE! got to be installed on startup with std::set_new_handler(avp::new_handler);
+void major_fail(uint8_t reason) __attribute__((noreturn));
+void hang_cpu() __attribute__((noreturn));
+void debug_action(); // if we want to debug something in General lib in primitive way
+// we can redefine this function (it is defined in common_cpp as a __weak  empty function)
+// and call it from everywhere.
+void new_handler()  __attribute__((noreturn)); // NOTE! got to be installed on startup with std::set_new_handler(avp::new_handler);
 #ifdef __cplusplus
 }
 #endif
