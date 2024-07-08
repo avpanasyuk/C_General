@@ -12,12 +12,12 @@
 #include "../C_General/General_C.h"
 #include "../C_General/Error.h"
 
+#ifdef EB_MONITOR
 extern int _write(int file, char *ptr, int len);
 
 __weak int debug_puts(const char *s) {
   return _write(0, (char *)s, strlen(s)+1);
 }
-
 
 __weak int debug_vprintf(const char *format, va_list a) {
   return debug_puts(svprintf_static(format, a));
@@ -28,6 +28,14 @@ __weak int debug_puts_free(const char *s, free_func_t free_func) {
   if(free_func != NULL) free_func((void *)s);
   return out;
 } // debug_puts
+
+#else // EB_MONITOR
+
+__weak int debug_vprintf(const char *format, va_list a) {
+  return vprintf(format, a);
+} // debug_vprintf
+
+#endif // EB_MONITOR
 
 __weak void debug_action() { };
 

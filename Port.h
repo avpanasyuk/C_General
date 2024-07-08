@@ -73,7 +73,7 @@ namespace avp {
     }; // BlockInfo
     static uint8_t RunningCS;
     static uint16_t BytesTransmitted;
-   protected:
+  protected:
     static CircBufferPWR2<uint8_t, Log2_TX_Buf_size, tSize> BufferTX; // byte transmit buffer
 
     // ***************  data for unbuffered block transmit buffer
@@ -216,7 +216,7 @@ namespace avp {
     } // write_byte_
     /// @}
 
-   public:
+  public:
     // *************** TRANSMISSION FUNCTIONS ********************
     // ALL write function return false if buffer is overrun and true if OK
     //! safe writeBufferRX.
@@ -233,11 +233,14 @@ namespace avp {
 
     //! buffered safe write
     static bool write(const uint8_t *Ptr, size_t Size) {
-      if(Size == 0) return true; // that was easy
-      if(Size > BufferTX.LeftToWrite()) return false;
-      while(Size--) if(!write_byte_(*(Ptr++))) return false;
+      bool Out = true; // assume best
+      if(Size > 0) {
+        if(Size > BufferTX.LeftToWrite()) Out = false;
+        else
+          while(Size--) if(!write_byte_(*(Ptr++))) return false;
+      }
       HW_IO_::TryToSend(); // got something to transmit, reenable interrupt
-      return true;
+      return Out;
     }  // write
 
     //! Write a single element of type T
