@@ -152,8 +152,11 @@ namespace avp {
         LastSentIsBlock = false;
       }
 
-      if(!BufferTX.LeftToRead()) return false;
-      else {
+      if(!BufferTX.LeftToRead()) {
+          *pp = nullptr;
+          *pSz = 0;
+          return false;
+      } else {
         static uint8_t b; // pointer to this variable is sent outside of this function, make sure it does not disappear
         b = BufferTX.Read_();
         *pp = &b;
