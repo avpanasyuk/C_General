@@ -9,8 +9,7 @@
   * DEBUG_PRINTF before including this file
   */
 
-#ifndef ERROR_H_INCLUDED
-#define ERROR_H_INCLUDED
+#pragma once
 
 /// @cond
 #include <stdint.h>
@@ -105,7 +104,5 @@ IGNORE_WARNING(-Wunused-value)
 
 
 
-// ************************* ASSERT/ERROR macros **********************
 
 
-#endif /* ERROR_H_INCLUDED */
