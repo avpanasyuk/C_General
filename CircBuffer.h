@@ -12,7 +12,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <type_traits>
-#include "Vector.h"
+#include "Array.h"
 /// @endcond
 // #include "Error.h"
 
@@ -90,7 +90,7 @@ struct CircBuffer {
     }
   protected:
     CounterType BeingRead, BeingWritten; //!< indexes of buffer currently being ....
-    avp::Vector<T,size> Buffer;
+    avp::Array<T,size> Buffer;
 
     void NormalizeReadCounter() { if(BeingRead >= size) BeingRead -= size; }
 }; // CircBuffer
