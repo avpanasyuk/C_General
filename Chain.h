@@ -31,7 +31,7 @@ namespace avp {
       friend class Chain;
     }; // class Link
 
-    Chain():pEnd(&Start) { DEBUG_OUT; }
+    Chain():pEnd(&Start) {}
     virtual ~Chain() {
       while(pEnd != &Start) delete pEnd;
     } // destructor
@@ -85,8 +85,8 @@ namespace avp {
           return ((const Link *)pLink)->Key == Key;
         };
       }; // class Comparator
-      Link(key_type Key_): Key(Key_) { DEBUG_OUT; }
-      Link(key_type Key_, Chain *pChain): Chain::Link(pChain), Key(Key_) { DEBUG_OUT; }
+      Link(key_type Key_): Key(Key_) {}
+      Link(key_type Key_, Chain *pChain): Chain::Link(pChain), Key(Key_) {}
     }; // class LinkPointer
 
     /**

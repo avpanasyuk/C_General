@@ -74,10 +74,16 @@ void new_handler(); //  __attribute__((noreturn)); // NOTE! got to be installed 
 
 // #ifndef RELEASE
 #ifdef DEBUG
-# define AVP_ERROR(format, ...) do{ \
+# define AVP_ERROR_PRETTY(format, ...) do{ \
     debug_printf("Error in %s in file " __FILE__ ", line %d: " format, \
                  __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); hang_cpu();\
   }while(0)
+
+# define AVP_ERROR(format, ...) do{ \
+    debug_printf("Error in file " __FILE__ ", line %d: " format, \
+                 __LINE__, ##__VA_ARGS__); hang_cpu();\
+  }while(0)
+
 /// AVP_ASSERT_WITH_EXPL = AVP_ASSERT_WITH_CODE with additional explanation
 /// @code - numeric code, optional
 /// @param ext_format - additional format string, followed by parameters

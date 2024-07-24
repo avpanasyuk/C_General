@@ -98,8 +98,7 @@ namespace avp {
     static ParseError_ ParseByte(uint8_t NewByte) { // this is static member function
       static const Link *pCur;
       static uint8_t ParamNum;
-      if(pInputByte == InputBytes.Name && NewByte == 0) {       debug_printf("Got NOOP!\n");
-       return NOOP;
+      if(pInputByte == InputBytes.Name && NewByte == 0) {       return NOOP;
       }
 
       *(pInputByte++) = NewByte;

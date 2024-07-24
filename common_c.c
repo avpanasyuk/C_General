@@ -80,7 +80,7 @@ char *svprintf_realloc(const char *format, va_list ap) {
   return out;
 } // svprintf_realloc
 
-#define MAX_SVPRINTF_BUFFER_SIZE  200
+#define MAX_SVPRINTF_BUFFER_SIZE  520
 char *svprintf_static(const char *format, va_list ap) {
   va_list ap_;
   va_copy(ap_, ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
