@@ -61,11 +61,11 @@ int debug_puts_free(const char *s, free_func_t free_func);
 enum MAJOR_FAIL_REASONS_0 {MEMALLOC = 1,NUM_FAIL_REASONS_0};
 
 void major_fail(uint8_t reason) __attribute__((noreturn));
-void hang_cpu() __attribute__((noreturn));
+void hang_cpu(); //  __attribute__((noreturn));
 void debug_action(); // if we want to debug something in General lib in primitive way
 // we can redefine this function (it is defined in common_cpp as a __weak  empty function)
 // and call it from everywhere.
-void new_handler()  __attribute__((noreturn)); // NOTE! got to be installed on startup with std::set_new_handler(avp::new_handler);
+void new_handler(); //  __attribute__((noreturn)); // NOTE! got to be installed on startup with std::set_new_handler(avp::new_handler);
 #ifdef __cplusplus
 }
 #endif
