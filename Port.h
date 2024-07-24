@@ -345,30 +345,30 @@ namespace avp {
   /**
     @tparam HW_IO_: see "Port" description
       -# additional member functions:
-        - static void SetCallBacks(tStoreReceivedByte pStoreReceivedByte_,  tGetByteToSend pGetByteToSend_)
+        - static void Init(tStoreReceivedByte pStoreReceivedByte_,  tGetByteToSend pGetByteToSend_)
         - bool StoreReceivedByte(uint8_t b)
         - bool GetByteToSend(uint8_t *p)
-      -# HW_IO_ should call StoreReceivedByte supplied to it by SetCallBacks call when it received a byte
+      -# HW_IO_ should call StoreReceivedByte supplied to it by Init call when it received a byte
       -# HW_IO_ should call GetByteToSend when it is ready to send new data
    */
   __PORT_TEMPLATE__ struct  PortByteTX: public _TEMPLATE_SPEC_ {
     static void Init() {
-      HW_IO_::SetCallBacks(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetByteToSend);
+      HW_IO_::Init(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetByteToSend);
     }
   }; //  PortByteTX
 
   /**
     @tparam HW_IO_: see "Port" description
       -# additional member functions:
-        - static void SetCallBacks(tStoreReceivedByte pStoreReceivedByte_,  tGetBlockToSend pGetBlockToSend_)
+        - static void Init(tStoreReceivedByte pStoreReceivedByte_,  tGetBlockToSend pGetBlockToSend_)
         - bool StoreReceivedByte(uint8_t b)
         - bool GetBlockToSend(uint8_t **p, size_t *pSz)
-      -# HW_IO_ should call StoreReceivedByte supplied to it by SetCallBacks call when it received a byte
+      -# HW_IO_ should call StoreReceivedByte supplied to it by Init call when it received a byte
       -# HW_IO_ should call GetBlockToSend when it is ready to send new data
    */
   __PORT_TEMPLATE__ struct  PortBlockTX: public _TEMPLATE_SPEC_ {
     static void Init() {
-      HW_IO_::SetCallBacks(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetBlockToSend);
+      HW_IO_::Init(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetBlockToSend);
     }
   }; //  PortBlockTX
 

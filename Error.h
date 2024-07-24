@@ -47,6 +47,7 @@ extern "C" {
 typedef void (*free_func_t)(void *);
 
 int debug_printf(const char *format, ...);
+#define DEBUG_OUT do{ debug_printf("%s: %d\n", __PRETTY_FUNCTION__, __LINE__); }while(0)
 
 extern volatile uint8_t FailReason;
 typedef void (*failfunc_type)(uint8_t reason); //  __attribute__((noreturn));
@@ -101,6 +102,9 @@ IGNORE_WARNING(-Wunused-value)
 #define AVP_THROW(exception,format,...) do{ throw exception(AVP_ERROR_STR(format,  ##__VA_ARGS__)); } while(0)
 
 #endif
+
+
+
 
 
 

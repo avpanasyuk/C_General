@@ -21,6 +21,7 @@ namespace avp {
       Link(Chain *pChain) {
         pChain->Append(this);
       }
+
       virtual ~Link() {
         if(pNext != nullptr) pNext->pPrev = pPrev;
         if(pPrev != nullptr) pPrev->pNext = pNext;
@@ -30,7 +31,7 @@ namespace avp {
       friend class Chain;
     }; // class Link
 
-    Chain():pEnd(&Start) {}
+    Chain():pEnd(&Start) { DEBUG_OUT; }
     virtual ~Chain() {
       while(pEnd != &Start) delete pEnd;
     } // destructor
@@ -40,20 +41,8 @@ namespace avp {
       pEnd = pLink;
     } // Append
 
-    const Link *GetFirstP() {
-      return Start.pNext;
-    }
-    const Link *GetNextP(const Link *p) {
-      AVP_ASSERT(p != nullptr);
-      return p->pNext;
-    } // GetNextP
 
-    const Link *GetPrevP(const Link *p) {
-      AVP_ASSERT(p != nullptr);
-      return p->pPrev;
-    } // GetPrevP
-
-    /**
+   /**
     @param fComp: find first Link for which "fComp" returns true
     */
     const Link *FindFirst(const Link::Comparator &c) const {
@@ -83,34 +72,35 @@ namespace avp {
     //!< Link Start has pPrev == nullptr, that's how we detect it
   }; // class Chain
 
-  struct ChainByPointer: public Chain {
+  template<typename key_type>
+  struct ChainByKey: public Chain {
     class Link: public Chain::Link {
-      const void *p; // key
+      key_type Key;
      public:
       class Comparator: public Chain::Link::Comparator {
-        const void *p; // key
+        key_type Key; // key
        public:
-        Comparator(const void *p_): p(p_) {}
+        Comparator(key_type Key_): Key(Key_) {}
         virtual bool IsIt(const Chain::Link *pLink) const {
-          return ((const Link *)pLink)->p == p;
+          return ((const Link *)pLink)->Key == Key;
         };
       }; // class Comparator
-      Link(const void *p_): p(p_) {}
-      Link(const void *p_, Chain *pChain): Chain::Link(pChain), p(p_) {}
+      Link(key_type Key_): Key(Key_) { DEBUG_OUT; }
+      Link(key_type Key_, Chain *pChain): Chain::Link(pChain), Key(Key_) { DEBUG_OUT; }
     }; // class LinkPointer
 
     /**
     @param fComp: find first Link for which "fComp" returns true
     */
-    const Link *FindFirst(const void *p) const {
-      return (const Link *)Chain::FindFirst(Link::Comparator(p));
+    const Link *FindFirst(key_type Key) const {
+      return (const Link *)Chain::FindFirst(typename ChainByKey<key_type>::Link::Comparator(Key));
     } // FindFirst
 
     /**
     @param fComp: find last Link for which "fComp" returns true
     */
-    const Link *FindLast(const void *p) const {
-      return (const Link *)Chain::FindLast(Link::Comparator(p));
+    const Link *FindLast(key_type Key) const {
+      return (const Link *)Chain::FindLast(typename ChainByKey<key_type>::Link::Comparator(Key));
     } // FindLast
-  }; // class ChainByPointer
+  }; // class ChainByKey
 } // namespace avp
