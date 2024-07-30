@@ -1,8 +1,8 @@
 /**
-  * @file AVP_LIBS\General\Time.h
-  * @author Alexander Panasyuk
-  *
-  */
+    @file MyTime.h
+    @author Alexander Panasyuk
+
+*/
 
 #pragma once
 
@@ -24,9 +24,9 @@ namespace avp {
   static_assert(std::is_unsigned<Time_t>::value, "Time_t should be unsigned!");
 
   /**
-   * Using: avp::Timeout<> Time_t; while(something) { if(Time_t) { error('Timed out!); break; }}
-   * @tparam TickFunction, millis() by default
-   */
+     Using: avp::Timeout<> Time_t; while(something) { if(Time_t) { error('Timed out!); break; }}
+     @tparam TickFunction, millis() by default
+  */
   template<Time_t (*TickFunction)() = millis>
   class TimeOut {
     const Time_t When;
@@ -67,11 +67,9 @@ namespace avp {
       NextTime = TickFunction() + Period;
     }
     /**
-    * @param Timeout in whatever units TickFunction works
+      @param Timeout in whatever units TickFunction works
     */
-    TimePeriod(Time_t Timeout) :Period(Timeout) {
-      Reset();
-    }
+    TimePeriod(Time_t Timeout) :Period(Timeout) { Reset(); }
     /// just checks whether TimePeriod had passed, does not do reset
     /// if there is no Reset for too long the counter may wrap over
     bool JustCheck() const {
@@ -85,9 +83,7 @@ namespace avp {
       return Out;
     } // Passed
 
-    operator Time_t&() {
-      return Period;
-    }
+    operator Time_t&() { return Period; }
 
     /// Pause with an internal loop
     static void Pause(Time_t Delay, void (*LoopFunc)()) {
@@ -101,14 +97,14 @@ namespace avp {
   }; // TimePeriod
 
   /**
-   *@brief we Run called in loop executes function with a given period
-   * Example:
-  void loop() {
-  avp::Periodically<SendData>::Run(1000);
-  }
-   *
-   * @tparam (*Func)()
-   */
+    @brief we Run called in loop executes function with a given period
+     Example:
+    void loop() {
+    avp::Periodically<SendData>::Run(1000);
+    }
+
+     @tparam (*Func)()
+  */
   template<void (*Func)(), Time_t(*TickFunction)() = millis>
   class Periodically {
     static Time_t NextTime;
@@ -133,9 +129,7 @@ namespace avp {
     static void cycle() {
       if(TP.Expired()) (*Func)();  // cycle
     }
-    static void Reset() {
-      TP.Reset();
-    }
+    static void Reset() { TP.Reset(); }
   }; // RunPeriodically
 
 
