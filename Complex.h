@@ -9,7 +9,7 @@
 #ifndef AVP_COMPLEX_H_
 #define AVP_COMPLEX_H_
 
-#include <arm_math.h>
+#include <cmath>
 
 namespace avp {
   template<typename T = float>
@@ -29,9 +29,10 @@ namespace avp {
       return *this;
     }
 
-    const Complex &conj() { Imag = - Imag; return *this; }
+    const Complex &conj() { Imag = - Imag; return *this; }
+
     T abs_sqr() const { return Real*Real + Imag*Imag; }
-    T abs() const { float32_t t; arm_sqrt_f32(abs_sqr(), &t); return t;}
+    T abs() const { float t; sqrt(abs_sqr(), &t); return t;}
 
     const Complex &operator+= (const Complex &a2) {
       Real += a2.Real;
@@ -75,7 +76,10 @@ inline friend Complex operator op (const Complex &x1, const Complex &x2) \
     bool IsFinite() { return isfinite(Real) && isfinite(Imag); }
     bool IsNormal() { return isnormal(Real) && isnormal(Imag); }
     // isnormal and isfinite are defined as macro, so no overloading
-  }; // Complex  // template<typename T = float>  // T abs(const Complex<T> &a) { return ::sqrt(a.abs_sqr()); }
+  }; // Complex
+
+  // template<typename T = float>
+  // T abs(const Complex<T> &a) { return ::sqrt(a.abs_sqr()); }
 } // namespace avp
 
 #endif /* AVP_COMPLEX_H_ */

@@ -8,9 +8,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <memory.h>
+#include <malloc.h>
+
 /// @endcond
 #include "../C_General/General_C.h"
 #include "../C_General/Error.h"
+#include "../C_General/sort_and_median.h"
+
+char AVP_ErrorMsgBuffer[AVP_ERROR_MSG_BUFFER_SZ];
+
+#ifndef __GNUC__
+#define __weak
+#endif
 
 #ifdef EB_MONITOR
 extern int _write(int file, char *ptr, int len);
@@ -106,6 +116,46 @@ uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t start) {
   }
   return crc;
 } // Crc16
+
+static const int MaxSizeInsertionSortIsBetter = 30; // we have to do a study and select this number. OK, 30 is about optimal,
+
+#ifdef ARM
+#define  my_copy_f32(pSrc, pDst, blockSize)   do{ arm_copy_f32((pSrc), (pDst), (blockSize)); }while(0)
+#else
+#define my_copy_f32(pSrc, pDst, blockSize)	do { memcpy((void *)(pDst), (const void *)(pSrc), (blockSize)*sizeof(float)); }while(0)
+#endif	
+
+void merge_sort(float *p, int N) {
+  if(N <= MaxSizeInsertionSortIsBetter) insertion_sort(p, N);
+  else {
+    int N1 = N/2, N2 = N - N1;
+    float *pa, *pb;
+    merge_sort(pa = p,N1);
+    merge_sort(pb = p + N1, N2);
+    // combine
+#ifndef __GNUC__
+    float *comb = (float *)alloca(N * sizeof(float));
+#else
+    float comb[N];
+#endif
+    float *pc = comb;
+
+    while(pc < comb + N) {
+      *(pc++) = *pa < *pb ? *(pa++) : *(pb++);
+      if(pa == p + N1) { // we ran out of A, so just copy the remnant of B
+        my_copy_f32(pb, pc, p + N - pb);
+        break;
+      }
+      if(pb == p + N) { // we ran out of B, so just copy the remnant of A
+        my_copy_f32(pa, pc, p + N1 - pa);
+        break;
+      }
+    }
+    // copy back to input vector
+    my_copy_f32(comb, p, N);
+  }
+} // merge_sort
+
 
 #if __linux__
 
