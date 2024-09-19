@@ -72,9 +72,9 @@ namespace avp {
 
   template<typename T>
   T* min(T *p_, int size) {
-    T *p = p_;  T Min = *p;
-    while(--size > 0) if(Min > *(++p)) Min = *p;
-    return p;
+    T *p = p_;  T *pMin = p;
+    while(--size > 0) if(*pMin > *(++p)) pMin = p;
+    return pMin;
   } // min
 
   template<typename Type>
