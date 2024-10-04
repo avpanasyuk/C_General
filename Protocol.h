@@ -165,9 +165,11 @@ namespace avp {
     static inline bool IsConnected() { return PortConnected; }
 
     /**
-    * if we can not fit the data we want to read into VAR_PARAM_NUM we can read them using this function
+    * if we can not fit the data we want to read into VAR_PARAM_NUM we can read them using this function.
+    * It sets up protocol to read bytes which will follow.
+    * It assumes that number of bytes to read is known. It does not check CS.
     */
-    static void just_read_bytes(size_t Num, uint8_t *Dest) {
+    static void setup_to_read_bytes(size_t Num, uint8_t *Dest) {
       LeftToRead = Num;
       DestPtr = Dest;
     } // just_read_bytes
@@ -196,7 +198,7 @@ namespace avp {
       } else if(SomethingToRX()) {
         if(LeftToRead) {
           *(DestPtr++) = Port::GetByte();
-          if(!(--LeftToRead)) ReturnOK();
+          --LeftToRead;
         } else {
           switch(InputParser::ParseByte(Port::GetByte())) {
             case InputParser::WRONG_ID:
