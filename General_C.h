@@ -41,15 +41,15 @@ extern "C" {
 /**
  * following two function allocate space for string every times using malloc, it needs eventually to be free"d"
  */
-char *svprintf_alloc(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
-char *sprintf_alloc(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
+const char *svprintf_alloc(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
+const char *sprintf_alloc(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
 
 /**
  * following two function return a pointer to the same memory every time, and reallocated the space for this memory as necessary
  * this memory does not need to be free"d"
  */
-char *svprintf_static(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
-char *sprintf_static(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
+const char *svprintf_static(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
+const char *sprintf_static(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
 
 typedef void (*free_func_t)(void *);
 
