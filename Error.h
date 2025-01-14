@@ -27,7 +27,10 @@
 #define AVP_ERROR_MSG_BUFFER_SZ 2000
 #endif
 
-extern char AVP_ErrorMsgBuffer[AVP_ERROR_MSG_BUFFER_SZ];
+#ifdef __cplusplus
+extern "C" 
+#endif
+char AVP_ErrorMsgBuffer[AVP_ERROR_MSG_BUFFER_SZ];
 
 #if defined(_MSC_VER) && defined(_DEBUG) || defined(__GNUC__) && defined(DEBUG)
 #define AVP_ERROR_STR(format,...) (snprintf(AVP_ErrorMsgBuffer, AVP_ERROR_MSG_BUFFER_SZ, \

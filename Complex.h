@@ -9,7 +9,10 @@
 #ifndef AVP_COMPLEX_H_
 #define AVP_COMPLEX_H_
 
-#include <arm_math.h>
+#include <cmath>
+
+#if defined(__ARM_FP)
+#include <arm_math.h>#endif
 
 namespace avp {
   template<typename T = float>
@@ -29,9 +32,25 @@ namespace avp {
       return *this;
     }
 
-    const Complex &conj() { Imag = - Imag; return *this; }
+    const Complex &conj() { Imag = - Imag; return *this; }
+
     T abs_sqr() const { return Real*Real + Imag*Imag; }
-    T abs() const { float32_t t; arm_sqrt_f32(abs_sqr(), &t); return t;}
+
+#if defined(__ARM_FP)
+    static inline T sqrt(T x) { float32_t t; arm_sqrt_f32(x, &t); return t; }
+#endif
+    T abs() const { return sqrt(abs_sqr()); }
+
+    T sin_phase() const {
+      auto Out = sqrt(1.f/(1.f+sqr(Real/Imag)));
+      return Imag >= 0 ?Out:-Out;
+    } // sin_phase
+
+    T cos_phase() const {
+      auto s = sqr(Real);
+      auto Out = sqrt(s/(s+sqr(Imag)));
+      return Real >= 0 ?Out:-Out;
+    } // cos_phase
 
     const Complex &operator+= (const Complex &a2) {
       Real += a2.Real;
@@ -58,10 +77,11 @@ namespace avp {
     }  // conj
 
 
+
 // FOllowing are binary operators as friends
 #define BINARY_OP_FROM_SELF(op) \
-inline friend Complex operator op (const Complex &x1, const Complex &x2) \
-{ return Complex(x1) op##= x2; }
+  inline friend Complex operator op (const Complex &x1, const Complex &x2) \
+  { return Complex(x1) op##= x2; }
 
     BINARY_OP_FROM_SELF(-)
     BINARY_OP_FROM_SELF(+)
@@ -75,7 +95,10 @@ inline friend Complex operator op (const Complex &x1, const Complex &x2) \
     bool IsFinite() { return isfinite(Real) && isfinite(Imag); }
     bool IsNormal() { return isnormal(Real) && isnormal(Imag); }
     // isnormal and isfinite are defined as macro, so no overloading
-  }; // Complex  // template<typename T = float>  // T abs(const Complex<T> &a) { return ::sqrt(a.abs_sqr()); }
+  }; // Complex
+
+  // template<typename T = float>
+  // T abs(const Complex<T> &a) { return ::sqrt(a.abs_sqr()); }
 } // namespace avp
 
 #endif /* AVP_COMPLEX_H_ */
