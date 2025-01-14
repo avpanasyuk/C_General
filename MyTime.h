@@ -15,9 +15,6 @@
 /// @endcond
 #include "General.h"
 
-extern "C" uint32_t millis();
-extern "C" uint32_t micros();
-
 namespace avp {
   /// !!!! Periods and Delays should not be longer than half of value which fits into typename!
   typedef decltype(millis()) Time_t;
