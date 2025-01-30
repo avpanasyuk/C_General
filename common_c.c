@@ -11,6 +11,8 @@
 #include "../C_General/General_C.h"
 #include "../C_General/Error.h"
 
+__weak int debug_puts(const char *s) { return fputs(s,stderr); } 
+
 __weak int debug_vprintf(const char *format, va_list a) {
   return debug_puts(svprintf_static(format, a));
 } // debug_vprintf
@@ -23,13 +25,8 @@ __weak int debug_puts_free(const char *s, free_func_t free_func) {
 
 __weak void debug_action() { };
 
-__weak int debug_printf(char const *format, ...) {
-  va_list ap;
-  va_start(ap, format);
-  int Out = debug_vprintf(format, ap) >= 0;
-  va_end(ap);
-  return Out;
-}
+__weak PRINTF_WRAPPER_C(int, debug_printf, debug_vprintf)
+
 __weak void hang_cpu() { while(1); }
 
 __weak void new_handler() { hang_cpu(); }
@@ -45,8 +42,6 @@ const char *svprintf_alloc(const char *format, va_list ap) {
   return out; // we do not write ending 0 byte
 } // svprintf_alloc
 
-PRINTF_WRAPPER(const char *, sprintf_alloc, svprintf_alloc)
-
 const char *svprintf_static(const char *format, va_list ap) {
   va_list ap_;
   va_copy(ap_, ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
@@ -59,8 +54,6 @@ const char *svprintf_static(const char *format, va_list ap) {
   vsprintf(out, format, ap);
   return out; // we do not write ending 0 byte
 } // string_vprintf
-
-PRINTF_WRAPPER(const char *, sprintf_static, svprintf_static)
 
 uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t start) {
   uint16_t crc = start;

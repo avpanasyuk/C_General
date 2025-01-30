@@ -22,11 +22,11 @@
 #endif /* __GNUC__ */
 
 /// creates printf-type function named "func_name" out of vprintf-type function named "vprinf_func"
-/// usage: return_type PRINTF_WRAPPER(_BOOL(printf,vprintf))
-#define PRINTF_WRAPPER(return_type,func_name,vprintf_func) \
-    __attribute__((format (printf, 1, 2))) return_type func_name(char const *format, ...) \
-    { va_list ap; va_start(ap,format); \
-    return_type Out =  vprintf_func(format,ap); va_end(ap); \
+/// usage: return_type PRINTF_WRAPPER_C(int,printf,vprintf)
+#define PRINTF_WRAPPER_C(return_type,func_name,vprintf_func) \
+   __attribute__((format (printf, 1, 2))) return_type func_name(const char *fmt, ...) \
+    { va_list ap; va_start(ap, fmt); \
+    return_type Out =  vprintf_func(fmt,ap); va_end(ap); \
     return Out; }
 
 /// @cond

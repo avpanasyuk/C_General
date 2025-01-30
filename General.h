@@ -20,12 +20,13 @@
 
 /**
 * USAGE
-static PRINTF_WRAPPER( info_printf, vprintf)
+static PRINTF_WRAPPER(return type, info_printf, vprintf)
+ __attribute__((format (printf, 1, 2)))
 */
-#define PRINTF_WRAPPER(func_name,vprintf_func) \
-    __attribute__((format (printf, 1, 2))) auto func_name(char const *format, ...) \
-    { va_list ap; va_start(ap,format); \
-    auto Out =  vprintf_func(format,ap); va_end(ap); \
+#define PRINTF_WRAPPER(return_type,func_name,vprintf_func) \
+ /* __attribute__((format(printf, 1, 2))) */ return_type func_name(const char *fmt, ...) \
+    { va_list ap; va_start(ap,fmt); \
+    return_type Out =  vprintf_func(fmt,ap); va_end(ap); \
     return Out; }
 
 #if 0 // cause reallu weird errors in c+11 and I think already built-in
