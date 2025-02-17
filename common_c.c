@@ -71,16 +71,18 @@ uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t start) {
 
 #if __linux__
 
+#include <sys/time.h>
+
 time_t millis() {
-  struct timeval time_now { };
-  gettimeofday(&time_now, nullptr);
-  return (time_now.tv_sec * time_t(1000)) + (time_now.tv_usec / 1000);
+  struct timeval time_now = { };
+  gettimeofday(&time_now, NULL);
+  return (time_now.tv_sec * 1000) + (time_now.tv_usec / 1000);
 } // millis
 
 time_t micros() {
-  struct timeval time_now { };
-  gettimeofday(&time_now, nullptr);
-  return (time_now.tv_sec * time_t(1000000L)) + time_now.tv_usec;
+  struct timeval time_now = { };
+  gettimeofday(&time_now, NULL);
+  return (time_now.tv_sec * 1000000L) + time_now.tv_usec;
 } // micros
 #endif
 
