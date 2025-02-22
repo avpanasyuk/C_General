@@ -244,7 +244,7 @@ namespace avp {
       return info_message((const uint8_t *)s,strlen(s),NonVolat);
     } // info_str
 
-    static PRINTF_WRAPPER( info_printf, vprintf<info_message>)
+    static PRINTF_WRAPPER(int, info_printf, vprintf<info_message>)
 
     /// sends error message of any size, splits if necessary into chunks
     /// @param Src - byte array to output
@@ -274,7 +274,7 @@ namespace avp {
       return return_error_message((const uint8_t *)ErrMsg, strlen(ErrMsg), NonVolat);
     } // return_error_str
 
-    static PRINTF_WRAPPER(return_error_printf, vprintf<return_error_message>)
+    static PRINTF_WRAPPER(int, return_error_printf, vprintf<return_error_message>)
 
     static bool ReturnBytesBuffered(const uint8_t *src, size_t size) {
       return Port::write_byte(0) && // success code

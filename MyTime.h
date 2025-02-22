@@ -134,7 +134,7 @@ namespace avp {
   TimePeriod<TickFunction> RunPeriodically<TickFunction, Func, Period>::TP(Period);
 
   typedef class TimePeriod<millis> Millisec;
-  typedef class TimePeriod<micros> Microsec;
+  // typedef class TimePeriod<micros> Microsec;
   // typedef class avp::TimePeriod<CPU_Ticks> CPU_Tick;
 }; // namespace avp
 
