@@ -1,9 +1,9 @@
 /**
   * @file ../C_General/Error.h
   * @author Alexander Panasyuk
-  * @note - to use MACROS you have to properly implement "avp::debug_vprintf".
-  * it is weakly linked in service.c as an output to stderr which often does
-  * not work
+  * @note - to use MACROS you have to properly implement 
+  * extern "C" int debug_puts(const char *s)".
+  * it is weakly linked in common_c.c as an output to stderr 
   * @note AVP_ASSERT in Release built DOES NOT CHECK EXPRESSION!
   * you can define debug output printf style function name be defining
   * DEBUG_PRINTF before including this file
@@ -17,6 +17,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 /// @endcond
+#include "General_C.h"
 #include "Macros.h"
 
 #ifdef _MSC_VER
@@ -27,7 +28,10 @@
 #define AVP_ERROR_MSG_BUFFER_SZ 2000
 #endif
 
-extern char AVP_ErrorMsgBuffer[AVP_ERROR_MSG_BUFFER_SZ];
+#ifdef __cplusplus
+extern "C" 
+#endif
+char AVP_ErrorMsgBuffer[AVP_ERROR_MSG_BUFFER_SZ];
 
 #if defined(_MSC_VER) && defined(_DEBUG) || defined(__GNUC__) && defined(DEBUG)
 #define AVP_ERROR_STR(format,...) (snprintf(AVP_ErrorMsgBuffer, AVP_ERROR_MSG_BUFFER_SZ, \

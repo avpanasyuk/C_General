@@ -22,11 +22,11 @@
 #endif /* __GNUC__ */
 
 /// creates printf-type function named "func_name" out of vprintf-type function named "vprinf_func"
-/// usage: return_type PRINTF_WRAPPER(_BOOL(printf,vprintf))
-#define PRINTF_WRAPPER(return_type,func_name,vprintf_func) \
-    __attribute__((format (printf, 1, 2))) return_type func_name(char const *format, ...) \
-    { va_list ap; va_start(ap,format); \
-    return_type Out =  vprintf_func(format,ap); va_end(ap); \
+/// usage: return_type PRINTF_WRAPPER_C(int,printf,vprintf)
+#define PRINTF_WRAPPER_C(return_type,func_name,vprintf_func) \
+   __attribute__((format (printf, 1, 2))) return_type func_name(const char *fmt, ...) \
+    { va_list ap; va_start(ap, fmt); \
+    return_type Out =  vprintf_func(fmt,ap); va_end(ap); \
     return Out; }
 
 /// @cond
@@ -41,15 +41,15 @@ extern "C" {
 /**
  * following two function allocate space for string every times using malloc, it needs eventually to be free"d"
  */
-char *svprintf_alloc(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
-char *sprintf_alloc(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
+const char *svprintf_alloc(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
+const char *sprintf_alloc(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
 
 /**
  * following two function return a pointer to the same memory every time, and reallocated the space for this memory as necessary
  * this memory does not need to be free"d"
  */
-char *svprintf_static(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
-char *sprintf_static(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
+const char *svprintf_static(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
+const char *sprintf_static(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
 
 typedef void (*free_func_t)(void *);
 

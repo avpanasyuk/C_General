@@ -85,7 +85,7 @@ struct CircBuffer {
 
     /// returns a preciding entry counting from Write pointer
     /// @param BackIndex - how many entries before, 0 corresponds to current Write pointer
-    const T &operator[] (CounterType BackIndex) const {
+    T &operator[] (CounterType BackIndex) const {
       return Buffer[BeingWritten >= BackIndex?BeingWritten - BackIndex:BeingWritten + size - BackIndex];
     }
   protected:

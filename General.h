@@ -20,12 +20,13 @@
 
 /**
 * USAGE
-static PRINTF_WRAPPER( info_printf, vprintf)
+static PRINTF_WRAPPER(return type, info_printf, vprintf)
+ __attribute__((format (printf, 1, 2)))
 */
-#define PRINTF_WRAPPER(func_name,vprintf_func) \
-    __attribute__((format (printf, 1, 2))) auto func_name(char const *format, ...) \
-    { va_list ap; va_start(ap,format); \
-    auto Out =  vprintf_func(format,ap); va_end(ap); \
+#define PRINTF_WRAPPER(return_type,func_name,vprintf_func) \
+ /* __attribute__((format(printf, 1, 2))) */ return_type func_name(const char *fmt, ...) \
+    { va_list ap; va_start(ap,fmt); \
+    return_type Out =  vprintf_func(fmt,ap); va_end(ap); \
     return Out; }
 
 #if 0 // cause reallu weird errors in c+11 and I think already built-in
@@ -90,10 +91,18 @@ namespace avp {
   /// in this case.
   /// @note we use T1 and T2 instead of a single T to detect cases when parameter types are different
   /// @return true if y > x even if y is wrapped
-  template<typename T1, typename T2> inline bool unsigned_is_smaller(const T1 &x, const T2 &y) {
+  template<typename T1, typename T2> 
+  inline bool unsigned_is_smaller_or_equal(const T1 &x, const T2 &y, T1 WrapValue = std::numeric_limits<T1>::max()) {
     static_assert(std::is_same<T1, T2>::value, "Types should be identical!");
     static_assert(std::is_unsigned<T1>::value, "Type should be unsigned!");
-    return y - x < std::numeric_limits<T1>::max() / 2;
+    return (y - x) < (WrapValue >> 1);
+  } // unsigned_is_smaller
+
+  template<typename T1, typename T2> 
+  inline bool unsigned_is_smaller(const T1 &x, const T2 &y, T1 WrapValue = std::numeric_limits<T1>::max()) {
+    static_assert(std::is_same<T1, T2>::value, "Types should be identical!");
+    static_assert(std::is_unsigned<T1>::value, "Type should be unsigned!");
+    return (x - y) > (WrapValue >> 1);
   } // unsigned_is_smaller
 
 /**
@@ -130,7 +139,7 @@ namespace avp {
       else {
         int Shift = L + N + SpaceForBreak - Length;
 
-        if(Shift > 0) { // overran Length, got to shift
+        if(Shift > 0) { // overran ReservedSz, got to shift
           const char *pBr = strstr(Text + Shift, Br); // find next break after Shift
 
           if(pBr != nullptr) {
