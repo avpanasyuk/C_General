@@ -28,6 +28,8 @@
     { va_list ap; va_start(ap, fmt); \
     return_type Out =  vprintf_func(fmt,ap); va_end(ap); \
     return Out; }
+	
+#define CEIL_RATIO(Numer, Denom) (((Numer) + (Denom) - 1)/(Denom))
 
 /// @cond
 #include <string.h>

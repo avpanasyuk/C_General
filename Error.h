@@ -1,9 +1,9 @@
 /**
   * @file ../C_General/Error.h
   * @author Alexander Panasyuk
-  * @note - to use MACROS you have to properly implement 
+  * @note - to use MACROS you have to properly implement
   * extern "C" int debug_puts(const char *s)".
-  * it is weakly linked in common_c.c as an output to stderr 
+  * it is weakly linked in common_c.c as an output to stderr
   * @note AVP_ASSERT in Release built DOES NOT CHECK EXPRESSION!
   * you can define debug output printf style function name be defining
   * DEBUG_PRINTF before including this file
@@ -25,17 +25,17 @@
 #endif
 
 #ifndef AVP_ERROR_MSG_BUFFER_SZ
-#define AVP_ERROR_MSG_BUFFER_SZ 2000
+#define AVP_ERROR_MSG_BUFFER_SZ 255
 #endif
 
 #ifdef __cplusplus
-extern "C" 
+extern "C"
 #endif
-char AVP_ErrorMsgBuffer[AVP_ERROR_MSG_BUFFER_SZ];
+char AVP_ErrorMsgBuffer[AVP_ERROR_MSG_BUFFER_SZ + 1];
 
 #if defined(_MSC_VER) && defined(_DEBUG) || defined(__GNUC__) && defined(DEBUG)
 #define AVP_ERROR_STR(format,...) (snprintf(AVP_ErrorMsgBuffer, AVP_ERROR_MSG_BUFFER_SZ, \
-  "In '%s', file '" __FILE__ "', line %u: " ## format, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__) < 0? \
+  format " in '%s', file '" __FILE__ "', line %u: " , __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__) < 0? \
   "Failed to snprintf error message in '" __FILE__ "'!":AVP_ErrorMsgBuffer)
 #else
 #define AVP_ERROR_STR(format,...) (snprintf(AVP_ErrorMsgBuffer, AVP_ERROR_MSG_BUFFER_SZ, \
@@ -103,6 +103,10 @@ void new_handler(); //  __attribute__((noreturn)); // NOTE! got to be installed 
     { AVP_ERROR(#exp " is false: " format "\n", ##__VA_ARGS__); }}while(0)
 
 #define ASSERT_BEING_0(exp,...) AVP_ASSERT((exp) == 0, ##__VA_ARGS__)
+
+#define AVP_ASSERT_RETURN_STR(exp) do{ if(!(exp)) \
+    { return AVP_ERROR_STR(#exp " is false"); }}while(0)
+
 // #endif
 IGNORE_WARNING(-Wunused-value)
 #endif // __GNUC__
