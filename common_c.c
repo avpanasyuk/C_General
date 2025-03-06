@@ -11,7 +11,7 @@
 #include "../C_General/General_C.h"
 #include "../C_General/Error.h"
 
-__weak int debug_puts(const char *s) { return fputs(s,stderr); } 
+__weak int debug_puts(const char *s) { return fputs(s,stderr); }
 
 __weak int debug_vprintf(const char *format, va_list a) {
   return debug_puts(svprintf_static(format, a));
@@ -54,6 +54,9 @@ const char *svprintf_static(const char *format, va_list ap) {
   vsprintf(out, format, ap);
   return out; // we do not write ending 0 byte
 } // string_vprintf
+
+PRINTF_WRAPPER_C(const char *,sprintf_alloc,svprintf_alloc)
+PRINTF_WRAPPER_C(const char *,sprintf_static,svprintf_static)
 
 uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t start) {
   uint16_t crc = start;
