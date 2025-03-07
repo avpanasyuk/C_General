@@ -1,81 +1,117 @@
 #pragma once
-/**
- * @file Vector.h
- * @author Sasha
- * @brief equivalent to std::vector, only comprehensible
- * @version 0.1
- * @date 2023-06-18
- *
- * @copyright Copyright (c) 2023
- *
- */
 
 #include <stdlib.h>
 #include <initializer_list>
-#include "RefCountArrPtr.h"
 #include "Error.h"
 
 namespace avp {
+/** Vector class with reference counting and automatic extension. All copies done with constructor or assignment
+  * point to the same data. Use "make_copy" to make a separate copy of data.
+  */
+
   template<typename T>
   class Vector {
-    RefCountArrPtr<T> p;
-    size_t L; //< length
-    // size_t Reserved; //< reserved space, now in RefCountArrPtr.size()
+    struct PtrWithRefCnt_ {
+      T* p;
+      size_t Allocated, Used, RefN;
+
+      PtrWithRefCnt_(size_t reserve): Used(0), RefN(1) { p = new T[Allocated = reserve]; }
+      ~PtrWithRefCnt_() { delete[] p; }
+
+      void push_back(const T &x) {
+        if(Used == Allocated) // no more space
+          reserve((Used + 1) << 1);
+        p[Used++] = x;
+      } // push_back
+
+      void reserve(size_t sz) {
+        if(sz > Allocated) {
+          auto temp = p;
+          p = new T[Allocated = sz];
+          for(size_t i=0; i<Used; ++i) p[i] = temp[i];
+          delete[] temp;
+        }
+      } // reserve
+    } *pPtrWithRefCnt; // this pointer is always allocated, never nullptr!
+
+    void ReleasePtrWithRefCnt() {
+      if(--pPtrWithRefCnt->RefN == 0) delete pPtrWithRefCnt;
+    } // ReleasePtrWithRefCnt
+
+    void ReplaceWith(const Vector &r) {
+      if(this != &r && pPtrWithRefCnt != r.pPtrWithRefCnt) {
+        ReleasePtrWithRefCnt();
+        (pPtrWithRefCnt = r.pPtrWithRefCnt)->RefN++;
+      }
+    } // ReplaceWith
+
    public:
-    Vector() : L(0) {}
+    Vector():pPtrWithRefCnt(new PtrWithRefCnt_(1)) {}
 
-    explicit Vector(size_t reserve) : p(reserve), L(0) {}
-
-    Vector(size_t sz, const T &fill) :p(sz), L(sz) {
-      for(auto &x:p) x = fill;
+    Vector(size_t reserve) {
+      pPtrWithRefCnt = reserve != 0?new PtrWithRefCnt_(reserve):new PtrWithRefCnt_(1);
     } // constructor
 
-    Vector(const Vector<T> &v) : p(v.p), L(v.L) {}
+    Vector(size_t sz, const T &fill) {
+      if(sz != 0) {
+        pPtrWithRefCnt = new PtrWithRefCnt_(sz);
+        while(sz--) pPtrWithRefCnt->push_back(fill);
+      } else pPtrWithRefCnt = new PtrWithRefCnt_(1);
+    } // constructor
 
-    Vector(const std::initializer_list<T> &t): p(t.size()), L(0) {
-      for(auto x:t) push_back(x);
+    Vector(const Vector &r) { (pPtrWithRefCnt = r.pPtrWithRefCnt)->RefN++; }
+
+    Vector(const std::initializer_list<T> &t) {
+      if(t.size() == 0) pPtrWithRefCnt = new PtrWithRefCnt_(1);
+      else {
+        pPtrWithRefCnt = new PtrWithRefCnt_(t.size());
+        for(auto x:t) pPtrWithRefCnt->push_back(x);
+      }
+    } // initializer list constructor
+
+    ~Vector() { ReleasePtrWithRefCnt(); }
+
+    void reserve(size_t sz) { pPtrWithRefCnt->reserve(sz); }
+
+    void push_back(const T &x) { pPtrWithRefCnt->push_back(x); }
+
+    const Vector &operator=(const Vector &r) {
+      ReplaceWith(r);
+      return *this;
     }
 
-    void push_back(const T &x) {
-      if(L == p.size()) // no more space
-        reserve((L + 1) << 1);
-      p.get()[L++] = x;
-    } // push_back
-
-    T *begin() const { return p.get(); }
-    T *end() const { return p.get() + L; }
-    const T *cbegin() const { return p.get(); }
-    const T *cend() const { return p.get() + L; }
-
-    T &operator[](size_t i) {
-      AVP_ASSERT(i < L);
-      return p.get()[i];
-    }
+    void clear() { pPtrWithRefCnt->Used = 0; }
+    bool empty() const { return size() == 0; }
+    size_t size() const { return pPtrWithRefCnt->Used; }
+  /**
+    * Makes copy which does not share data
+    */
+    Vector<T> const make_copy() {
+      Vector<T> Out(pPtrWithRefCnt->Used); // allocate only used size
+      const T *p = cbegin();
+      for(auto &x:Out) x = *(p++);
+      return Out;
+    } // make _copy
 
     const T &operator[](size_t i) const {
-      AVP_ASSERT(i < L);
-      return p.get()[i];
+      AVP_ASSERT(i < size());
+      return pPtrWithRefCnt->p[i];
     }
 
-    size_t size() const { return L; }
+    T &operator[](size_t i) {
+      reserve(i+1);
+      if(i >= size()) set_size(i+1);
+      return pPtrWithRefCnt->p[i];
+    }
 
-    void reserve(size_t sz) {
-      if(sz > p.size()) {
-        avp::RefCountArrPtr<T> temp(p);
-        p = avp::RefCountArrPtr<T>(sz);
-        for(size_t i=0; i<L; ++i) p.get()[i] = temp.get()[i];
-      }
-    } // reserve
+    // begin/end go only over used portion
+    const T *cbegin() const { return pPtrWithRefCnt->p; }
+    const T *cend() const { return pPtrWithRefCnt->p + pPtrWithRefCnt->Used; }
+    T *begin() { return pPtrWithRefCnt->p; }
+    T *end() { return pPtrWithRefCnt->p + pPtrWithRefCnt->Used; }
 
-    const Vector<T> &operator =(const Vector<T> &v) {
-      p = v.p; L = v.L;
-      return *this;
-    } // operator =
-
-    T *data() const { return p.get(); }
-
-    bool empty() const { return size() == 0;}
-
-    void clear() { L = 0; }
+    // low level access to the data
+    T* get() const { return pPtrWithRefCnt->p; }
+    void set_size(size_t sz) { reserve(sz); pPtrWithRefCnt->Used = sz; }
   }; // class Vector
 } // namespace avp

@@ -172,7 +172,7 @@ namespace avp {
     static void setup_to_read_bytes(size_t Num, uint8_t *Dest) {
       LeftToRead = Num;
       DestPtr = Dest;
-    } // just_read_bytes
+    } // setup_to_read_bytes
 
     /// returns code which indicated that command was not received and has to be resent
     static bool return_error_code(int8_t Code) {
