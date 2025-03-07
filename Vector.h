@@ -11,32 +11,30 @@
  */
 
 #include <stdlib.h>
-#include <memory>
 #include <initializer_list>
+#include "RefCountArrPtr.h"
 #include "Error.h"
 
 namespace avp {
   template<typename T>
   class Vector {
-    std::shared_ptr<T> p;
+    avp::RefCountArrPtr<T> p;
     size_t L; //< length
     size_t Reserved; //< reserved space
    public:
-    explicit Vector(size_t sz = 0) : p(nullptr), L(0), Reserved(0) {
-      reserve(sz);
-    } // constructor
+    Vector() : L(0), Reserved(0) {}
 
-    Vector(size_t sz, const T &fill) : p(nullptr), L(0), Reserved(0) {
+    explicit Vector(size_t sz) : p(sz), L(sz), Reserved(sz) {}
+
+    Vector(size_t sz, const T &fill) : L(0), Reserved(0) {
       reserve(sz);
       for(auto ptr = begin(); ptr < end(); ++ptr) *ptr = fill;
     } // constructor
 
     Vector(const Vector<T> &v) : p(v.p), L(v.L), Reserved(v.Reserved) {}
 
-    Vector(const std::initializer_list<T> &t): p(nullptr), Reserved(0) {
-      reserve(L = t.size());
-      size_t i = 0;
-      for(auto x:t) p.get()[i++] = x;
+    Vector(const std::initializer_list<T> &t): p(t.size()), L(0), Reserved(t.size()) {
+      for(auto x:t) push_back(x);
     }
 
     void push_back(const T &x) {
@@ -64,8 +62,8 @@ namespace avp {
 
     void reserve(size_t sz) {
       if(sz > Reserved) {
-        std::shared_ptr<T> temp(p);
-        p = std::shared_ptr<T>(new T[Reserved = sz], std::default_delete<T[]>());
+        avp::RefCountArrPtr<T> temp(p);
+        p = avp::RefCountArrPtr<T>(Reserved = sz);
         for(size_t i=0; i<L; ++i) p.get()[i] = temp.get()[i];
       }
     } // reserve
@@ -79,6 +77,6 @@ namespace avp {
 
     bool empty() const { return L == 0;}
 
-    void clear() { p = nullptr; L = 0; }
+    void clear() { L = 0; }
   }; // class Vector
 } // namespace avp
