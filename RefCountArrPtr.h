@@ -1,11 +1,15 @@
 #pragma once
 
+#include "../C_General/Error.h"
+
 namespace avp {
   template<typename T>
   class RefCountArrPtr {
     struct PtrWithRefCnt_ {
       T* p;
-      size_t RefN;
+      size_t Allocated, RefN;
+      PtrWithRefCnt_(size_t sz): RefN(1) { p = new T[Allocated = sz]; }
+      ~PtrWithRefCnt_() { delete[] p; }
     } *pPtrWithRefCnt;
 
     void ReplaceWith(const RefCountArrPtr &r) {
@@ -18,11 +22,7 @@ namespace avp {
     RefCountArrPtr():pPtrWithRefCnt(nullptr) {}
 
     RefCountArrPtr(size_t N) {
-      if(N != 0) {
-        pPtrWithRefCnt = new PtrWithRefCnt_;
-        pPtrWithRefCnt->p = new T[N];
-        pPtrWithRefCnt->RefN = 1;
-      } else pPtrWithRefCnt = nullptr;
+      pPtrWithRefCnt = N != 0?new PtrWithRefCnt_(N):nullptr;
     } // constructor
 
     RefCountArrPtr(const RefCountArrPtr &r) { ReplaceWith(r); }
@@ -30,13 +30,14 @@ namespace avp {
     ~RefCountArrPtr() { ReleasePtrWithRefCnt(); }
 
     void ReleasePtrWithRefCnt() {
-      if(pPtrWithRefCnt != nullptr && --pPtrWithRefCnt->RefN == 0) {
-        delete[] pPtrWithRefCnt->p;
+      if(pPtrWithRefCnt != nullptr && --pPtrWithRefCnt->RefN == 0)
         delete pPtrWithRefCnt;
-      }
     } // ReleasePtrWithRefCnt
 
-    T* get() const { return pPtrWithRefCnt != nullptr?pPtrWithRefCnt->p:nullptr; }
+    T* get() const {
+      AVP_ASSERT(pPtrWithRefCnt != nullptr);
+      return pPtrWithRefCnt->p;
+    } // get
 
     const RefCountArrPtr &operator=(const RefCountArrPtr &r) {
       if(this != &r && pPtrWithRefCnt != r.pPtrWithRefCnt) ReplaceWith(r);
@@ -44,5 +45,9 @@ namespace avp {
     }
 
     void clear() { ReleasePtrWithRefCnt(); pPtrWithRefCnt = nullptr; }
+    size_t size() { return pPtrWithRefCnt == nullptr?0:pPtrWithRefCnt->Allocated; }
+
+    T *begin() const { return get(); }
+    T *end() const { return get() + pPtrWithRefCnt->Allocated; }
   }; // class RefCountPtr
 } // namespace avp

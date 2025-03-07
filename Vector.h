@@ -18,27 +18,26 @@
 namespace avp {
   template<typename T>
   class Vector {
-    avp::RefCountArrPtr<T> p;
+    RefCountArrPtr<T> p;
     size_t L; //< length
-    size_t Reserved; //< reserved space
+    // size_t Reserved; //< reserved space, now in RefCountArrPtr.size()
    public:
-    Vector() : L(0), Reserved(0) {}
+    Vector() : L(0) {}
 
-    explicit Vector(size_t sz) : p(sz), L(sz), Reserved(sz) {}
+    explicit Vector(size_t reserve) : p(reserve), L(0) {}
 
-    Vector(size_t sz, const T &fill) : L(0), Reserved(0) {
-      reserve(sz);
-      for(auto ptr = begin(); ptr < end(); ++ptr) *ptr = fill;
+    Vector(size_t sz, const T &fill) :p(sz), L(sz) {
+      for(auto &x:p) x = fill;
     } // constructor
 
-    Vector(const Vector<T> &v) : p(v.p), L(v.L), Reserved(v.Reserved) {}
+    Vector(const Vector<T> &v) : p(v.p), L(v.L) {}
 
-    Vector(const std::initializer_list<T> &t): p(t.size()), L(0), Reserved(t.size()) {
+    Vector(const std::initializer_list<T> &t): p(t.size()), L(0) {
       for(auto x:t) push_back(x);
     }
 
     void push_back(const T &x) {
-      if(L == Reserved) // no more space
+      if(L == p.size()) // no more space
         reserve((L + 1) << 1);
       p.get()[L++] = x;
     } // push_back
@@ -61,21 +60,21 @@ namespace avp {
     size_t size() const { return L; }
 
     void reserve(size_t sz) {
-      if(sz > Reserved) {
+      if(sz > p.size()) {
         avp::RefCountArrPtr<T> temp(p);
-        p = avp::RefCountArrPtr<T>(Reserved = sz);
+        p = avp::RefCountArrPtr<T>(sz);
         for(size_t i=0; i<L; ++i) p.get()[i] = temp.get()[i];
       }
     } // reserve
 
     const Vector<T> &operator =(const Vector<T> &v) {
-      p = v.p; L = v.L; Reserved = v.Reserved;
+      p = v.p; L = v.L;
       return *this;
     } // operator =
 
     T *data() const { return p.get(); }
 
-    bool empty() const { return L == 0;}
+    bool empty() const { return size() == 0;}
 
     void clear() { L = 0; }
   }; // class Vector
