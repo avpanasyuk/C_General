@@ -5,7 +5,8 @@
 #include "Error.h"
 
 namespace avp {
-/** Vector class with reference counting and automatic extension. All copies done with constructor or assignment
+/** Vector class with reference counting and automatic extension by a factor of two
+  * All copies done with constructor or assignment
   * point to the same data. Use "make_copy" to make a separate copy of data.
   */
 
