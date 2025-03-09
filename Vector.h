@@ -2,13 +2,14 @@
 
 #include <stdlib.h>
 #include <initializer_list>
+#include <limits>
 #include "Error.h"
 
 namespace avp {
-/** Vector class with reference counting and automatic extension by a factor of two
-  * All copies done with constructor or assignment
-  * point to the same data. Use "make_copy" to make a separate copy of data.
-  */
+  /** Vector class with reference counting and automatic extension by a factor of two
+    * All copies done with constructor or assignment
+    * point to the same data. Use "make_copy" to make a separate copy of data.
+    */
 
   template<typename T>
   class Vector {
@@ -47,6 +48,8 @@ namespace avp {
     } // ReplaceWith
 
    public:
+    struct Range { T Min, Max; };
+
     Vector():pPtrWithRefCnt(new PtrWithRefCnt_(1)) {}
 
     Vector(size_t reserve) {
@@ -81,12 +84,12 @@ namespace avp {
       return *this;
     }
 
-    void clear() { pPtrWithRefCnt->Used = 0; }
+    void clear() { pPtrWithRefCnt->Used = 0; } // does not change reserved space
     bool empty() const { return size() == 0; }
     size_t size() const { return pPtrWithRefCnt->Used; }
-  /**
-    * Makes copy which does not share data
-    */
+    /**
+      * Makes copy which does not share data
+      */
     Vector<T> const make_copy() {
       Vector<T> Out(pPtrWithRefCnt->Used); // allocate only used size
       const T *p = cbegin();
@@ -105,14 +108,25 @@ namespace avp {
       return pPtrWithRefCnt->p[i];
     }
 
+    Range MinMax() const {
+      Range Out = { std::numeric_limits<T>::max(), std::numeric_limits<T>::min()};
+      for(const auto &d:*this) {
+        if(d < Out.Min) Out.Min = d;
+        if(d > Out.Max) Out.Max = d;
+      }
+      return Out;
+    } // MinMax
+
     // begin/end go only over used portion
     const T *cbegin() const { return pPtrWithRefCnt->p; }
     const T *cend() const { return pPtrWithRefCnt->p + pPtrWithRefCnt->Used; }
     T *begin() { return pPtrWithRefCnt->p; }
     T *end() { return pPtrWithRefCnt->p + pPtrWithRefCnt->Used; }
+    const T *begin() const { return pPtrWithRefCnt->p; }
+    const T *end() const { return pPtrWithRefCnt->p + pPtrWithRefCnt->Used; }
 
     // low level access to the data
-    T* get() const { return pPtrWithRefCnt->p; }
+    T* data() const { return pPtrWithRefCnt->p; }
     void set_size(size_t sz) { reserve(sz); pPtrWithRefCnt->Used = sz; }
   }; // class Vector
 } // namespace avp
