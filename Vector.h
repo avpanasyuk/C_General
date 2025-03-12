@@ -29,11 +29,11 @@ namespace avp {
 
       void push_back(const T &x) {
         if(Used == Allocated) // no more space
-          resize((Used + 1) << 1); // allocate twice as much and then some
+          reserve((Used + 1) << 1); // allocate twice as much and then some
         p[Used++] = x;
       } // push_back
 
-      void resize(size_t sz) {
+      void reserve(size_t sz) {
         if(sz > Allocated) {
           auto temp = p;
           p = new T[Allocated = sz];
@@ -82,7 +82,7 @@ namespace avp {
 
     ~Vector() { ReleasePtrWithRefCnt(); }
 
-    void resize(size_t sz) { pPtrWithRefCnt->resize(sz); }
+    void reserve(size_t sz) { pPtrWithRefCnt->reserve(sz); }
 
     void push_back(const T &x) { pPtrWithRefCnt->push_back(x); }
 
@@ -110,7 +110,7 @@ namespace avp {
     }
 
     T &operator[](size_t i) {
-      resize(i+1);
+      reserve(i+1);
       if(i >= size()) set_size(i+1);
       return pPtrWithRefCnt->p[i];
     }
@@ -134,6 +134,6 @@ namespace avp {
 
     // low level access to the data
     T* data() const { return pPtrWithRefCnt->p; }
-    void set_size(size_t sz) { resize(sz); pPtrWithRefCnt->Used = sz; }
+    void set_size(size_t sz) { reserve(sz); pPtrWithRefCnt->Used = sz; }
   }; // class Vector
 } // namespace avp
