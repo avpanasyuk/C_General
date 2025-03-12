@@ -13,6 +13,13 @@ namespace avp {
 
   template<typename T>
   class Vector {
+    /**
+    * this is a reference counting class for Vectors. The object of this class is shared between
+    * Vectors containing the same array of type T pointed on by "p". If Vectgor decides not to point to this
+    * particular object any more it decreases it's reference number.
+    *
+    * This class never decreases memory pointer by "p".
+    */
     struct PtrWithRefCnt_ {
       T* p;
       size_t Allocated, Used, RefN;
@@ -22,19 +29,19 @@ namespace avp {
 
       void push_back(const T &x) {
         if(Used == Allocated) // no more space
-          reserve((Used + 1) << 1);
+          resize((Used + 1) << 1); // allocate twice as much and then some
         p[Used++] = x;
       } // push_back
 
-      void reserve(size_t sz) {
+      void resize(size_t sz) {
         if(sz > Allocated) {
           auto temp = p;
           p = new T[Allocated = sz];
           for(size_t i=0; i<Used; ++i) p[i] = temp[i];
           delete[] temp;
         }
-      } // reserve
-    } *pPtrWithRefCnt; // this pointer is always allocated, never nullptr!
+      } // resize
+    } *pPtrWithRefCnt; // this pointer to a reference counting class is always allocated, never nullptr!
 
     void ReleasePtrWithRefCnt() {
       if(--pPtrWithRefCnt->RefN == 0) delete pPtrWithRefCnt;
@@ -75,7 +82,7 @@ namespace avp {
 
     ~Vector() { ReleasePtrWithRefCnt(); }
 
-    void reserve(size_t sz) { pPtrWithRefCnt->reserve(sz); }
+    void resize(size_t sz) { pPtrWithRefCnt->resize(sz); }
 
     void push_back(const T &x) { pPtrWithRefCnt->push_back(x); }
 
@@ -103,7 +110,7 @@ namespace avp {
     }
 
     T &operator[](size_t i) {
-      reserve(i+1);
+      resize(i+1);
       if(i >= size()) set_size(i+1);
       return pPtrWithRefCnt->p[i];
     }
@@ -127,6 +134,6 @@ namespace avp {
 
     // low level access to the data
     T* data() const { return pPtrWithRefCnt->p; }
-    void set_size(size_t sz) { reserve(sz); pPtrWithRefCnt->Used = sz; }
+    void set_size(size_t sz) { resize(sz); pPtrWithRefCnt->Used = sz; }
   }; // class Vector
 } // namespace avp
