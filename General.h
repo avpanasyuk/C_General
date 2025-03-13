@@ -8,9 +8,10 @@
 #ifndef GENERAL_H_
 #define GENERAL_H_
 
- /// @cond
+/// @cond
 #include <stdint.h>
 #include <stdarg.h>
+#include <tuple>
 #include "General_C.h"
 /// @endcond
 
@@ -24,8 +25,8 @@ static PRINTF_WRAPPER(return type, info_printf, vprintf)
  __attribute__((format (printf, 1, 2)))
 */
 #define PRINTF_WRAPPER(return_type,func_name,vprintf_func) \
- /* __attribute__((format(printf, 1, 2))) */ return_type func_name(const char *fmt, ...) \
-    { va_list ap; va_start(ap,fmt); \
+  /* __attribute__((format(printf, 1, 2))) */ return_type func_name(const char *fmt, ...) \
+  { va_list ap; va_start(ap,fmt); \
     return_type Out =  vprintf_func(fmt,ap); va_end(ap); \
     return Out; }
 
@@ -91,29 +92,29 @@ namespace avp {
   /// in this case.
   /// @note we use T1 and T2 instead of a single T to detect cases when parameter types are different
   /// @return true if y > x even if y is wrapped
-  template<typename T1, typename T2> 
+  template<typename T1, typename T2>
   inline bool unsigned_is_smaller_or_equal(const T1 &x, const T2 &y, T1 WrapValue = std::numeric_limits<T1>::max()) {
     static_assert(std::is_same<T1, T2>::value, "Types should be identical!");
     static_assert(std::is_unsigned<T1>::value, "Type should be unsigned!");
     return (y - x) < (WrapValue >> 1);
   } // unsigned_is_smaller
 
-  template<typename T1, typename T2> 
+  template<typename T1, typename T2>
   inline bool unsigned_is_smaller(const T1 &x, const T2 &y, T1 WrapValue = std::numeric_limits<T1>::max()) {
     static_assert(std::is_same<T1, T2>::value, "Types should be identical!");
     static_assert(std::is_unsigned<T1>::value, "Type should be unsigned!");
     return (x - y) > (WrapValue >> 1);
   } // unsigned_is_smaller
 
-/**
- *@brief restores value of a variable upon getting out of scope
- *
- * @tparam T - variable type
- */
+  /**
+   *@brief restores value of a variable upon getting out of scope
+   *
+   * @tparam T - variable type
+   */
   template<typename T>
   class RestoreOnReturn {
     const T SavedValue; T *p;
-  public:
+   public:
     RestoreOnReturn(T &Var) : SavedValue(Var), p(&Var) { }
     ~RestoreOnReturn() { *p = SavedValue; }
   }; // RestoreOnReturn
@@ -126,7 +127,7 @@ namespace avp {
     int L;
     const char * const Br;
     const int BrL;
-  public:
+   public:
     Log(const char *Break = "<br>") : Text { 0 }, L(0), Br(Break), BrL(strlen(Br)) { }
 
     const char *Get() const { return Text; }
@@ -161,6 +162,31 @@ namespace avp {
   inline void shift_array_left(T *To, std::size_t N, std::size_t By = 1) {
     while(N--) { *To = *(To + By); ++To; }
   } // shift_array_left
+
+  template<typename T>
+  auto MinMax(const T &v) {
+    using C = typename T::value_type;
+    C Min = std::numeric_limits<C>::max();
+    C Max = std::numeric_limits<C>::min();
+
+    for(const auto &d:v) {
+      if(d < Min) Min = d;
+      if(d > Max) Max = d;
+    }
+    return std::tuple<C, C>{Min,Max};
+  } // MinMax
+
+  template<typename C>
+  auto MinMax(const C *v, size_t N) {
+    C Min = std::numeric_limits<C>::max();
+    C Max = std::numeric_limits<C>::min();
+
+    for(size_t i=0; i<N; ++i) {
+      if(v[i] < Min) Min = v[i];
+      if(v[i] > Max) Max = v[i];
+    }
+    return std::tuple<C, C>{Min,Max};
+  } // MinMax
 } // avp
 #endif
 #endif /* GENERAL_H_ */

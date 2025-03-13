@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdlib.h>
+#include <arm_math.h>
 #include <initializer_list>
 #include <limits>
 #include "Error.h"
@@ -24,7 +25,7 @@ namespace avp {
       T* p;
       size_t Allocated, Used, RefN;
 
-      PtrWithRefCnt_(size_t reserve): Used(0), RefN(1) { p = new T[Allocated = reserve]; }
+      PtrWithRefCnt_(size_t reserve): Used(0), RefN(1) { p = new T[Allocated = MAX(reserve,1)]; }
       ~PtrWithRefCnt_() { delete[] p; }
 
       void push_back(const T &x) {
@@ -36,7 +37,7 @@ namespace avp {
       void reserve(size_t sz) {
         if(sz > Allocated) {
           auto temp = p;
-          p = new T[Allocated = sz];
+          p = new T[Allocated = MAX(2*Allocated,sz)]; // increase at least by a factor of 2 to avoid calling new too often
           for(size_t i=0; i<Used; ++i) p[i] = temp[i];
           delete[] temp;
         }
@@ -55,7 +56,7 @@ namespace avp {
     } // ReplaceWith
 
    public:
-    struct Range { T Min, Max; };
+    using value_type = T;
 
     Vector():pPtrWithRefCnt(new PtrWithRefCnt_(1)) {}
 
@@ -110,19 +111,9 @@ namespace avp {
     }
 
     T &operator[](size_t i) {
-      reserve(i+1);
       if(i >= size()) set_size(i+1);
       return pPtrWithRefCnt->p[i];
     }
-
-    Range MinMax() const {
-      Range Out = { std::numeric_limits<T>::max(), std::numeric_limits<T>::min()};
-      for(const auto &d:*this) {
-        if(d < Out.Min) Out.Min = d;
-        if(d > Out.Max) Out.Max = d;
-      }
-      return Out;
-    } // MinMax
 
     // begin/end go only over used portion
     const T *cbegin() const { return pPtrWithRefCnt->p; }
