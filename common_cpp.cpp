@@ -4,6 +4,23 @@
  * Created: 11/11/2013 3:02:38 PM
  *  Author: panasyuk
  */
+#include "millis_micros.h"
+#include <chrono>
+#include "General_C.h"
+
+namespace avp {
+  uint32_t millis() {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+             std::chrono::system_clock::now().time_since_epoch()
+           ).count();
+  } // millis
+
+  uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly) {
+    return ::Crc16(pcBlock, len, crc, poly);
+  }
+} // namespace avp
+
+
 // #include <stdlib.h>
 // #include <stdio.h>
 // #include "General.h"

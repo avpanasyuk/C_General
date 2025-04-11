@@ -53,7 +53,7 @@ const char *sprintf_static(char const *format, ...) __attribute__ ((format (prin
 
 typedef void (*free_func_t)(void *);
 
-uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t start);
+uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly);
 
 #ifdef __cplusplus
 }
