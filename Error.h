@@ -111,11 +111,7 @@ void new_handler(); //  __attribute__((noreturn)); // NOTE! got to be installed 
 IGNORE_WARNING(-Wunused-value)
 #endif // __GNUC__
 
-#if defined(USE_EXCEPTIONS) && USE_EXCEPTIONS != 0
 
-#define AVP_THROW(exception,format,...) do{ throw exception(AVP_ERROR_STR(format,  ##__VA_ARGS__)); } while(0)
-
-#endif
 
 
 
