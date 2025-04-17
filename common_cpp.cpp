@@ -4,20 +4,49 @@
  * Created: 11/11/2013 3:02:38 PM
  *  Author: panasyuk
  */
-#include "millis_micros.h"
+#ifndef NO_STL
 #include <chrono>
-#include "General_C.h"
+#include <string>
+#endif // NO_STL
+
+#include "millis_micros.h"
+#include "General.h"
 
 namespace avp {
+  uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly) {
+    return ::Crc16(pcBlock, len, crc, poly);
+  }
+
+#ifndef NO_STL
   uint32_t millis() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::system_clock::now().time_since_epoch()
            ).count();
   } // millis
 
-  uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly) {
-    return ::Crc16(pcBlock, len, crc, poly);
-  }
+  std::string string_vprintf(const char *format, va_list ap) {
+    va_list ap_;
+    va_copy(ap_,ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
+    const int Size = vsnprintf(nullptr,0,format,ap_);
+    if(Size < 0) return "string_vprintf: format is wrong!";
+#ifdef _WIN32
+    char *Buffer = (char *)_alloca(Size+1); // +1 to include ending zero byte
+#else
+    char Buffer[Size+1]; // +1 to include ending zero byte
+#endif
+    vsnprintf(Buffer,Size,format,ap);
+    return std::string(Buffer,Size); // we do not write ending 0 byte
+  } // string_vprintf
+
+  PRINTF_WRAPPER(std::string,string_printf,string_vprintf)
+//  std::string string_printf(char const *format, ...) {
+//    va_list ap;
+//    va_start(ap,format);
+//    std::string Out =  string_vprintf(format,ap);
+//    va_end(ap);
+//    return Out;
+//  } // string_printf
+#endif
 } // namespace avp
 
 
