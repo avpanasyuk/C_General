@@ -9,8 +9,8 @@
 #include <string>
 #endif // NO_STL
 
-#include "millis_micros.h"
-#include "General.h"
+#include "millis_micros.hpp"
+#include "General.hpp"
 
 namespace avp {
   uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly) {

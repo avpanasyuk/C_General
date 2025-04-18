@@ -11,7 +11,7 @@
  /// @cond
 #include <stdint.h>
 #include <stdarg.h>
-#include "General_C.h"
+#include "General.h"
 /// @endcond
 
 #ifdef PRINTF_WRAPPER
