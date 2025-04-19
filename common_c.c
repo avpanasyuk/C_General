@@ -27,7 +27,7 @@ __weak void debug_action() { };
 
 __weak PRINTF_WRAPPER_C(int, debug_printf, debug_vprintf)
 
-__weak void hang_cpu() { while(1); }
+__weak void hang_cpu() { fflush(stderr); while(1); }
 
 __weak void new_handler() { hang_cpu(); }
 

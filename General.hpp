@@ -5,8 +5,7 @@
  *  Author: panasyuk
  */
 
-#ifndef GENERAL_H_
-#define GENERAL_H_
+#pragma once
 
  /// @cond
 #include <stdint.h>
@@ -165,6 +164,17 @@ namespace avp {
   constexpr uint16_t CRC16_CCITT_POLY = 0x1021;
   uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc = 0xFFFF, uint16_t poly = CRC16_CCITT_POLY);
   uint32_t millis();
+
+  template<typename T>
+  class ReleaseWhenOutOfScope {
+    const T p;
+    void (*ReleaseFunc)(T);
+  public:
+    ReleaseWhenOutOfScope(T p_, void (*ReleaseFunc_)(T)): p(p_), ReleaseFunc(ReleaseFunc_) {}
+
+    ~ReleaseWhenOutOfScope() { ReleaseFunc(p); }
+
+    operator T() { return p; }
+  }; // ReleaseWhenOutOfScope
 } // avp
 #endif
-#endif /* GENERAL_H_ */

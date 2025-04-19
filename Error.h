@@ -36,6 +36,7 @@ char AVP_ErrorMsgBuffer[AVP_ERROR_MSG_BUFFER_SZ];
 /**
 @note AVP_ERROR_STR is using global variable AVP_ErrorMsgBuffer, so it is not thread safe
 or reenterable! Use std::string(AVP_ERROR_STR(...)) to make it better or better avp::string_[v]printf
+@note "format" can be a literal string only !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 #if defined(_MSC_VER) && defined(_DEBUG) || defined(__GNUC__) && defined(DEBUG)
 #define AVP_ERROR_STR(format,...) (snprintf(AVP_ErrorMsgBuffer, AVP_ERROR_MSG_BUFFER_SZ, \

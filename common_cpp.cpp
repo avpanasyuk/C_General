@@ -34,7 +34,7 @@ namespace avp {
 #else
     char Buffer[Size+1]; // +1 to include ending zero byte
 #endif
-    vsnprintf(Buffer,Size,format,ap);
+    vsnprintf(Buffer,Size+1,format,ap);
     return std::string(Buffer,Size); // we do not write ending 0 byte
   } // string_vprintf
 

@@ -5,10 +5,10 @@
  *  Author: panasyuk
  */
 
-#ifndef GENERAL_C_H_
-#define GENERAL_C_H_
+ #pragma once
+ 
 
-/// @cond
+ /// @cond
 #include <stdint.h>
 #include <stdarg.h>
 /// @endcond
@@ -58,6 +58,3 @@ uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t pol
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif /* GENERAL_C_H_ */
