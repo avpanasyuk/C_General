@@ -31,6 +31,9 @@ __weak void hang_cpu() { fflush(stderr); while(1); }
 
 __weak void new_handler() { hang_cpu(); }
 
+/*
+ * pointer returned by this function has to be freed after use
+ */
 const char *svprintf_alloc(const char *format, va_list ap) {
   va_list ap_;
   va_copy(ap_, ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
@@ -42,6 +45,11 @@ const char *svprintf_alloc(const char *format, va_list ap) {
   return out; // we do not write ending 0 byte
 } // svprintf_alloc
 
+PRINTF_WRAPPER_C(const char *,sprintf_alloc,svprintf_alloc)
+
+/*
+ * pointer returned by this function should not be freed after use
+ */
 const char *svprintf_static(const char *format, va_list ap) {
   va_list ap_;
   va_copy(ap_, ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
@@ -54,6 +62,8 @@ const char *svprintf_static(const char *format, va_list ap) {
   vsprintf(out, format, ap);
   return out; // we do not write ending 0 byte
 } // string_vprintf
+
+PRINTF_WRAPPER_C(const char *,sprintf_static,svprintf_static)
 
 uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly) {
   while(len--) {
