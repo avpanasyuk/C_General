@@ -33,8 +33,16 @@
  * "exp" return error string, success is when the string is empty
  */
 #define AVP_ASSERT_EMPTY_STRING(exp) do{\
-	auto ErrStr = (exp); \
-	if(!ErrStr.empty()) AVP_ERROR("%s",ErrStr.c_str()); \
+  auto ErrStr = (exp); \
+  if(!ErrStr.empty()) AVP_ERROR("%s",ErrStr.c_str()); \
+}while(0)
+
+/**
+ * "exp" return error string, success is when the string is empty
+ */
+#define ASSERT_EMPTY_STRING_ELSE_RETURN(exp) do{\
+  auto ErrStr = (exp); \
+  if(!ErrStr.empty()) return ErrStr; \
 }while(0)
 
 #endif // NO_STL
