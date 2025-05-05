@@ -61,11 +61,12 @@ int debug_printf(const char *format, ...);
 extern volatile uint8_t FailReason;
 typedef void (*failfunc_type)(uint8_t reason); //  __attribute__((noreturn));
 
-/// defined in General library as weak, sending stuff to ::vprintf
-/// may be redefined
-int debug_vprintf(const char *format, va_list a);
+/// defined in General library as weak, sending stuff to stderr
+/// Each one calls previous ones, may be redefined at any level
+int debug_putchar(char c);
 int debug_puts(const char *s);
 int debug_puts_free(const char *s, free_func_t free_func);
+int debug_vprintf(const char *format, va_list a);
 
 enum MAJOR_FAIL_REASONS_0 {MEMALLOC = 1,NUM_FAIL_REASONS_0};
 

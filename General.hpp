@@ -7,10 +7,11 @@
 
 #pragma once
 
- /// @cond
+/// @cond
 #include <stdint.h>
 #include <stdarg.h>
 #include "General.h"
+#include "Error.h"
 /// @endcond
 
 #ifdef PRINTF_WRAPPER
@@ -18,10 +19,10 @@
 #endif
 
 /**
-* USAGE
-static PRINTF_WRAPPER(return type, info_printf, vprintf)
+ * USAGE
+ static PRINTF_WRAPPER(return type, info_printf, vprintf)
  __attribute__((format (printf, 1, 2)))
-*/
+ */
 #define PRINTF_WRAPPER(return_type,func_name,vprintf_func) \
  /* __attribute__((format(printf, 1, 2))) */ return_type func_name(const char *fmt, ...) \
     { va_list ap; va_start(ap,fmt); \
@@ -72,7 +73,8 @@ namespace avp {
   // to suppress unused-variable or unused-value
   // volatile auto x = (unused-value-expression);
   // avp::unused(x)
-  template<typename T> void unused(T const &) { }
+  template<typename T> void unused(T const&) {
+  }
 }
 #ifndef NO_STL
 /// @cond
@@ -104,18 +106,23 @@ namespace avp {
     return (x - y) > (WrapValue >> 1);
   } // unsigned_is_smaller
 
-/**
- *@brief restores value of a variable upon getting out of scope
- *
- * @tparam T - variable type
- */
+  /**
+   *@brief restores value of a variable upon getting out of scope
+   *
+   * @tparam T - variable type
+   */
   template<typename T>
   class RestoreOnReturn {
-    const T SavedValue; T *p;
-  public:
-    RestoreOnReturn(T &Var) : SavedValue(Var), p(&Var) { }
-    ~RestoreOnReturn() { *p = SavedValue; }
-  }; // RestoreOnReturn
+    const T SavedValue;
+    T *p;
+    public:
+    RestoreOnReturn(T &Var) : SavedValue(Var), p(&Var) {
+    }
+    ~RestoreOnReturn() {
+      *p = SavedValue;
+    }
+  };
+  // RestoreOnReturn
 
 #define RESTORE_ON_RETURN(x) avp::RestoreOnReturn<decltype(x)> _##__LINE__(x);
 
@@ -123,42 +130,54 @@ namespace avp {
   class Log {
     char Text[Length + 1];
     int L;
-    const char * const Br;
+    const char *const Br;
     const int BrL;
-  public:
-    Log(const char *Break = "<br>") : Text { 0 }, L(0), Br(Break), BrL(strlen(Br)) { }
+    public:
+    Log(const char *Break = "<br>") : Text {0}, L(0), Br(Break), BrL(strlen(Br)) {
+    }
 
-    const char *Get() const { return Text; }
+    const char* Get() const {
+      return Text;
+    }
 
     void Add(const char *s, bool NoBreak = false) {
       int N = strlen(s);
       int SpaceForBreak = NoBreak ? 0 : BrL;
 
-      if(N + SpaceForBreak > Length) Add("New entry is too big!");
+      if (N + SpaceForBreak > Length) Add("New entry is too big!");
       else {
         int Shift = L + N + SpaceForBreak - Length;
 
-        if(Shift > 0) { // overran ReservedSz, got to shift
+        if (Shift > 0) { // overran ReservedSz, got to shift
           const char *pBr = strstr(Text + Shift, Br); // find next break after Shift
 
-          if(pBr != nullptr) {
+          if (pBr != nullptr) {
             pBr += BrL; // step over the last break, we do not need to copy it
             L = Text + L - pBr;
-            for(char *p = Text; p <= Text + L; ++p, ++pBr) *p = *pBr;
+            for (char *p = Text; p <= Text + L; ++p, ++pBr)
+              *p = *pBr;
           } else L = 0;
         }
-        strcpy(Text + L, s); L += N;
-        if(!NoBreak) { strcpy(Text + L, Br); L += BrL; }
+        strcpy(Text + L, s);
+        L += N;
+        if (!NoBreak) {
+          strcpy(Text + L, Br);
+          L += BrL;
+        }
       }
     } // Add
 
-  }; // class Log
+  };
+  // class Log
   /**
-  *
-  */
+   *
+   */
   template<typename T>
   inline void shift_array_left(T *To, std::size_t N, std::size_t By = 1) {
-    while(N--) { *To = *(To + By); ++To; }
+    while (N--) {
+      *To = *(To + By);
+      ++To;
+    }
   } // shift_array_left
 
   constexpr uint16_t CRC16_CCITT_POLY = 0x1021;
@@ -169,12 +188,60 @@ namespace avp {
   class ReleaseWhenOutOfScope {
     const T p;
     void (*ReleaseFunc)(T);
-  public:
-    ReleaseWhenOutOfScope(T p_, void (*ReleaseFunc_)(T)): p(p_), ReleaseFunc(ReleaseFunc_) {}
+    public:
+    ReleaseWhenOutOfScope(T p_, void (*ReleaseFunc_)(T)) : p(p_), ReleaseFunc(ReleaseFunc_) {
+    }
 
-    ~ReleaseWhenOutOfScope() { ReleaseFunc(p); }
+    ~ReleaseWhenOutOfScope() {
+      ReleaseFunc(p);
+    }
 
-    operator T() { return p; }
-  }; // ReleaseWhenOutOfScope
+    operator T() {
+      return p;
+    }
+  };
+// ReleaseWhenOutOfScope
+
+// some libraries use std::cout and std::cerr to report errors, lets have a way to redirect them is necessary
+#if !defined(NO_STL) && defined(REDIRECT_COUT)
+
+#include <istream>
+#include <ostream>
+#include <streambuf>
+#include <iostream>
+
+
+class DebugStreamBuf : public std::streambuf {
+public:
+  DebugStreamBuf() {
+        // Initialize the put area (optional, but good practice)
+        setp(buffer_, buffer_ + sizeof(buffer_));
+        std::cout.rdbuf(this);
+        std::cerr.rdbuf(this);
+    } // constructor
+
+protected:
+    // Called when a character needs to be written
+    int overflow(int c) override {
+        if (c != EOF) {
+            // Write the character to your byte-writing function
+            debug_putchar(static_cast<uint8_t>(c));
+        }
+        return c; // Return the character written (or EOF on error)
+    }
+
+    // Called when the stream is flushed (e.g., std::endl or std::flush)
+    int sync() override {
+        // Optional: Add flushing logic if your destination requires it
+        // For example, flush a serial buffer or ensure data is sent
+        return 0; // Return 0 on success, -1 on failure
+    }
+
+private:
+    // Optional: Small internal buffer to reduce calls to write_byte
+    char buffer_[256]; // Adjust size based on your needs
+};
+#endif
+
 } // avp
 #endif
