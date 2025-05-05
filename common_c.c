@@ -35,10 +35,13 @@ __weak void debug_action() { };
 
 __weak PRINTF_WRAPPER_C(int, debug_printf, debug_vprintf)
 
-__weak void hang_cpu() { while(1); }
+__weak void hang_cpu() { fflush(stderr); while(1); }
 
 __weak void new_handler() { hang_cpu(); }
 
+/*
+ * pointer returned by this function has to be freed after use
+ */
 const char *svprintf_alloc(const char *format, va_list ap) {
   va_list ap_;
   va_copy(ap_, ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
@@ -50,6 +53,11 @@ const char *svprintf_alloc(const char *format, va_list ap) {
   return out; // we do not write ending 0 byte
 } // svprintf_alloc
 
+PRINTF_WRAPPER_C(const char *,sprintf_alloc,svprintf_alloc)
+
+/*
+ * pointer returned by this function should not be freed after use
+ */
 const char *svprintf_static(const char *format, va_list ap) {
   va_list ap_;
   va_copy(ap_, ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
@@ -63,18 +71,15 @@ const char *svprintf_static(const char *format, va_list ap) {
   return out; // we do not write ending 0 byte
 } // string_vprintf
 
-PRINTF_WRAPPER_C(const char *,sprintf_alloc,svprintf_alloc)
 PRINTF_WRAPPER_C(const char *,sprintf_static,svprintf_static)
 
-uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t start) {
-  uint16_t crc = start;
-
+uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly) {
   while(len--) {
     crc ^= ((uint16_t)*(pcBlock++)) << 8;
 
-    for(uint8_t i = 0; i < 8; i++)
-      if((crc & 0x8000) != 0)
-        crc = ((crc ^ 0x8810) << 1) + 1;
+    for(uint8_t i = 0; i < 8; ++i)
+      if(crc & 0x8000)
+        crc = (crc << 1) ^ poly;
       else crc <<= 1;
   }
   return crc;
@@ -82,16 +87,19 @@ uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t start) {
 
 #if __linux__
 
+#include <sys/time.h>
+
 time_t millis() {
-  struct timeval time_now { };
-  gettimeofday(&time_now, nullptr);
-  return (time_now.tv_sec * time_t(1000)) + (time_now.tv_usec / 1000);
+  struct timeval time_now = { };
+  gettimeofday(&time_now, NULL);
+  return (time_now.tv_sec * 1000) + (time_now.tv_usec / 1000);
 } // millis
 
 time_t micros() {
-  struct timeval time_now { };
-  gettimeofday(&time_now, nullptr);
-  return (time_now.tv_sec * time_t(1000000L)) + time_now.tv_usec;
+  struct timeval time_now = { };
+  gettimeofday(&time_now, NULL);
+  return (time_now.tv_sec * 1000000L) + time_now.tv_usec;
 } // micros
+
 #endif
 
