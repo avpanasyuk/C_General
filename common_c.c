@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 /// @endcond
-#include "../C_General/General_C.h"
+#include "../C_General/General.h"
 #include "../C_General/Error.h"
 
 __weak int debug_puts(const char *s) { return fputs(s,stderr); }
