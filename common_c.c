@@ -11,14 +11,22 @@
 #include "../C_General/General.h"
 #include "../C_General/Error.h"
 
-__weak int debug_puts(const char *s) { return fputs(s,stderr); }
+// __weak int debug_puts(const char *s) { return fputs(s,stderr); }
+__weak int debug_putchar(char c) { return fputc(c,stderr); }
+
+__weak int debug_puts(const char *s) {
+  while(*(s++))
+    if(debug_putchar(*(s-1)) == -1)
+      return -1;
+  return 0;
+} // debug_puts
 
 __weak int debug_vprintf(const char *format, va_list a) {
   return debug_puts(svprintf_static(format, a));
 } // debug_vprintf
 
 __weak int debug_puts_free(const char *s, free_func_t free_func) {
-  int out = puts(s);
+  int out = debug_puts(s);
   if(free_func != NULL) free_func((void *)s);
   return out;
 } // debug_puts
