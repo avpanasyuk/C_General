@@ -2,7 +2,8 @@ BasedOnStyle: LLVM
 ColumnLimit: 120
 IndentWidth: 2
 NamespaceIndentation: All
-AllowShortIfStatementsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse 
 AllowShortLoopsOnASingleLine: true
 AllowShortBlocksOnASingleLine: true
 IndentExternBlock: Indent
+PenaltyBreakBeforeFirstCallParameter: 100
