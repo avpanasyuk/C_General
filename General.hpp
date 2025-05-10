@@ -126,49 +126,7 @@ namespace avp {
 
 #define RESTORE_ON_RETURN(x) avp::RestoreOnReturn<decltype(x)> _##__LINE__(x);
 
-  template<int Length>
-  class Log {
-    char Text[Length + 1];
-    int L;
-    const char *const Br;
-    const int BrL;
-    public:
-    Log(const char *Break = "<br>") : Text {0}, L(0), Br(Break), BrL(strlen(Br)) {
-    }
-
-    const char* Get() const {
-      return Text;
-    }
-
-    void Add(const char *s, bool NoBreak = false) {
-      int N = strlen(s);
-      int SpaceForBreak = NoBreak ? 0 : BrL;
-
-      if (N + SpaceForBreak > Length) Add("New entry is too big!");
-      else {
-        int Shift = L + N + SpaceForBreak - Length;
-
-        if (Shift > 0) { // overran ReservedSz, got to shift
-          const char *pBr = strstr(Text + Shift, Br); // find next break after Shift
-
-          if (pBr != nullptr) {
-            pBr += BrL; // step over the last break, we do not need to copy it
-            L = Text + L - pBr;
-            for (char *p = Text; p <= Text + L; ++p, ++pBr)
-              *p = *pBr;
-          } else L = 0;
-        }
-        strcpy(Text + L, s);
-        L += N;
-        if (!NoBreak) {
-          strcpy(Text + L, Br);
-          L += BrL;
-        }
-      }
-    } // Add
-
-  };
-  // class Log
+  
   /**
    *
    */
