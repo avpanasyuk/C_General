@@ -97,8 +97,9 @@ namespace avp {
     @brief we Run called in loop executes function with a given period
      Example:
     void loop() {
-    avp::Periodically<SendData>::Run(1000);
+      avp::Periodically<SendData>::Run(1000);
     }
+      When period is set to 0 the function does not run
 
      @tparam (*Func)()
   */
@@ -106,6 +107,11 @@ namespace avp {
   class Periodically {
     static Time_t NextTime;
    public:
+   /**
+    * @brief when called in the loop runs the function with a given period
+    * @param Period - period in whatever units TickFunction works, Function is
+    *                 not called if Period is 0
+    */
     static void Run(Time_t Period) {
       Time_t Now = TickFunction();
       if(unsigned_is_smaller(NextTime, Now)) {
