@@ -85,7 +85,7 @@ uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t pol
   return crc;
 } // Crc16
 
-#if __linux__
+#if defined(__linux__) && __linux__
 
 #include <sys/time.h>
 

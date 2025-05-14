@@ -14,6 +14,7 @@
 #include <type_traits>
 /// @endcond
 #include "General.hpp"
+#include "millis_micros.hpp"
 
 namespace avp {
   /// !!!! Periods and Delays should not be longer than half of value which fits into typename!

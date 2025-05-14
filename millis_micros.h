@@ -1,7 +1,17 @@
 #pragma once
 
-#include <stdint.h>
+#ifdef ARDUINO
 
-uint32_t millis();
-uint32_t micros();
+#include <Arduino.h> // millis and micros are defined in Arduino.h
+
+#endif
+
+#if defined(__linux__) && __linux__
+
+#include <sys/time.h>
+
+time_t millis();
+time_t micros();
+
+#endif
 

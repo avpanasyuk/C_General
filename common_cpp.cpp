@@ -24,6 +24,12 @@ namespace avp {
            ).count();
   } // millis
 
+  uint32_t micros() {
+    return std::chrono::duration_cast<std::chrono::microseconds>(
+             std::chrono::system_clock::now().time_since_epoch()
+           ).count();
+  } // millis
+
   std::string string_vprintf(const char *format, va_list ap) {
     va_list ap_;
     va_copy(ap_,ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
