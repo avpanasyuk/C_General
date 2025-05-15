@@ -7,3 +7,5 @@ AllowShortLoopsOnASingleLine: true
 AllowShortBlocksOnASingleLine: true
 IndentExternBlock: Indent
 PenaltyBreakBeforeFirstCallParameter: 100
+SpaceAfterControlStatementKeyword: false
+
