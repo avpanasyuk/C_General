@@ -8,4 +8,7 @@ AllowShortBlocksOnASingleLine: true
 IndentExternBlock: Indent
 PenaltyBreakBeforeFirstCallParameter: 100
 SpaceAfterControlStatementKeyword: false
+BreakTemplateDeclarations: Yes
+SpaceAfterTemplateKeyword: false
+
 

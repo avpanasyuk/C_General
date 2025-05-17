@@ -45,13 +45,7 @@ namespace avp {
   } // string_vprintf
 
   PRINTF_WRAPPER(std::string,string_printf,string_vprintf)
-//  std::string string_printf(char const *format, ...) {
-//    va_list ap;
-//    va_start(ap,format);
-//    std::string Out =  string_vprintf(format,ap);
-//    va_end(ap);
-//    return Out;
-//  } // string_printf
+
 #endif
 } // namespace avp
 
