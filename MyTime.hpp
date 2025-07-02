@@ -94,6 +94,44 @@ namespace avp {
     }
   }; // TimePeriod
 
+  //! @tparam Time_t should be unsigned!
+  template<Time_t Period, Time_t (*TickFunction)() = millis>
+  class TimePeriod1 {
+    Time_t NextTime;
+   public:
+    void Reset() {
+      NextTime = TickFunction() + Period;
+    }
+    /**
+      @param Timeout in whatever units TickFunction works
+    */
+    TimePeriod1() { Reset(); }
+    /// just checks whether TimePeriod had passed, does not do reset
+    /// if there is no Reset for too long the counter may wrap over
+    bool JustCheck() const {
+      return unsigned_is_smaller(NextTime, TickFunction());
+    }
+
+    /// if TimePeriod had passed does reset to start a new TimePeriod
+    bool Expired() {
+      bool Out = JustCheck();
+      if(Out) Reset();
+      return Out;
+    } // Passed
+
+    operator Time_t() { return Period; }
+
+    /// Pause with an internal loop
+    static void Pause(Time_t Delay, void (*LoopFunc)()) {
+      TimePeriod Timer(Delay);
+      while(!Timer.Expired()) (*LoopFunc)();
+    } // Pause
+
+    static void Pause(Time_t Delay) {
+      Pause(Delay, []() { });
+    }
+  }; // TimePeriod1
+
   /**
     @brief we Run called in loop executes function with a given period
      Example:
@@ -136,9 +174,22 @@ namespace avp {
     static void Reset() { TP.Reset(); }
   }; // RunPeriodically
 
+/// RunPeriodically may be static class because Func and Period make all of them different
+  template<Time_t(*TickFunction)(), Time_t Period>
+  class RunPeriodically1 {
+    static TimePeriod1<Period, TickFunction> TP;
+   public:
+    static void cycle(void (*Func)()) {
+      if(TP.Expired()) (*Func)();  // cycle
+    }
+    static void Reset() { TP.Reset(); }
+  }; // RunPeriodically
 
-  template<Time_t(*TickFunction)(), void (*Func)(), Time_t Period>
+  template<Time_t (*TickFunction)(), void (*Func)(), Time_t Period>
   TimePeriod<TickFunction> RunPeriodically<TickFunction, Func, Period>::TP(Period);
+
+  template<Time_t (*TickFunction)(), Time_t Period>
+  TimePeriod1<Period,TickFunction> RunPeriodically1<TickFunction, Period>::TP;
 
   typedef class TimePeriod<millis> Millisec;
   // typedef class TimePeriod<micros> Microsec;
