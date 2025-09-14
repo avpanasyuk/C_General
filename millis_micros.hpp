@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdint.h>
-#include "millis_micros.h"
 
 #ifndef NO_STL
 #include <chrono>
