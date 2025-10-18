@@ -81,7 +81,7 @@ namespace avp {
       return Out;
     } // Passed
 
-    operator Time_t&() { return Period; }
+    explicit operator Time_t&() { return Period; }
 
     /// Pause with an internal loop
     static void Pause(Time_t Delay, void (*LoopFunc)()) {
