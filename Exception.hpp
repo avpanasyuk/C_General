@@ -1,40 +1,47 @@
 #ifndef EXCEPTION_H
 #define EXCEPTION_H
 
+#include "General.hpp"
+#include <cstdarg>
 #include <exception>
 #include <string>
-#include <cstdarg>
-#include "General.h"
+
 
 namespace avp {
-  class Exception: public std::exception {
-      std::string err_text;
-    public:
-      Exception(const char *file, unsigned int line, const char *func_name)  {
-        err_text = string_printf("Error in %s of file %s at line %d!\n",
-                                 func_name, file, line);
+  class Exception : public std::exception {
+    std::string err_text;
 
-      } // constructor
+  public:
+    Exception(const std::string &s) : err_text(s) {}
 
-      Exception(const char *file, unsigned int line, const char *func_name,
-                const char *format, ...) {
-        va_list ap;
-        va_start(ap,format);
-        err_text = string_printf("Error in function \"%s\" of file \"%s\" at line %d: ",
-                                 func_name, file, line) + string_vprintf(format,ap);
-        va_end(ap);
-      } // constructor
+    Exception(const char *file, unsigned int line, const char *func_name) {
+      err_text = string_printf("Error in %s of file %s at line %d!\n", func_name, file, line);
 
-      virtual const char* what() const noexcept {
-          return err_text.c_str();
-      } //
+    } // constructor
+
+    Exception(const char *file, unsigned int line, const char *func_name, const char *format, ...) {
+      va_list ap;
+      va_start(ap, format);
+      err_text = string_printf("Error in function \"%s\" of file \"%s\" at line %d: ", func_name, file, line) +
+                 string_vprintf(format, ap);
+      va_end(ap);
+    } // constructor
+
+    virtual const std::string &message() const noexcept { return err_text; }
+
+    virtual const char *what() const noexcept { return message().c_str(); }
+
   }; // Exception
-}
+} // namespace avp
 
-#define THROW_EXC  throw avp::Exception(__FILE__,__LINE__,__PRETTY_FUNCTION__)
-#define THROW_EXC_PRINTF(format, ...) \
-   throw avp::Exception(__FILE__,__LINE__,__PRETTY_FUNCTION__,format,##__VA_ARGS__)
+#define THROW_EXC throw avp::Exception(__FILE__, __LINE__, __PRETTY_FUNCTION__)
+#define THROW_EXC_STR(str)                                                                                  \
+  throw avp::Exception(__FILE__, __LINE__, __PRETTY_FUNCTION__, str)
+#define THROW_EXC_PRINTF(format, ...)                                                                                  \
+  throw avp::Exception(__FILE__, __LINE__, __PRETTY_FUNCTION__, format, ##__VA_ARGS__)
 
-#define AVP_ASSERT(exp) do{ if(!(exp)) \
-{ THROW_EXC_PRINTF("Expression (" #exp ") is false!\n"); }}while(0)
+#define THROW_ASSERT(exp)                                                                                                \
+  do {                                                                                                                 \
+    if(!(exp)) { THROW_EXC_PRINTF("Expression (" #exp ") is false!\n"); }                                              \
+  } while(0)
 #endif // EXCEPTION_H
