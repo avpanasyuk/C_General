@@ -19,13 +19,13 @@ namespace avp {
 
 #ifndef NO_STL
   uint32_t millis() {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(
+    return (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::system_clock::now().time_since_epoch()
            ).count();
   } // millis
 
   uint32_t micros() {
-    return std::chrono::duration_cast<std::chrono::microseconds>(
+    return (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(
              std::chrono::system_clock::now().time_since_epoch()
            ).count();
   } // millis

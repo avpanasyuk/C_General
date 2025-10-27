@@ -48,6 +48,16 @@ or reenterable! Use std::string(AVP_ERROR_STR(...)) to make it better or better 
   "Failed to snprintf error message, format = " format " !":AVP_ErrorMsgBuffer)
 #endif
 
+/// defined in General library as weak, sending stuff to stderr
+/// Each one calls previous ones, may be redefined at any level
+int debug_putchar(char c);
+int debug_puts(const char *s);
+int debug_puts_free(const char *s, free_func_t free_func);
+int debug_vprintf(const char *format, va_list a);
+int debug_printf(const char *format, ...);
+void hang_cpu();     //  __attribute__((noreturn));
+void debug_action(); // if we want to debug something in General lib in primitive way
+
 #ifdef __GNUC__
 #ifdef __cplusplus
 extern "C" {
@@ -55,24 +65,14 @@ extern "C" {
 
 typedef void (*free_func_t)(void *);
 
-int debug_printf(const char *format, ...);
 #define DEBUG_OUT do{ debug_printf("%s: %d\n", __PRETTY_FUNCTION__, __LINE__); }while(0)
 
 extern volatile uint8_t FailReason;
 typedef void (*failfunc_type)(uint8_t reason); //  __attribute__((noreturn));
 
-/// defined in General library as weak, sending stuff to stderr
-/// Each one calls previous ones, may be redefined at any level
-int debug_putchar(char c);
-int debug_puts(const char *s);
-int debug_puts_free(const char *s, free_func_t free_func);
-int debug_vprintf(const char *format, va_list a);
-
 enum MAJOR_FAIL_REASONS_0 {MEMALLOC = 1,NUM_FAIL_REASONS_0};
 
 void major_fail(uint8_t reason) __attribute__((noreturn));
-void hang_cpu(); //  __attribute__((noreturn));
-void debug_action(); // if we want to debug something in General lib in primitive way
 // we can redefine this function (it is defined in common_cpp as a __weak  empty function)
 // and call it from everywhere.
 void new_handler(); //  __attribute__((noreturn)); // NOTE! got to be installed on startup with std::set_new_handler(avp::new_handler);
