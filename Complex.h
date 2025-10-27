@@ -11,6 +11,9 @@
 
 #include <cmath>
 
+#if defined(__ARM_FP)
+#include <arm_math.h>#endif
+
 namespace avp {
   template<typename T = float>
   struct Complex {
@@ -32,7 +35,22 @@ namespace avp {
     const Complex &conj() { Imag = - Imag; return *this; }
 
     T abs_sqr() const { return Real*Real + Imag*Imag; }
-    T abs() const { float t; sqrt(abs_sqr(), &t); return t;}
+
+#if defined(__ARM_FP)
+    static inline T sqrt(T x) { float32_t t; arm_sqrt_f32(x, &t); return t; }
+#endif
+    T abs() const { return sqrt(abs_sqr()); }
+
+    T sin_phase() const {
+      auto Out = sqrt(1.f/(1.f+sqr(Real/Imag)));
+      return Imag >= 0 ?Out:-Out;
+    } // sin_phase
+
+    T cos_phase() const {
+      auto s = sqr(Real);
+      auto Out = sqrt(s/(s+sqr(Imag)));
+      return Real >= 0 ?Out:-Out;
+    } // cos_phase
 
     const Complex &operator+= (const Complex &a2) {
       Real += a2.Real;
@@ -59,10 +77,11 @@ namespace avp {
     }  // conj
 
 
+
 // FOllowing are binary operators as friends
 #define BINARY_OP_FROM_SELF(op) \
-inline friend Complex operator op (const Complex &x1, const Complex &x2) \
-{ return Complex(x1) op##= x2; }
+  inline friend Complex operator op (const Complex &x1, const Complex &x2) \
+  { return Complex(x1) op##= x2; }
 
     BINARY_OP_FROM_SELF(-)
     BINARY_OP_FROM_SELF(+)
