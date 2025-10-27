@@ -368,7 +368,7 @@ namespace avp {
    */
   __PORT_TEMPLATE__ struct  PortBlockTX: public _TEMPLATE_SPEC_ {
     static void Init() {
-      HW_IO_::Init(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetBlockToSend);
+      HW_IO_::SetCallBacks(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetBlockToSend);
     }
   }; //  PortBlockTX
 

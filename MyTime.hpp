@@ -19,10 +19,8 @@
 #include <ctime>
 
 /// @endcond
-#include "General.h"
-
-extern "C" uint32_t millis();
-extern "C" uint32_t micros();
+#include "General.hpp"
+#include "millis_micros.hpp"
 
 namespace avp {
   /// !!!! Periods and Delays should not be longer than half of value which fits into typename!
@@ -102,12 +100,51 @@ namespace avp {
     }
   }; // TimePeriod
 
+  //! @tparam Time_t should be unsigned!
+  template<Time_t Period, Time_t (*TickFunction)() = millis>
+  class TimePeriod1 {
+    Time_t NextTime;
+   public:
+    void Reset() {
+      NextTime = TickFunction() + Period;
+    }
+    /**
+      @param Timeout in whatever units TickFunction works
+    */
+    TimePeriod1() { Reset(); }
+    /// just checks whether TimePeriod had passed, does not do reset
+    /// if there is no Reset for too long the counter may wrap over
+    bool JustCheck() const {
+      return unsigned_is_smaller(NextTime, TickFunction());
+    }
+
+    /// if TimePeriod had passed does reset to start a new TimePeriod
+    bool Expired() {
+      bool Out = JustCheck();
+      if(Out) Reset();
+      return Out;
+    } // Passed
+
+    operator Time_t() { return Period; }
+
+    /// Pause with an internal loop
+    static void Pause(Time_t Delay, void (*LoopFunc)()) {
+      TimePeriod Timer(Delay);
+      while(!Timer.Expired()) (*LoopFunc)();
+    } // Pause
+
+    static void Pause(Time_t Delay) {
+      Pause(Delay, []() { });
+    }
+  }; // TimePeriod1
+
   /**
     @brief we Run called in loop executes function with a given period
      Example:
     void loop() {
-    avp::Periodically<SendData>::Run(1000);
+      avp::Periodically<SendData>::Run(1000);
     }
+      When period is set to 0 the function does not run
 
      @tparam (*Func)()
   */
@@ -115,6 +152,11 @@ namespace avp {
   class Periodically {
     static Time_t NextTime;
    public:
+   /**
+    * @brief when called in the loop runs the function with a given period
+    * @param Period - period in whatever units TickFunction works, Function is
+    *                 not called if Period is 0
+    */
     static void Run(Time_t Period) {
       Time_t Now = TickFunction();
       if(unsigned_is_smaller(NextTime, Now)) {
@@ -138,12 +180,25 @@ namespace avp {
     static void Reset() { TP.Reset(); }
   }; // RunPeriodically
 
+/// RunPeriodically may be static class because Func and Period make all of them different
+  template<Time_t(*TickFunction)(), Time_t Period>
+  class RunPeriodically1 {
+    static TimePeriod1<Period, TickFunction> TP;
+   public:
+    static void cycle(void (*Func)()) {
+      if(TP.Expired()) (*Func)();  // cycle
+    }
+    static void Reset() { TP.Reset(); }
+  }; // RunPeriodically
 
-  template<Time_t(*TickFunction)(), void (*Func)(), Time_t Period>
+  template<Time_t (*TickFunction)(), void (*Func)(), Time_t Period>
   TimePeriod<TickFunction> RunPeriodically<TickFunction, Func, Period>::TP(Period);
 
+  template<Time_t (*TickFunction)(), Time_t Period>
+  TimePeriod1<Period,TickFunction> RunPeriodically1<TickFunction, Period>::TP;
+
   typedef class TimePeriod<millis> Millisec;
-  typedef class TimePeriod<micros> Microsec;
+  // typedef class TimePeriod<micros> Microsec;
   // typedef class avp::TimePeriod<CPU_Ticks> CPU_Tick;
   
   std::string getCurrentTimeFormatted(const char *Format) {

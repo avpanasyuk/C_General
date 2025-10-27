@@ -5,7 +5,7 @@
  *      Author: panasyuk
  */
 
-#include <arm_math.h>
+#include <memory.h>
 #include "sort_and_median.h"
 
 static int MaxSizeInsertionSortIsBetter = 30; // we have to do a study and select this number. OK, 30 is about optimal,
@@ -22,16 +22,16 @@ void merge_sort(float *p, int N) {
     while(pc < comb + N) {
       *(pc++) = *pa < *pb ? *(pa++) : *(pb++);
       if(pa == p + N1) { // we ran out of A, so just copy the remnant of B
-        arm_copy_f32(pb, pc, p + N - pb);
+        memcpy(pc, pb, (p + N - pb)*sizeof(float));
         break;
       }
       if(pb == p + N) { // we ran out of B, so just copy the remnant of A
-        arm_copy_f32(pa, pc, p + N1 - pa);
+        memcpy(pc, pa, (p + N1 - pa)*sizeof(float));
         break;
       }
     }
     // copy back to input vector
-    arm_copy_f32(comb, p, N);
+    memcpy(p, comb, N*sizeof(float));
   }
 } // merge_sort
 

@@ -1,9 +1,9 @@
 /**
   * @file ../C_General/Error.h
   * @author Alexander Panasyuk
-  * @note - to use MACROS you have to properly implement "avp::debug_vprintf".
-  * it is weakly linked in service.c as an output to stderr which often does
-  * not work
+  * @note - to use MACROS you have to properly implement
+  * extern "C" int debug_puts(const char *s)".
+  * it is weakly linked in common_c.c as an output to stderr
   * @note AVP_ASSERT in Release built DOES NOT CHECK EXPRESSION!
   * you can define debug output printf style function name be defining
   * DEBUG_PRINTF before including this file
@@ -17,6 +17,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 /// @endcond
+#include "General.h"
 #include "Macros.h"
 
 #ifdef _MSC_VER
@@ -24,17 +25,22 @@
 #endif
 
 #ifndef AVP_ERROR_MSG_BUFFER_SZ
-#define AVP_ERROR_MSG_BUFFER_SZ 2000
+#define AVP_ERROR_MSG_BUFFER_SZ 255
 #endif
 
 #ifdef __cplusplus
-extern "C" 
+extern "C"
 #endif
-char AVP_ErrorMsgBuffer[AVP_ERROR_MSG_BUFFER_SZ];
+char AVP_ErrorMsgBuffer[AVP_ERROR_MSG_BUFFER_SZ + 1];
 
+/**
+@note AVP_ERROR_STR is using global variable AVP_ErrorMsgBuffer, so it is not thread safe
+or reenterable! Use std::string(AVP_ERROR_STR(...)) to make it better or better avp::string_[v]printf
+@note "format" can be a literal string only !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+*/
 #if defined(_MSC_VER) && defined(_DEBUG) || defined(__GNUC__) && defined(DEBUG)
 #define AVP_ERROR_STR(format,...) (snprintf(AVP_ErrorMsgBuffer, AVP_ERROR_MSG_BUFFER_SZ, \
-  "In '%s', file '" __FILE__ "', line %u: " ## format, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__) < 0? \
+  format " in '%s', file '" __FILE__ "', line %u: " , __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__) < 0? \
   "Failed to snprintf error message in '" __FILE__ "'!":AVP_ErrorMsgBuffer)
 #else
 #define AVP_ERROR_STR(format,...) (snprintf(AVP_ErrorMsgBuffer, AVP_ERROR_MSG_BUFFER_SZ, \
@@ -55,11 +61,12 @@ int debug_printf(const char *format, ...);
 extern volatile uint8_t FailReason;
 typedef void (*failfunc_type)(uint8_t reason); //  __attribute__((noreturn));
 
-/// defined in General library as weak, sending stuff to ::vprintf
-/// may be redefined
-int debug_vprintf(const char *format, va_list a);
+/// defined in General library as weak, sending stuff to stderr
+/// Each one calls previous ones, may be redefined at any level
+int debug_putchar(char c);
 int debug_puts(const char *s);
 int debug_puts_free(const char *s, free_func_t free_func);
+int debug_vprintf(const char *format, va_list a);
 
 enum MAJOR_FAIL_REASONS_0 {MEMALLOC = 1,NUM_FAIL_REASONS_0};
 
@@ -102,15 +109,15 @@ void new_handler(); //  __attribute__((noreturn)); // NOTE! got to be installed 
     { AVP_ERROR(#exp " is false: " format "\n", ##__VA_ARGS__); }}while(0)
 
 #define ASSERT_BEING_0(exp,...) AVP_ASSERT((exp) == 0, ##__VA_ARGS__)
+
+#define AVP_ASSERT_RETURN_STR(exp) do{ if(!(exp)) \
+    { return AVP_ERROR_STR(#exp " is false"); }}while(0)
+
 // #endif
 IGNORE_WARNING(-Wunused-value)
 #endif // __GNUC__
 
-#if defined(USE_EXCEPTIONS) && USE_EXCEPTIONS != 0
 
-#define AVP_THROW(exception,format,...) do{ throw exception(AVP_ERROR_STR(format,  ##__VA_ARGS__)); } while(0)
-
-#endif
 
 
 
