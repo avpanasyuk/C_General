@@ -46,7 +46,9 @@ namespace avp {
     bool IsSet;
     Time_t End;
    public:
-    TimeInterval(): IsSet(false) {}
+    TimeInterval(Time_t Interval = 0) : IsSet(false) {
+       if(Interval) Start(Interval);
+    }
 
     void Start(Time_t Interval) {
       End = TickFunction() + Interval;

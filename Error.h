@@ -40,7 +40,7 @@ or reenterable! Use std::string(AVP_ERROR_STR(...)) to make it better or better 
 */
 #if defined(_MSC_VER) && defined(_DEBUG) || defined(__GNUC__) && defined(DEBUG)
 #define AVP_ERROR_STR(format,...) (snprintf(AVP_ErrorMsgBuffer, AVP_ERROR_MSG_BUFFER_SZ, \
-  format " in '%s', file '" __FILE__ "', line %u: " , __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__) < 0? \
+  " in '%s', file '" __FILE__ "', line %u: " format, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__) < 0? \
   "Failed to snprintf error message in '" __FILE__ "'!":AVP_ErrorMsgBuffer)
 #else
 #define AVP_ERROR_STR(format,...) (snprintf(AVP_ErrorMsgBuffer, AVP_ERROR_MSG_BUFFER_SZ, \
