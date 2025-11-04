@@ -67,11 +67,14 @@ namespace avp {
     /**
       @param Timeout in whatever units TickFunction works
     */
-    TimePeriod(Time_t Timeout) :Period(Timeout) { Reset(); }
+    TimePeriod(Time_t Timeout, bool Expired = false) :Period(Timeout) { 
+      if(Expired) NextTime = TickFunction(); else Reset(); 
+    }
     /// just checks whether TimePeriod had passed, does not do reset
     /// if there is no Reset for too long the counter may wrap over
     bool JustCheck() const {
-      return unsigned_is_smaller(NextTime, TickFunction());
+      auto t = TickFunction();
+      return (NextTime == t) || unsigned_is_smaller(NextTime, t);
     }
 
     /// if TimePeriod had passed does reset to start a new TimePeriod
