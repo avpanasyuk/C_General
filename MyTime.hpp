@@ -12,6 +12,12 @@
 #include <stdint.h>
 #include <limits.h>
 #include <type_traits>
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <iomanip>
+#include <ctime>
+
 /// @endcond
 #include "General.hpp"
 #include "millis_micros.hpp"
@@ -40,7 +46,9 @@ namespace avp {
     bool IsSet;
     Time_t End;
    public:
-    TimeInterval(): IsSet(false) {}
+    TimeInterval(Time_t Interval = 0) : IsSet(false) {
+       if(Interval) Start(Interval);
+    }
 
     void Start(Time_t Interval) {
       End = TickFunction() + Interval;
@@ -194,5 +202,20 @@ namespace avp {
   typedef class TimePeriod<millis> Millisec;
   // typedef class TimePeriod<micros> Microsec;
   // typedef class avp::TimePeriod<CPU_Ticks> CPU_Tick;
+  
+  std::string getCurrentTimeFormatted(const char *Format) {
+    // Get current time
+    std::time_t now = std::time(nullptr);
+
+    // Convert to local time
+    std::tm *timeinfo = std::localtime(&now);
+
+    // Format using ostringstream and put_time
+    std::ostringstream oss;
+    oss << std::put_time(timeinfo, Format);
+
+    return oss.str();
+  } // getCurrentTimeFormatted
+
 }; // namespace avp
 
