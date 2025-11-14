@@ -1,14 +1,24 @@
 BasedOnStyle: LLVM
-ColumnLimit: 120
+BreakBeforeBraces: Attach
+ColumnLimit: 0
 IndentWidth: 2
 NamespaceIndentation: All
 AllowShortIfStatementsOnASingleLine: AllIfsAndElse 
 AllowShortLoopsOnASingleLine: true
 AllowShortBlocksOnASingleLine: true
+AllowShortFunctionsOnASingleLine: true
+AllowShortLambdasOnASingleLine: None
 IndentExternBlock: Indent
 PenaltyBreakBeforeFirstCallParameter: 100
 SpaceAfterControlStatementKeyword: false
 BreakTemplateDeclarations: Yes
 SpaceAfterTemplateKeyword: false
+SortIncludes: Never
+IncludeBlocks: Preserve
+BinPackArguments: false
+AllowAllArgumentsOnNextLine: true
+AlignAfterOpenBracket: DontAlign 
+ContinuationIndentWidth: 2
+
 
 
