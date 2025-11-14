@@ -20,7 +20,6 @@
 
 /// @endcond
 #include "General.hpp"
-#include "millis_micros.hpp"
 
 namespace avp {
   /// !!!! Periods and Delays should not be longer than half of value which fits into typename!
@@ -203,19 +202,7 @@ namespace avp {
   // typedef class TimePeriod<micros> Microsec;
   // typedef class avp::TimePeriod<CPU_Ticks> CPU_Tick;
   
-  std::string getCurrentTimeFormatted(const char *Format) {
-    // Get current time
-    std::time_t now = std::time(nullptr);
-
-    // Convert to local time
-    std::tm *timeinfo = std::localtime(&now);
-
-    // Format using ostringstream and put_time
-    std::ostringstream oss;
-    oss << std::put_time(timeinfo, Format);
-
-    return oss.str();
-  } // getCurrentTimeFormatted
+  std::string getCurrentTimeFormatted(const char *Format);
 
 }; // namespace avp
 

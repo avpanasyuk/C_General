@@ -11,7 +11,9 @@
 
 #include "General.hpp"
 #include "millis_micros.hpp"
+#include "MyTime.hpp"
 
+#ifndef NO_STL
 uint32_t millis() {
   return (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::system_clock::now().time_since_epoch())
@@ -23,12 +25,13 @@ uint32_t micros() {
              std::chrono::system_clock::now().time_since_epoch())
       .count();
 } // millis
-
+#endif
 namespace avp {
   uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly) {
     return ::Crc16(pcBlock, len, crc, poly);
   }
 
+#ifndef NO_STL
   std::string string_vprintf(const char *format, va_list ap) {
     va_list ap_;
     va_copy(ap_, ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
@@ -44,6 +47,22 @@ namespace avp {
   } // string_vprintf
 
   PRINTF_WRAPPER(std::string, string_printf, string_vprintf)
+  
+    std::string getCurrentTimeFormatted(const char *Format) {
+    // Get current time
+    std::time_t now = std::time(nullptr);
+
+    // Convert to local time
+    std::tm *timeinfo = std::localtime(&now);
+
+    // Format using ostringstream and put_time
+    std::ostringstream oss;
+    oss << std::put_time(timeinfo, Format);
+
+    return oss.str();
+  } // getCurrentTimeFormatted
+
+#endif
 } // namespace avp
 
 // #include <stdlib.h>

@@ -48,6 +48,10 @@ or reenterable! Use std::string(AVP_ERROR_STR(...)) to make it better or better 
   "Failed to snprintf error message, format = " format " !":AVP_ErrorMsgBuffer)
 #endif
 
+#ifdef __GNUC__
+#ifdef __cplusplus
+extern "C" {
+#endif
 /// defined in General library as weak, sending stuff to stderr
 /// Each one calls previous ones, may be redefined at any level
 int debug_putchar(char c);
@@ -57,11 +61,6 @@ int debug_vprintf(const char *format, va_list a);
 int debug_printf(const char *format, ...);
 void hang_cpu();     //  __attribute__((noreturn));
 void debug_action(); // if we want to debug something in General lib in primitive way
-
-#ifdef __GNUC__
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 typedef void (*free_func_t)(void *);
 
