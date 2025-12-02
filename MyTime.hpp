@@ -36,6 +36,7 @@ namespace avp {
     }
     void Start() { When = TickFunction() + Interval; Active = true; }
     void Stop() { Active = false; }
+    bool IsActive() const { return Active; }
   }; // StartableTimeOut
 
   template<Time_t (*TickFunction)() = millis>
