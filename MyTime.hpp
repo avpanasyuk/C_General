@@ -21,19 +21,33 @@ namespace avp {
   typedef decltype(millis()) Time_t;
   static_assert(std::is_unsigned<Time_t>::value, "Time_t should be unsigned!");
 
-  /**
-     Using: avp::Timeout<> Time_t; while(something) { if(Time_t) { error('Timed out!); break; }}
-     @tparam TickFunction, millis() by default
-  */
+  template<Time_t Interval, Time_t (*TickFunction)() = millis>
+  class StartableTimeOut {
+    Time_t When;
+    bool Active;
+   public:
+    StartableTimeOut(bool DoStart = false):Active(false) { if(DoStart) Start(); }
+    operator bool() {
+      if(Active && unsigned_is_smaller(When, TickFunction())) {
+        Active = false;
+        return true;  // true when expired
+      }
+      return false;
+    }
+    void Start() { When = TickFunction() + Interval; Active = true; }
+    void Stop() { Active = false; }
+  }; // StartableTimeOut
+
   template<Time_t (*TickFunction)() = millis>
   class TimeOut {
     const Time_t When;
    public:
-    TimeOut(Time_t Timeout) : When(TickFunction() + Timeout) { }
+    TimeOut(Time_t Timeout):When(TickFunction() + Timeout) {}
     operator bool() const {
       return unsigned_is_smaller(When, TickFunction());  // true when expired
     }
   }; // TimeOut
+
 
   template<Time_t (*TickFunction)() = millis>
   class TimeInterval {
