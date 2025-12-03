@@ -9,5 +9,6 @@ IndentExternBlock: Indent
 PenaltyBreakBeforeFirstCallParameter: 100
 SpaceAfterControlStatementKeyword: false
 SpaceAfterTemplateKeyword: false
+SortIncludes: false
 
 

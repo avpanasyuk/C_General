@@ -4,11 +4,12 @@
 
 #define FOR_ARRAY(array,ptr)     for(auto ptr = array; ptr < AFTER_LAST(array); ++ptr)
 
-/// creates a class to be precise alias of another class
+/// creates a class to be precise alias of another class, e.g. for catch
+/// problem arises if parent is specified with namespace, it does not work
+/// just do it manually.
 #define PURE_CHILD(class_name,parent) \
 struct class_name: public parent { \
-    template<typename... Types> \
-    class_name(Types... args) : parent(args...) {}  \
+  using parent::parent; \
 };
 
 /// corresponding binary operator should be defined in advance
