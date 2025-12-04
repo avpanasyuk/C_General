@@ -119,12 +119,14 @@ namespace avp {
       avp::Periodically<SendData>::Run(1000);
     }
       When period is set to 0 the function does not run
+      Func gotta be a template parameter as there is no other way 
+      to differenciate generated classes otherwise
 
      @tparam (*Func)()
   */
   template<void (*Func)(), Time_t(*TickFunction)() = millis>
   class Periodically {
-    static Time_t NextTime;
+    static inline Time_t NextTime = TickFunction();
    public:
    /**
     * @brief when called in the loop runs the function with a given period
@@ -139,9 +141,6 @@ namespace avp {
       }
     } // Run
   }; // Periodically
-
-  template<void (*Func)(), Time_t(*TickFunction)()>
-  Time_t Periodically<Func, TickFunction>::NextTime = TickFunction();
 
   /// RunPeriodically may be static class because Func and Period make all of them different
   template<Time_t(*TickFunction)(), void (*Func)(), Time_t Period>
