@@ -12,12 +12,51 @@
 #include "Error.h"
 
 // __weak int debug_puts(const char *s) { return fputs(s,stderr); }
-__weak int debug_putchar(char c) { return fputc(c,stderr); }
+#ifdef _MSC_VER
 
-__weak int debug_puts(const char *s) {
+#pragma comment(linker, "/alternatename:debug_putchar=debug_putchar_default")
+int debug_putchar_default(char c) { return fputc(c,stderr); }
+
+#pragma comment(linker, "/alternatename:debug_puts=debug_puts_default")
+int debug_puts_default(const char *s) {
   while(*(s++))
     if(debug_putchar(*(s-1)) == -1)
       return -1;
+  return 0;
+} // debug_puts
+
+#pragma comment(linker, "/alternatename:debug_vprintf=debug_vprintf_default")
+int debug_vprintf_default(const char *format, va_list a) {
+  return debug_puts(svprintf_static(format, a));
+} // debug_vprintf
+
+#pragma comment(linker, "/alternatename:debug_puts_free=debug_puts_free_default")
+int debug_puts_free_default(const char *s, free_func_t free_func) {
+  int out = debug_puts(s);
+  if(free_func != NULL) free_func((void *)s);
+  return out;
+} // debug_puts
+
+#pragma comment(linker, "/alternatename:debug_action=debug_action_default")
+void debug_action_default() {};
+
+#pragma comment(linker, "/alternatename:debug_printf=debug_printf_default")
+PRINTF_WRAPPER_C(int, debug_printf_default, debug_vprintf)
+
+#pragma comment(linker, "/alternatename:hang_cpu=hang_cpu_default")
+void hang_cpu_default() {
+  fflush(stderr);
+  while(1);
+}
+
+#pragma comment(linker, "/alternatename:new_handler=new_handler_default")
+void new_handler_default() { hang_cpu(); }
+#else
+__weak int debug_putchar(char c) { return fputc(c, stderr); }
+
+__weak int debug_puts(const char *s) {
+  while(*(s++))
+    if(debug_putchar(*(s - 1)) == -1) return -1;
   return 0;
 } // debug_puts
 
@@ -31,13 +70,17 @@ __weak int debug_puts_free(const char *s, free_func_t free_func) {
   return out;
 } // debug_puts
 
-__weak void debug_action() { };
+__weak void debug_action() {};
 
 __weak PRINTF_WRAPPER_C(int, debug_printf, debug_vprintf)
 
-__weak void hang_cpu() { fflush(stderr); while(1); }
+__weak void hang_cpu() {
+  fflush(stderr);
+  while(1);
+}
 
 __weak void new_handler() { hang_cpu(); }
+#endif
 
 /*
  * pointer returned by this function has to be freed after use

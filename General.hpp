@@ -86,14 +86,17 @@
    } // unsigned_is_smaller
   } // namespace avp
 
- #ifndef NO_STL
+ 
+ namespace avp {
+ 
+  #ifndef NO_STL
  /// @cond
  #include <string>
  /// @endcond
- 
- namespace avp {
    std::string string_vprintf(const char *format, va_list a) __attribute__((format(printf, 1, 0)));
    std::string string_printf(char const *format, ...) __attribute__((format(printf, 1, 2)));
+ 
+   #endif
  
    /// this function is for comparison two relatively close unsigned values of the same type in case larger of them  wraps
    /// and we want to consider wrapped value to be still "larger" than the other one. Literal comparison does not work
@@ -141,8 +144,7 @@
  
    constexpr uint16_t CRC16_CCITT_POLY = 0x1021;
    uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc = 0xFFFF, uint16_t poly = CRC16_CCITT_POLY);
-   uint32_t millis();
- 
+   
    template<typename T>
    class ReleaseWhenOutOfScope {
      const T p;
@@ -203,5 +205,5 @@
  #endif
  
  } // avp
- #endif
+
  
