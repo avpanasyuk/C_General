@@ -1,10 +1,9 @@
 #pragma once
 
 #include <stdlib.h>
-#include <arm_math.h>
 #include <initializer_list>
 #include <limits>
-#include "Error.h"
+#include "Error.hpp"
 
 namespace avp {
   /** Vector class with reference counting and automatic extension by a factor of two
@@ -22,7 +21,7 @@ namespace avp {
     * This class never decreases memory pointer by "p".
     */
     struct PtrWithRefCnt_ {
-      T* p; //< nevel nullptr, always at least one element allocated
+      T* p; ///< nevel nullptr, always at least one element allocated
       size_t Allocated, Used, RefN;
 
       PtrWithRefCnt_(size_t reserve): Used(0), RefN(1) { p = new T[Allocated = MAX(reserve,1)]; }

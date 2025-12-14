@@ -10,6 +10,8 @@ namespace avp {
   class Exception: public std::exception {
       std::string err_text;
     public:
+    Exception(const std::string &s) : err_text(s) {}
+
       Exception(const char *file, unsigned int line, const char *func_name)  {
         err_text = string_printf("Error in %s of file %s at line %d!\n",
                                  func_name, file, line);
@@ -25,13 +27,16 @@ namespace avp {
         va_end(ap);
       } // constructor
 
-      virtual const char* what() const noexcept {
-          return err_text.c_str();
-      } //
+    virtual const std::string &message() const noexcept { return err_text; }
+
+    virtual const char *what() const noexcept { return message().c_str(); }
+
   }; // Exception
-}
+} // namespace avp
 
 #define THROW_EXC  throw avp::Exception(__FILE__,__LINE__,__PRETTY_FUNCTION__)
+#define THROW_EXC_STR(str)                                                                                  \
+  throw avp::Exception(__FILE__, __LINE__, __PRETTY_FUNCTION__, str)
 #define THROW_EXC_PRINTF(format, ...) \
    throw avp::Exception(__FILE__,__LINE__,__PRETTY_FUNCTION__,format,##__VA_ARGS__)
 
