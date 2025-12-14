@@ -16,13 +16,13 @@
 #endif
 
 #ifdef ESP8266
-uint32_t micros() {
-    return system_get_time();
-}
+// uint32_t micros() {
+//     return system_get_time();
+// }
 
-uint32_t millis() {
-    return system_get_time() / 1000;
-}
+// uint32_t millis() {
+//     return system_get_time() / 1000;
+// }
 #endif
 
 #ifndef NO_STL
