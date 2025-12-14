@@ -52,6 +52,6 @@
 
 #if defined(USE_EXCEPTIONS) && USE_EXCEPTIONS != 0
 
-#define AVP_THROW(exception,format,...) do{ throw exception(AVP_ERROR_STR(format,  ##__VA_ARGS__)); } while(0)
+#define AVP_THROW(exception,format,...) do{ throw exception(AVP_DEBUG_PRINTF(format,  ##__VA_ARGS__)); } while(0)
 
 #endif
