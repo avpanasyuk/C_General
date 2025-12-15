@@ -32,18 +32,14 @@ extern "C"
   defined(__GNUC__) && defined(DEBUG) ||     \
   defined(DEBUG_LEVEL) && DEBUG_LEVEL
 
-#define AVP_DEBUG_PRINTF(format, ...)                                        \
-  do { debug_print(" in '%s', file '" __FILE__ "', line %u: " format, \
-  __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__) < 0? \
-  "Failed to snprintf error message in '" __FILE__ "'!":AVP_ErrorMsgBuffer); \
-  } while(0)
+#define AVP_DEBUG_PRINTF(format, ...) \
+  do { debug_printf(" in '%s', file '" __FILE__ "', line %u: " format, \
+  __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);} while(0)
 
 #else
 
-#define AVP_DEBUG_PRINTF(format, ...)                                            \
-  do { debug_print(format, ##__VA_ARGS__) < 0? \
-  "Failed to snprintf error message, format = " format " !":AVP_ErrorMsgBuffer); \
-  } while(0)
+#define AVP_DEBUG_PRINTF(format, ...) \
+  do { debug_printf(format, ##__VA_ARGS__); } while(0)
 
 #endif
 
@@ -66,13 +62,7 @@ extern "C"
 #define DEBUG_LINE_NUM \
   do { debug_printf("%s: %d\n", __PRETTY_FUNCTION__, __LINE__); } while(0)
 
-  extern volatile uint8_t FailReason;
-  typedef void (*failfunc_type)(uint8_t reason); //  __attribute__((noreturn));
-
-  enum MAJOR_FAIL_REASONS_0 { MEMALLOC = 1,
-    NUM_FAIL_REASONS_0 };
-
-  void major_fail(uint8_t reason) __attribute__((noreturn));
+ void major_fail(uint8_t reason) __attribute__((noreturn));
   // we can redefine this function (it is defined in common_cpp as a __weak  empty function)
   // and call it from everywhere.
   void new_handler(); //  __attribute__((noreturn)); // NOTE! got to be installed on startup with std::set_new_handler(avp::new_handler);
@@ -113,5 +103,5 @@ extern "C"
   } while(0)
 
 // #endif
-IGNORE_WARNING(-Wunused - value)
+IGNORE_WARNING(-Wunused-value)
 #endif // __GNUC__
