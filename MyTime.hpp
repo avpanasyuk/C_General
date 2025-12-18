@@ -81,7 +81,8 @@ namespace avp {
   //! @tparam Time_t should be unsigned!
   template<Time_t (*TickFunction)() = millis>
   class TimePeriod {
-    Time_t NextTime, Period;
+    volatile Time_t NextTime;
+    Time_t Period;
    public:
     void Reset() {
       NextTime = TickFunction() + Period;
@@ -96,7 +97,7 @@ namespace avp {
     /// if there is no Reset for too long the counter may wrap over
     bool JustCheck() const {
       auto t = TickFunction();
-      return (NextTime == t) || unsigned_is_smaller(NextTime, t);
+      return (NextTime == t) || unsigned_is_smaller((Time_t)NextTime, t);
     }
 
     /// if TimePeriod had passed does reset to start a new TimePeriod
@@ -107,6 +108,7 @@ namespace avp {
     } // Passed
 
     explicit operator Time_t&() { return Period; }
+    operator bool() const { return JustCheck(); }
 
     /// Pause with an internal loop
     static void Pause(Time_t Delay, void (*LoopFunc)()) {
@@ -122,7 +124,7 @@ namespace avp {
   //! @tparam Time_t should be unsigned!
   template<Time_t Period, Time_t (*TickFunction)() = millis>
   class TimePeriod1 {
-    Time_t NextTime;
+    volatile Time_t NextTime;
    public:
     void Reset() {
       NextTime = TickFunction() + Period;
@@ -134,7 +136,7 @@ namespace avp {
     /// just checks whether TimePeriod had passed, does not do reset
     /// if there is no Reset for too long the counter may wrap over
     bool JustCheck() const {
-      return unsigned_is_smaller(NextTime, TickFunction());
+      return unsigned_is_smaller((Time_t)NextTime, TickFunction());
     }
 
     /// if TimePeriod had passed does reset to start a new TimePeriod
@@ -144,7 +146,7 @@ namespace avp {
       return Out;
     } // Passed
 
-    operator Time_t() const { return Period; }
+    explicit operator Time_t() const { return Period; }
     operator bool() const { return JustCheck(); } 
 
     /// Pause with an internal loop
