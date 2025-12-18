@@ -144,7 +144,8 @@ namespace avp {
       return Out;
     } // Passed
 
-    operator Time_t() { return Period; }
+    operator Time_t() const { return Period; }
+    operator bool() const { return JustCheck(); } 
 
     /// Pause with an internal loop
     static void Pause(Time_t Delay, void (*LoopFunc)()) {
