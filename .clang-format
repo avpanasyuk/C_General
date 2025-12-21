@@ -15,7 +15,8 @@ BreakTemplateDeclarations: Yes
 SpaceAfterTemplateKeyword: false
 SortIncludes: Never
 IncludeBlocks: Preserve
-BinPackArguments: false
+BinPackArguments: true
+BinPackParameters: true
 AllowAllArgumentsOnNextLine: true
 AlignAfterOpenBracket: DontAlign 
 ContinuationIndentWidth: 2
