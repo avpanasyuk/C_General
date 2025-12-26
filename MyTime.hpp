@@ -12,9 +12,13 @@
 #include <stdint.h>
 #include <limits.h>
 #include <type_traits>
+
+#ifndef NO_STL
 #include <iostream>
 #include <string>
 #include <sstream>
+#endif
+
 #include <iomanip>
 #include <ctime>
 
@@ -222,7 +226,9 @@ namespace avp {
   // typedef class TimePeriod<micros> Microsec;
   // typedef class avp::TimePeriod<CPU_Ticks> CPU_Tick;
   
+  #ifndef NO_STL
   std::string getCurrentTimeFormatted(const char *Format);
+  #endif
 
 }; // namespace avp
 
