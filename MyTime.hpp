@@ -151,7 +151,7 @@ namespace avp {
 
     /// Pause with an internal loop
     static void Pause(Time_t Delay, void (*LoopFunc)()) {
-      TimePeriod Timer(Delay);
+      TimePeriod<> Timer(Delay);
       while(!Timer.Expired()) (*LoopFunc)();
     } // Pause
 
