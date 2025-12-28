@@ -77,10 +77,13 @@
    // avp::unused(x)
    template<typename T> void unused(T const&) {
    }
-  
+
+  template <typename T, typename U>
+  inline constexpr bool is_same_type_v = std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<U>>;
+
  template<typename T1, typename T2>
    inline bool unsigned_is_smaller(const T1 &x, const T2 &y, T1 WrapValue = std::numeric_limits<T1>::max()) {
-     static_assert(std::is_same<T1, T2>::value, "Types should be identical!");
+     static_assert(is_same_type_v<T1, T2>, "Types should be identical!");
      static_assert(std::is_unsigned<T1>::value, "Type should be unsigned!");
      return (x - y) > (WrapValue >> 1);
    } // unsigned_is_smaller
