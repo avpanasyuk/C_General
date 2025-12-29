@@ -123,7 +123,7 @@
      const T SavedValue;
      T *p;
      public:
-     RestoreOnReturn(T &Var) : SavedValue(Var), p(&Var) {
+     explicit RestoreOnReturn(T &Var) : SavedValue(Var), p(&Var) {
      }
      ~RestoreOnReturn() {
        *p = SavedValue;

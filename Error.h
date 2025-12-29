@@ -33,8 +33,8 @@ extern "C"
   defined(DEBUG_LEVEL) && DEBUG_LEVEL
 
 #define AVP_DEBUG_PRINTF(format, ...) \
-  do { debug_printf(" in '%s', file '" __FILE__ "', line %u: " format, \
-  __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);} while(0)
+  do{ debug_printf(" in '%s', file '" __FILE__ "', line %u: " format, \
+  __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);}while(0);
 
 #else
 
@@ -60,7 +60,7 @@ extern "C"
   typedef void (*free_func_t)(void *);
 
 #define DEBUG_LINE_NUM \
-  do { debug_printf("%s: %d\n", __PRETTY_FUNCTION__, __LINE__); } while(0)
+  do { debug_printf("%sin " __FILE__ ", %d\n", __PRETTY_FUNCTION__, __LINE__); } while(0);
 
  void major_fail(uint8_t reason) __attribute__((noreturn));
   // we can redefine this function (it is defined in common_cpp as a __weak  empty function)

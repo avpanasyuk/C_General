@@ -35,7 +35,7 @@ namespace avp {
     Time_t When;
     bool Active;
    public:
-    StartableTimeOut(bool DoStart = false):Active(false) { if(DoStart) Start(); }
+    explicit StartableTimeOut(bool DoStart = false):Active(false) { if(DoStart) Start(); }
     operator bool() {
       if(Active && unsigned_is_smaller(When, TickFunction())) {
         Active = false;
