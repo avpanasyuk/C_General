@@ -29,12 +29,12 @@ extern "C"
 #endif
 
 #if defined(_MSC_VER) && defined(_DEBUG) || \
-  defined(__GNUC__) && defined(DEBUG) ||     \
+  defined(__GNUC__) && defined(DEBUG) ||    \
   defined(DEBUG_LEVEL) && DEBUG_LEVEL
 
-#define AVP_DEBUG_PRINTF(format, ...) \
-  do{ debug_printf(" in '%s', file '" __FILE__ "', line %u: " format, \
-  __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);}while(0);
+#define AVP_DEBUG_PRINTF(format, ...)                                  \
+  do { debug_printf(" in '%s', file '" __FILE__ "', line %u: " format, \
+    __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__); } while(0);
 
 #else
 
@@ -62,7 +62,7 @@ extern "C"
 #define DEBUG_LINE_NUM \
   do { debug_printf("%sin " __FILE__ ", %d\n", __PRETTY_FUNCTION__, __LINE__); } while(0);
 
- void major_fail(uint8_t reason) __attribute__((noreturn));
+  void major_fail(uint8_t reason) __attribute__((noreturn));
   // we can redefine this function (it is defined in common_cpp as a __weak  empty function)
   // and call it from everywhere.
   void new_handler(); //  __attribute__((noreturn)); // NOTE! got to be installed on startup with std::set_new_handler(avp::new_handler);
@@ -97,11 +97,13 @@ extern "C"
 
 #define ASSERT_BEING_0(exp, ...) AVP_ASSERT((exp) == 0, ##__VA_ARGS__)
 
-#define AVP_ASSERT_RETURN_STR(exp)                            \
-  do {                                                        \
+#define AVP_ASSERT_RETURN_STR(exp)          \
+  do {                                      \
     if(!(exp)) { return #exp " is false"; } \
   } while(0)
 
 // #endif
+// clang-format off
 IGNORE_WARNING(-Wunused-value)
+// clang-format on
 #endif // __GNUC__

@@ -5,8 +5,8 @@
 #include <cmath>
 #include <initializer_list>
 /// @endcond
-#include "Error.h"
-#include "General.h"
+#include "Error.hpp"
+#include "General.hpp"
 
 namespace avp {
   template<typename T, size_t Length>
