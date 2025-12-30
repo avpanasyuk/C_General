@@ -15,12 +15,12 @@
 #ifdef _MSC_VER
 
 #pragma comment(linker, "/alternatename:debug_putchar=debug_putchar_default")
-int debug_putchar_default(char c) { return fputc(c,stderr); }
+int debug_putchar_default(char c) { return fputc(c, stderr); }
 
 #pragma comment(linker, "/alternatename:debug_puts=debug_puts_default")
 int debug_puts_default(const char *s) {
   while(*(s++))
-    if(debug_putchar(*(s-1)) == -1)
+    if(debug_putchar(*(s - 1)) == -1)
       return -1;
   return 0;
 } // debug_puts
@@ -96,7 +96,25 @@ const char *svprintf_alloc(const char *format, va_list ap) {
   return out; // we do not write ending 0 byte
 } // svprintf_alloc
 
-PRINTF_WRAPPER_C(const char *,sprintf_alloc,svprintf_alloc)
+PRINTF_WRAPPER_C(const char *, sprintf_alloc, svprintf_alloc)
+
+/*
+ * pointer returned by this function should not be freed after use
+ */
+const char *svprintf_realloc(const char *format, va_list ap) {
+  va_list ap_;
+  va_copy(ap_, ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
+  int Size = vsnprintf(NULL, 0, format, ap_);
+  if(Size < 0) return "string_vprintf: format is wrong!";
+  static char *out = NULL;
+  static size_t Reserved = 0;
+  if(Size + 1 > Reserved) out = (char *)realloc(out, Reserved = 2 * (Size + 1));
+  if(out == NULL) return "svprintf_static: failed to reallocate memory!";
+  vsprintf(out, format, ap);
+  return out; // we do not write ending 0 byte
+} // string_vprintf
+
+PRINTF_WRAPPER_C(const char *, sprintf_realloc, svprintf_realloc)
 
 /*
  * pointer returned by this function should not be freed after use
@@ -104,17 +122,13 @@ PRINTF_WRAPPER_C(const char *,sprintf_alloc,svprintf_alloc)
 const char *svprintf_static(const char *format, va_list ap) {
   va_list ap_;
   va_copy(ap_, ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
-  int Size = vsnprintf(NULL, 0, format, ap_);
-  if(Size < 0) return "string_vprintf: format is wrong!";
-  static char *out = NULL;
-  static size_t Reserved = 0;
-  if(Size + 1 > Reserved) out = (char *)realloc(out, Reserved = 2*(Size + 1));
-  if(out == NULL) return "svprintf_static: failed to reallocate memory!";
-  vsprintf(out, format, ap);
-  return out; // we do not write ending 0 byte
+#define BUFFER_SIZE 200
+  static char Buffer[BUFFER_SIZE];
+  vsnprintf(Buffer, BUFFER_SIZE, format, ap);
+  return Buffer; // we do not write ending 0 byte
 } // string_vprintf
 
-PRINTF_WRAPPER_C(const char *,sprintf_static,svprintf_static)
+PRINTF_WRAPPER_C(const char *, sprintf_static, svprintf_static)
 
 uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly) {
   while(len--) {
@@ -127,4 +141,3 @@ uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t pol
   }
   return crc;
 } // Crc16
-

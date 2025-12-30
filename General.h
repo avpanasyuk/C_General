@@ -51,6 +51,9 @@ const char *sprintf_alloc(char const *format, ...) __attribute__ ((format (print
 const char *svprintf_static(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
 const char *sprintf_static(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
 
+const char *svprintf_realloc(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
+const char *sprintf_realloc(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
+
 typedef void (*free_func_t)(void *);
 
 uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly);
