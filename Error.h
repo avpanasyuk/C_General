@@ -97,9 +97,15 @@ extern "C"
 
 #define ASSERT_BEING_0(exp, ...) AVP_ASSERT((exp) == 0, ##__VA_ARGS__)
 
-#define AVP_ASSERT_RETURN_STR(exp)          \
+#define AVP_ASSERT_AND_RETURN_STR(exp)      \
   do {                                      \
     if(!(exp)) { return #exp " is false"; } \
+  } while(0)
+
+#define AVP_ASSERT_RETURNED_STR(func_call)                                  \
+  do {                                                                      \
+    const char *err = (func_call);                                          \
+    if(err != nullptr) { AVP_ERROR(#func_call " failed with %s!\n", err); } \
   } while(0)
 
 // #endif
