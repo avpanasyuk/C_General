@@ -1,6 +1,8 @@
 #ifndef MACROS_H_INCLUDED
 #define MACROS_H_INCLUDED
 
+#define EXPAND(...) __VA_ARGS__
+
 // preprocessor tricks. __VA_ARGS__ is used so the last parameter may be empty
 #define _COMB2(a,...) a##__VA_ARGS__
 #define COMB2(a,...) _COMB2(a,__VA_ARGS__) // second parameter may be absent

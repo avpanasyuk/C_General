@@ -4,6 +4,10 @@
  * Created: 11/11/2013 3:02:38 PM
  *  Author: panasyuk
  */
+#if defined(ESP32) || defined(ESP8266)
+#include <esp_attr.h>
+#endif
+
 /// @cond
 #include <stdlib.h>
 #include <stdio.h>
@@ -54,9 +58,9 @@ void new_handler_default() { hang_cpu(); }
 #else
 __weak int debug_putchar(char c) { return fputc(c, stderr); }
 
-__weak int debug_puts(const char *s) {
-  while(*(s++))
-    if(debug_putchar(*(s - 1)) == -1) return -1;
+__weak int AVP_RAM_ATTR debug_puts(const char *s) {
+  while(*s)
+    if(debug_putchar(*(s++)) == -1) return -1;
   return 0;
 } // debug_puts
 
@@ -64,7 +68,7 @@ __weak int debug_vprintf(const char *format, va_list a) {
   return debug_puts(svprintf_static(format, a));
 } // debug_vprintf
 
-__weak int debug_puts_free(const char *s, free_func_t free_func) {
+__weak int AVP_RAM_ATTR debug_puts_free(const char *s, free_func_t free_func) {
   int out = debug_puts(s);
   if(free_func != NULL) free_func((void *)s);
   return out;

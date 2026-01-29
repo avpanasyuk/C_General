@@ -180,7 +180,7 @@ using this EVAL macro:
 #define EMPTY()
 #define DEFER(id) id EMPTY()
 #define OBSTRUCT(...) __VA_ARGS__ DEFER(EMPTY)()
-#define EXPAND(...) __VA_ARGS__
+
 /// repeat
 #define REPEAT(count, macro, ...) \
   WHEN(count) \

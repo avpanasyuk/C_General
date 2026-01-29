@@ -24,12 +24,8 @@
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
 
-#ifdef __cplusplus
-extern "C"
-#endif
-
 #if defined(_MSC_VER) && defined(_DEBUG) || \
-  defined(__GNUC__) && defined(DEBUG) ||    \
+  defined(__GNUC__) && !defined(NDEBUG) ||  \
   defined(DEBUG_LEVEL) && DEBUG_LEVEL
 
 #define AVP_DEBUG_PRINTF(format, ...)                                  \
@@ -59,8 +55,8 @@ extern "C"
 
   typedef void (*free_func_t)(void *);
 
-#define DEBUG_LINE_NUM \
-  do { debug_printf("%sin " __FILE__ ", %d\n", __PRETTY_FUNCTION__, __LINE__); } while(0);
+#define DEBUG_PUT_PLACE \
+  do { debug_printf("%s in " __FILE__ ", %d\n", __PRETTY_FUNCTION__, __LINE__); } while(0);
 
   void major_fail(uint8_t reason) __attribute__((noreturn));
   // we can redefine this function (it is defined in common_cpp as a __weak  empty function)
@@ -71,19 +67,25 @@ extern "C"
 #endif
 
 #ifdef NDEBUG
-#define AVP_ERROR(format, ...) \
+#define AVP_ERROR_PUTS(s) \
+  do { hang_cpu(); } while(0)
+#define AVP_ERROR_PRINTF(format, ...) \
   do { hang_cpu(); } while(0)
 #define AVP_ASSERT(exp) \
   do { (exp); } while(0)
 #else
-#define AVP_ERROR(format, ...)               \
+#define AVP_ERROR_PUTS(s) \
+  do { hang_cpu(); } while(0)
+
+#define AVP_ERROR_PRINTF(format, ...)               \
   do {                                       \
     AVP_DEBUG_PRINTF(format, ##__VA_ARGS__); \
     hang_cpu();                              \
   } while(0)
+
 #define AVP_ASSERT(exp)                            \
   do {                                             \
-    if(!(exp)) { AVP_ERROR(#exp " is false!\n"); } \
+    if(!(exp)) { AVP_ERROR_PRINTF(#exp " is false!\n"); } \
   } while(0)
 #endif // NDEBUG
 
@@ -92,7 +94,7 @@ extern "C"
 /// @param ext_format - additional format string, followed by parameters
 #define AVP_ASSERT_WITH_EXPL(exp, format, ...)                               \
   do {                                                                       \
-    if(!(exp)) { AVP_ERROR(#exp " is false: " format "\n", ##__VA_ARGS__); } \
+    if(!(exp)) { AVP_ERROR_PRINTF(#exp " is false: " format "\n", ##__VA_ARGS__); } \
   } while(0)
 
 #define ASSERT_BEING_0(exp, ...) AVP_ASSERT((exp) == 0, ##__VA_ARGS__)
@@ -105,7 +107,7 @@ extern "C"
 #define AVP_ASSERT_RETURNED_STR(func_call)                                  \
   do {                                                                      \
     const char *err = (func_call);                                          \
-    if(err != nullptr) { AVP_ERROR(#func_call " failed with %s!\n", err); } \
+    if(err != nullptr) { AVP_ERROR_PRINTF(#func_call " failed with %s!\n", err); } \
   } while(0)
 
 // #endif

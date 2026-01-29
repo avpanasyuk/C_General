@@ -8,8 +8,16 @@
 *  continous sequence of the elements at once.
 */
 
-#ifndef CIRCBUFFERWITHCONT_H_
-#define CIRCBUFFERWITHCONT_H_
+#pragma once
+#include "Macros.h"
+
+#ifndef AVP_RAM_ATTR
+#define AVP_RAM_ATTR // set to IRAM_ATTR for ESP
+#else
+#if defined(ESP32) || defined(ESP8266)
+#include <esp_attr.h>
+#endif 
+#endif
 
 #include <stddef.h>
 #include <stdint.h>
@@ -27,25 +35,25 @@
   * is maximum value which can fit into this type
   * @tparam sizeLog2 - Log2 of desired size in bytes. Capacity of this buffer is 2^sizeLog2 - 1
   */
-template <typename T, typename tSize=uint8_t, uint8_t sizeLog2 = sizeof(tSize)*8>
+template <typename T, uint8_t sizeLog2, typename tSize=unsigned int>
 struct CircBufferWithCont {
   static_assert(sizeof(tSize)*8 >= sizeLog2,"CircBuffer:Size variable is too small to hold size!");
 
   // *********** General functions
   CircBufferWithCont() { BeingWritten = 0; Clear(); }
-  void Clear()  {  BeingRead = BeingWritten; LastBlockSize = 0;}
-  static constexpr tSize GetCapacity() { return (1UL << sizeLog2) - 1; };
+  void AVP_RAM_ATTR Clear()  {  BeingRead = BeingWritten; LastBlockSize = 0;}
+  static constexpr size_t GetCapacity() { return (1UL << sizeLog2) - 1; };
 
   //************* Writer functions *************************************************
-  tSize LeftToWrite() const  { return (BeingRead - 1 - BeingWritten) & Mask; }
+  tSize AVP_RAM_ATTR LeftToWrite() const  { return (BeingRead - 1 - BeingWritten) & Mask; }
 
-  T *GetSlotToWrite() { return &Buffer[BeingWritten]; }
+  T * AVP_RAM_ATTR GetSlotToWrite() { return &Buffer[BeingWritten]; }
 
-  void FinishedWriting() { BeingWritten = (BeingWritten + 1) & Mask; }
+  void AVP_RAM_ATTR FinishedWriting() { BeingWritten = (BeingWritten + 1) & Mask; }
 
-  void Write_(T const &d) { *GetSlotToWrite() = d; FinishedWriting(); }
+  void AVP_RAM_ATTR Write_(T const &d) { *GetSlotToWrite() = d; FinishedWriting(); }
 
-  bool Write(T const &d) {
+  bool AVP_RAM_ATTR Write(T const &d) {
     if(LeftToWrite() == 0) return false;
     else { Write_(d); return true; }
   } // safe Write
@@ -53,7 +61,7 @@ struct CircBufferWithCont {
   // It is risky function because if there is no place to write it modifies BeingRead index, so interferes with reading function. E.g
   // if read is in progress and this function is called from the interrupt (or vise versa) things may get screwed up.
   // The function never fails
-  T *ForceSlotToWrite()  {
+  T * AVP_RAM_ATTR ForceSlotToWrite()  {
     if(LeftToWrite() == 0) { // we will free some space
       if(LastBlockSize == 0) LastBlockSize = 1; // when no read is on progress we still have to move pointer
       FinishedReading();
@@ -63,7 +71,7 @@ struct CircBufferWithCont {
 
   // It is marginally safer function because it moves BeingRead index only when no read is in progress. Interrupts may still screw things up
   // if racing condition occurs. Fails and returns NULL is reading is in progress
-  T *SaferForceSlotToWrite()  {
+  T * AVP_RAM_ATTR SaferForceSlotToWrite()  {
     if(LeftToWrite() == 0) { // we will try to free some space
       if(LastBlockSize == 0) BeingRead = (BeingRead + 1) & Mask; // move read pointer if no read is in progress
       else return nullptr; // will fail but not overwrite data being read
@@ -74,16 +82,16 @@ struct CircBufferWithCont {
 
 
   //************* Reader functions ***************************************
-  tSize LeftToRead() const  { return (BeingWritten - BeingRead) & Mask; }
+  tSize AVP_RAM_ATTR LeftToRead() const  { return (BeingWritten - BeingRead) & Mask; }
 
   //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
-  T const *GetSlotToRead() { LastBlockSize = 1; return &Buffer[BeingRead]; }
+  T const * AVP_RAM_ATTR GetSlotToRead() { LastBlockSize = 1; return &Buffer[BeingRead]; }
 
-  void FinishedReading() { BeingRead = (BeingRead + LastBlockSize) & Mask; LastBlockSize = 0; }
+  void AVP_RAM_ATTR FinishedReading() { BeingRead = (BeingRead + LastBlockSize) & Mask; LastBlockSize = 0; }
 
-  T Read_() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
+  T AVP_RAM_ATTR Read_() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
 
-  bool Read(T* Dst) {
+  bool AVP_RAM_ATTR Read(T* Dst) {
     if(LeftToRead() == 0) return false;
     else { *Dst = Read_(); return true; }
   } // safer Read
@@ -92,57 +100,30 @@ struct CircBufferWithCont {
   /** instead of a single entry marks for reading a continuous block.
   * Use GetSizeToRead to determine size of the block to read
   */
-  T const *GetContinousBlockToRead() {
+  T const * AVP_RAM_ATTR GetContinousBlockToRead() {
     if(BeingRead > BeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
       LastBlockSize = GetCapacity() + 1 - BeingRead; // BeingRead is at least 1 here
     } else  LastBlockSize = LeftToRead();
     return &Buffer[BeingRead];
   } // GetContinousBlockToRead
 
-  tSize GetSizeToRead() { return LastBlockSize; }
-
-  // ************* two Continous block reading functions
-  #ifdef TWO_BLOCKS
-  /**
-   * when BeingWritten pointer is wrapped over the data to read consist of two continuous blocks. Following is
-   * at the same time to return both of them
-  */
-  struct TwoBlocks_ {
-      T const *pBlock[2];
-      tSize Size[2];
-  }; // TwoBlocks
-
- TwoBlocks_ GetContinousBlockToRead() {
-     TwoBlocks_ Out;
-
-     LastBlockSize = LeftToRead();
-     Out.pBlock[1] = &Buffer[BeingRead];
-
-    if(BeingRead > BeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
-      Out.Size[1] = GetCapacity() + 1 - BeingRead;
-      Out.pBlock[2] = &Buffer[0];
-      Out.Size[2] = BeingWritten;
-    } else {
-      Out.Size[1] = LastBlockSize;
-      Out.pBlock[2] = nullptr;
-      Out.Size[2] = 0;
-    }
-    return Out;
-  } // GetContinousBlockToRead
-
-  #endif
+  tSize AVP_RAM_ATTR GetSizeToRead() { return LastBlockSize; }
 
   // ************* service functions
   // for debugging purposes
-  void GetInternals(tSize *WriteI, tSize *ReadI, tSize *ReadSize) {
+  void AVP_RAM_ATTR GetInternals(tSize *WriteI, tSize *ReadI, tSize *ReadSize) {
     *WriteI = BeingWritten; *ReadI = BeingRead; *ReadSize = LastBlockSize;
   } // GetInternals
 protected:
   T Buffer[size_t(GetCapacity())+1]; //!< buffer size is 2^sizeLog2
   static constexpr tSize Mask = GetCapacity(); //!< marks used bits in index variables
   // we do not care what happens in upper bits
-  tSize BeingRead, BeingWritten; //!< indexes of buffer currently being ....
+  volatile tSize BeingRead, BeingWritten; //!< indexes of buffer currently being ....
   tSize LastBlockSize; //! 0 if no read is in progress, size of the read being in progress otherwise
-}; // CircBuffer
+}; // CircBufferWithCont
 
-#endif /* CIRCBUFFERWITHCONT_H_ */
+
+
+
+
+

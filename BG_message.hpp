@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 /// @endcond
-#include "IO.h"
+#include "IO.hpp"
 
 namespace avp {
   template<write_type_func write_func, size_t BufferSize, char OverrunIndicator = '~'>

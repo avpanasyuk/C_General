@@ -215,7 +215,7 @@ namespace avp {
               break;
             case InputParser::NO_ERROR: break;
             case InputParser::NOOP: ReturnOK(); break;
-            default: AVP_ERROR("Unrecognized error code.");
+            default: AVP_ERROR_PRINTF("Unrecognized error code.");
           } // switch
         }
       }

@@ -10,6 +10,54 @@
 #pragma once
 
 #include "Error.h"
+#include "BitBang.hpp"
+#include "MyMath.hpp"
+
+template<typename T>
+int debug_put_binary(T x, bool LeadingZeroes = true) {
+  for(unsigned i = 0; i < sizeof(T)*8; ++i) { 
+    if((x = avp::rotate_left(x)) & 1) {
+      if(debug_putchar('1') == -1) return -1;
+      LeadingZeroes = true;
+    } else if(LeadingZeroes) if(debug_putchar('0') == -1) return -1;
+  }
+} // debug_put_binary<>
+
+template<typename T>
+int debug_put_hex(T x, bool LeadingZeroes = true) {
+  static const char Chars[] = "0123456789ABCDEF";
+
+  for(unsigned i = 0; i < sizeof(T)*2; ++i) {
+    auto v = (x = avp::rotate_left(x,4)) & 0xF; 
+    if(v) {
+      if(debug_putchar(Chars[v]) == -1) return -1;
+      LeadingZeroes = true;
+    } else if(LeadingZeroes) if(debug_putchar('0') == -1) return -1;
+  }
+} // debug_put_hex<>
+
+template<typename T>
+int debug_put_decimal(T x) {
+  char B[avp::CeilRatio(sizeof(x)*8,3U)];
+
+  uint_fast8_t i = 0;
+  do {
+    T x1 = x; x /= 10; B[i++] = '0' + x1 - x*10;
+  } while(x);
+  do {
+    if(debug_putchar(B[i-1]) == -1) return -1; 
+  } while(--i);
+  return 1; 
+} // debug_put_decimal<>
+
+#undef DEBUG_PUT_PLACE // comes from Error.h
+#define DEBUG_PUT_PLACE do { \
+  debug_puts(__PRETTY_FUNCTION__); \
+  debug_puts(" in " __FILE__ " on line "); \
+  debug_put_decimal(__LINE__); \
+} while(0);
+
+
 #ifndef NO_STL
 #include "General.hpp"
 
@@ -37,7 +85,7 @@
  */
 #define ASSERT_EMPTY_STRING(exp) do{\
     auto ErrStr = (exp); \
-    if(!ErrStr.empty()) AVP_ERROR("%s",ErrStr.c_str()); \
+    if(!ErrStr.empty()) AVP_ERROR_PRINTF("%s",ErrStr.c_str()); \
 }while(0)
 
 /**
