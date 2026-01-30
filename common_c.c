@@ -64,7 +64,7 @@ __weak int AVP_RAM_ATTR debug_puts(const char *s) {
   return 0;
 } // debug_puts
 
-__weak int debug_vprintf(const char *format, va_list a) {
+__weak int AVP_RAM_ATTR debug_vprintf(const char *format, va_list a) {
   return debug_puts(svprintf_static(format, a));
 } // debug_vprintf
 
@@ -76,7 +76,7 @@ __weak int AVP_RAM_ATTR debug_puts_free(const char *s, free_func_t free_func) {
 
 __weak void debug_action() {};
 
-__weak PRINTF_WRAPPER_C(int, debug_printf, debug_vprintf)
+__weak AVP_RAM_ATTR PRINTF_WRAPPER_C(int, debug_printf, debug_vprintf)
 
 __weak void hang_cpu() {
   fflush(stderr);
