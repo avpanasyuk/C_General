@@ -10,6 +10,7 @@
 /// @cond
 #include <type_traits>
 #include <limits>
+#include <functional>
 #include <stdint.h>
 #include <stdarg.h>
 #include "General.h"
@@ -164,6 +165,14 @@ namespace avp {
       return p;
     }
   }; // ReleaseWhenOutOfScope
+
+  class CallWhenOutOfScope {
+    const std::function<void()> fun;
+
+  public:
+    CallWhenOutOfScope(std::function<void()> fun_) : fun(fun_) {}
+    ~CallWhenOutOfScope() { fun(); }
+  }; // CallWhenOutOfScope
 
 // some libraries use std::cout and std::cerr to report errors, lets have a way to redirect them is necessary
 #if !defined(NO_STL) && defined(REDIRECT_COUT)
