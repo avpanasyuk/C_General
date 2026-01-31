@@ -98,11 +98,13 @@ namespace avp {
   } // bits
   //! when last_bit is the last bit
   template<typename type>
-  inline constexpr type bits(type x, uint8_t first_bit) {
+  constexpr inline __attribute__((always_inline)) 
+  type bits(type x, uint8_t first_bit) {
     return x >> first_bit;
   } // bits
   template<typename type>
-  inline constexpr type getbits(type x, uint8_t numbits, uint8_t first_bit) {
+  constexpr inline __attribute__((always_inline)) 
+  type getbits(type x, uint8_t numbits, uint8_t first_bit) {
     return (x >> first_bit) & ((type(1U) << numbits) - 1);
   } // bits
 
@@ -110,14 +112,14 @@ namespace avp {
   inline uint16_t bswap_16(uint16_t w) { return (w << 8) | (w >> 8); }
 
   template<typename T>
-  T rotate_left(T x, unsigned n = 1) {
+  T inline __attribute__((always_inline)) rotate_left(T x, unsigned n = 1) {
     static constexpr unsigned Nbits = sizeof(T)*8; 
     n &= Nbits - 1; // n mod 32
     return (x << n) | (x >> (Nbits - n));
   }
 
   template<typename T>
-  T rotate_right(T x, unsigned n = 1) {
+  T inline __attribute__((always_inline)) rotate_right(T x, unsigned n = 1) {
     static constexpr unsigned Nbits = sizeof(T)*8; 
 
     n &= Nbits - 1; // n mod 32

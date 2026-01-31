@@ -40,7 +40,7 @@ namespace avp {
       }
     } // debug_in_loop
 
-    static inline int AVP_RAM_ATTR putchar(char c) { // redefining one in common_c.c
+    static int inline __attribute__((always_inline)) putchar(char c) { // redefining one in common_c.c
       switch(Buf.LeftToWrite()) {
       case 0:
         return -1;

@@ -13,18 +13,28 @@
 #include "BitBang.hpp"
 #include "MyMath.hpp"
 
+#ifndef AVP_RAM_ATTR
+#define AVP_RAM_ATTR // set to IRAM_ATTR for ESP
+#else
+#if defined(ESP32) || defined(ESP8266)
+#include <esp_attr.h>
+#endif 
+#endif
+
+
 template<typename T>
-int debug_put_binary(T x, bool LeadingZeroes = true) {
+int inline AVP_RAM_ATTR debug_put_binary(T x, bool LeadingZeroes = true) {
   for(unsigned i = 0; i < sizeof(T)*8; ++i) { 
     if((x = avp::rotate_left(x)) & 1) {
       if(debug_putchar('1') == -1) return -1;
       LeadingZeroes = true;
     } else if(LeadingZeroes) if(debug_putchar('0') == -1) return -1;
   }
+  return 0;
 } // debug_put_binary<>
 
 template<typename T>
-int debug_put_hex(T x, bool LeadingZeroes = true) {
+int inline AVP_RAM_ATTR debug_put_hex(T x, bool LeadingZeroes = true) {
   static const char Chars[] = "0123456789ABCDEF";
 
   for(unsigned i = 0; i < sizeof(T)*2; ++i) {
@@ -37,7 +47,11 @@ int debug_put_hex(T x, bool LeadingZeroes = true) {
 } // debug_put_hex<>
 
 template<typename T>
-int debug_put_decimal(T x) {
+int inline AVP_RAM_ATTR debug_put_decimal(T x) {
+  if(x < 0) {
+    debug_putchar('-');
+    return debug_put_decimal<T>(-x);
+  }
   char B[avp::CeilRatio(sizeof(x)*8,3U)];
 
   uint_fast8_t i = 0;
@@ -48,7 +62,7 @@ int debug_put_decimal(T x) {
     if(debug_putchar(B[i-1]) == -1) return -1; 
   } while(--i);
   return 1; 
-} // debug_put_decimal<>
+} // debug_put_decimal
 
 #undef DEBUG_PUT_PLACE // comes from Error.h
 #define DEBUG_PUT_PLACE do { \
