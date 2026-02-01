@@ -87,7 +87,10 @@ struct CircBufferWithCont {
   //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
   T const * AVP_RAM_ATTR GetSlotToRead() { LastBlockSize = 1; return &Buffer[BeingRead]; }
 
-  void AVP_RAM_ATTR FinishedReading() { BeingRead = (BeingRead + LastBlockSize) & Mask; LastBlockSize = 0; }
+  void AVP_RAM_ATTR FinishedReading() { 
+    BeingRead = (BeingRead + LastBlockSize) & Mask; 
+    LastBlockSize = 0; 
+  }
 
   T AVP_RAM_ATTR Read_() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
 
@@ -99,11 +102,14 @@ struct CircBufferWithCont {
   // ************* Continous block reading functions
   /** instead of a single entry marks for reading a continuous block.
   * Use GetSizeToRead to determine size of the block to read
+  * BeingWritten can change behind our back
   */
   T const * AVP_RAM_ATTR GetContinousBlockToRead() {
-    if(BeingRead > BeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
+    auto FrozenBeingWritten = BeingWritten; // BeingWritten can change behind our back
+    // which is OK, but we need to be consistent here
+    if(BeingRead > FrozenBeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
       LastBlockSize = GetCapacity() + 1 - BeingRead; // BeingRead is at least 1 here
-    } else  LastBlockSize = LeftToRead();
+    } else  LastBlockSize = (FrozenBeingWritten - BeingRead) & Mask;
     return &Buffer[BeingRead];
   } // GetContinousBlockToRead
 
