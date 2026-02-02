@@ -197,7 +197,7 @@ namespace avp {
   /// RunPeriodically may be static class because Func and Period make all of them different
   template<Time_t(*TickFunction)(), void (*Func)(), Time_t Period>
   class RunPeriodically {
-    static TimePeriod<TickFunction> TP;
+    static inline TimePeriod<TickFunction> TP;
    public:
     static void cycle() {
       if(TP.Expired()) (*Func)();  // cycle
@@ -208,19 +208,13 @@ namespace avp {
 /// RunPeriodically may be static class because Func and Period make all of them different
   template<Time_t(*TickFunction)(), Time_t Period>
   class RunPeriodically1 {
-    static TimePeriod1<Period, TickFunction> TP;
+    static inline TimePeriod1<Period, TickFunction> TP;
    public:
     static void cycle(void (*Func)()) {
       if(TP.Expired()) (*Func)();  // cycle
     }
     static void Reset() { TP.Reset(); }
   }; // RunPeriodically
-
-  template<Time_t (*TickFunction)(), void (*Func)(), Time_t Period>
-  TimePeriod<TickFunction> RunPeriodically<TickFunction, Func, Period>::TP(Period);
-
-  template<Time_t (*TickFunction)(), Time_t Period>
-  TimePeriod1<Period,TickFunction> RunPeriodically1<TickFunction, Period>::TP;
 
   typedef class TimePeriod<millis> Millisec;
   // typedef class TimePeriod<micros> Microsec;
