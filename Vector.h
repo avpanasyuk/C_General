@@ -5,6 +5,7 @@
 #include <initializer_list>
 #include <limits>
 #include "Error.h"
+#include "MyMath.h"
 
 namespace avp {
   /** Vector class with reference counting and automatic extension by a factor of two
@@ -25,7 +26,7 @@ namespace avp {
       T* p;
       size_t Allocated, Used, RefN;
 
-      PtrWithRefCnt_(size_t reserve): Used(0), RefN(1) { p = new T[Allocated = MAX(reserve,1)]; }
+      PtrWithRefCnt_(size_t reserve): Used(0), RefN(1) { p = new T[Allocated = max(reserve,(size_t)1)]; }
       ~PtrWithRefCnt_() { delete[] p; }
 
       void push_back(const T &x) {
@@ -37,7 +38,7 @@ namespace avp {
       void reserve(size_t sz) {
         if(sz > Allocated) {
           auto temp = p;
-          p = new T[Allocated = MAX(2*Allocated,sz)]; // increase at least by a factor of 2 to avoid calling new too often
+          p = new T[Allocated = max(2*Allocated,sz)]; // increase at least by a factor of 2 to avoid calling new too often
           for(size_t i=0; i<Used; ++i) p[i] = temp[i];
           delete[] temp;
         }
