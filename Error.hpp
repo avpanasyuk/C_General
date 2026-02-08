@@ -16,8 +16,11 @@
 #ifndef AVP_RAM_ATTR
 #define AVP_RAM_ATTR // set to IRAM_ATTR for ESP
 #else
-#if defined(ESP32) || defined(ESP8266)
+#if defined(ESP32)
 #include <esp_attr.h>
+#endif
+#if defined(ESP8266)
+#include <Arduino.h>
 #endif 
 #endif
 

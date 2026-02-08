@@ -4,8 +4,12 @@
  * Created: 11/11/2013 3:02:38 PM
  *  Author: panasyuk
  */
-#if defined(ESP32) || defined(ESP8266)
+#if defined(ESP32)
 #include <esp_attr.h>
+#endif
+
+#if defined(ESP8266)
+#include <Arduino.h>
 #endif
 
 /// @cond
