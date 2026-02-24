@@ -2,7 +2,7 @@
 #define IO_H_INCLUDED
 
 /**
-  * @file ../C_General/IO.h
+  * @file ../C_General/IO.hpp
   * @author Alexander Panasyuk
   * Generic functions for output.
   * @brief templates of write_byte->write->vprintf->printf hierarhy
@@ -14,9 +14,9 @@
 #include <stdarg.h>
 #include <stdint.h>
 /// @endcond
-#include "General.h"
-#include "Error.h"
-#include "MyTime.h"
+#include "General.hpp"
+#include "Error.hpp"
+#include "MyTime.hpp"
 
 namespace avp {
 //! @note ALL IO FUNCTIONS HAVE atomic output - either they write or not,

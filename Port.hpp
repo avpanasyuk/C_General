@@ -33,10 +33,10 @@
 #include <string.h>
 #include <stdlib.h>
 /// @endcond
-#include "MyMath.h"
-#include "Error.h"
-#include "General.h"
-#include "CircBuffer.h"
+#include "MyMath.hpp"
+#include "Error.hpp"
+#include "General.hpp"
+#include "CircBuffer.hpp"
 
 #define AVP_PORT_DEF_RX_BUF_SIZE 7
 #define AVP_PORT_DEF_TX_BUF_SIZE 7

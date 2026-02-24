@@ -1,5 +1,5 @@
 /*!
- * @file ../C_General/General.h
+ * @file ../C_General/General.hpp
  *
  * Created: 7/28/2013 10:37:52 AM
  *  Author: panasyuk
@@ -13,9 +13,10 @@
 #include <functional>
 #include <stdint.h>
 #include <stdarg.h>
+/// @endcond
+
 #include "General.h"
 #include "Error.h"
-/// @endcond
 
 #ifdef PRINTF_WRAPPER
 #undef PRINTF_WRAPPER
@@ -55,7 +56,7 @@
 #define CLASS xxxxx
 #define BINARY_OP_FROM_SELF(op) \
   inline friend CLASS operator op(const CLASS &x1, const CLASS &x2) { return CLASS(x1) op## = x2; }
- 
+
  BINARY_OP_FROM_SELF(-)
  BINARY_OP_FROM_SELF(+)
  BINARY_OP_FROM_SELF(*)
@@ -63,7 +64,7 @@
  BINARY_OP_FROM_SELF(&)
  BINARY_OP_FROM_SELF(| )
 #undef BINARY_OP_FROM_SELF
- 
+
  inline friend bool operator==(CLASS const &v1, CLASS const &v2) { return equal(v1, v2); }
  inline friend bool operator!=(CLASS const &v1, CLASS const &v2) { return !(v1 == v2); }
 

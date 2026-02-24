@@ -89,6 +89,8 @@
   } while(0)
 #endif // NDEBUG
 
+#define AVP_ERROR AVP_ERROR_PRINTF // backward compatibility
+
 /// AVP_ASSERT_WITH_EXPL = AVP_ASSERT_WITH_CODE with additional explanation
 /// @code - numeric code, optional
 /// @param ext_format - additional format string, followed by parameters

@@ -69,11 +69,11 @@
 #include <stdint.h>
 #include <stdarg.h>
 /// @endcond
-#include "Error.h"
-#include "Time.h"
-#include "Port.h"
-#include "IO.h"
-#include "CommandParser.h"
+#include "Error.hpp"
+#include "MyTime.hpp"
+#include "Port.hpp"
+#include "IO.hpp"
+#include "CommandParser.hpp"
 
 namespace avp {
   /**

@@ -25,7 +25,7 @@ namespace avp {
       T* p; ///< nevel nullptr, always at least one element allocated
       size_t Allocated, Used, RefN;
 
-      PtrWithRefCnt_(size_t reserve): Used(0), RefN(1) { p = new T[Allocated = avp::max(reserve,1)]; }
+      PtrWithRefCnt_(size_t reserve): Used(0), RefN(1) { p = new T[Allocated = avp::max<size_t>(reserve,1)]; }
       ~PtrWithRefCnt_() { delete[] p; }
 
       void push_back(const T &x) {

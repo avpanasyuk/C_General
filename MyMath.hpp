@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <type_traits>
+#include <algorithm>
+#include <array>
+#include <limits>
 /// @endcond
 
 namespace avp {
@@ -83,6 +86,35 @@ namespace avp {
     while(size--) Out ^= *(p++);
     return Out;
   } // XOR
+
+  template<class Container>
+  std::array<typename Container::value_type,2> MinMax(const Container &x) {
+    auto [it_min, it_max] = std::minmax_element(x.cbegin(), x.cend());
+    return {*it_min, *it_max};
+  } //MinMax
+
+  template<typename T, std::size_t N>
+  std::array<T,2> MinMax(T (&x)[N]) {
+    T Min = std::numeric_limits<T>::max();
+    T Max = std::numeric_limits<T>::min();
+    for(auto &a:x) {
+        if(Min > a) Min = a;
+        if(Max < a) Max = a;
+    }
+    return {Min, Max};
+  } // MinMax
+
+  template<typename T>
+  std::array<T,2> MinMax(const T *p, size_t N) {
+    T Min = std::numeric_limits<T>::max();
+    T Max = std::numeric_limits<T>::min();
+    for(;N;++p, --N) {
+        if(Min > p[N]) Min = p[N];
+        if(Max < p[N]) Max = p[N];
+    }
+    return {Min, Max};
+  } // MinMax
+
 
 //  template<typename Type>
 //  static constexpr Type XOR(const Type *p, size_t size) {

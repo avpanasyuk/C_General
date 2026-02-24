@@ -94,8 +94,8 @@ namespace avp {
     /**
       @param Timeout in whatever units TickFunction works
     */
-    TimePeriod(Time_t Timeout, bool Expired = false) :Period(Timeout) { 
-      if(Expired) NextTime = TickFunction(); else Reset(); 
+    TimePeriod(Time_t Timeout, bool Expired = false) :Period(Timeout) {
+      if(Expired) NextTime = TickFunction(); else Reset();
     }
     /// just checks whether TimePeriod had passed, does not do reset
     /// if there is no Reset for too long the counter may wrap over
@@ -151,7 +151,7 @@ namespace avp {
     } // Passed
 
     explicit operator Time_t() const { return Period; }
-    operator bool() const { return JustCheck(); } 
+    operator bool() const { return JustCheck(); }
 
     /// Pause with an internal loop
     static void Pause(Time_t Delay, void (*LoopFunc)()) {
@@ -171,7 +171,7 @@ namespace avp {
       avp::Periodically<SendData>::Run(1000);
     }
       When period is set to 0 the function does not run
-      Func gotta be a template parameter as there is no other way 
+      Func gotta be a template parameter as there is no other way
       to differenciate generated classes otherwise
 
      @tparam (*Func)()
@@ -197,10 +197,10 @@ namespace avp {
   /// RunPeriodically may be static class because Func and Period make all of them different
   template<Time_t(*TickFunction)(), void (*Func)(), Time_t Period>
   class RunPeriodically {
-    static inline TimePeriod<TickFunction> TP;
+    static inline TimePeriod1<Period,TickFunction> TP;
    public:
     static void cycle() {
-      if(TP.Expired()) (*Func)();  // cycle
+       if(TP.Expired()) (*Func)();  // cycle
     }
     static void Reset() { TP.Reset(); }
   }; // RunPeriodically
@@ -219,7 +219,7 @@ namespace avp {
   typedef class TimePeriod<millis> Millisec;
   // typedef class TimePeriod<micros> Microsec;
   // typedef class avp::TimePeriod<CPU_Ticks> CPU_Tick;
-  
+
   #ifndef NO_STL
   std::string getCurrentTimeFormatted(const char *Format);
   #endif
