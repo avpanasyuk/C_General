@@ -1,5 +1,5 @@
 /**
- * @file class to send messages from interrupt handlers which uses circular buffer. 
+ * @file class to send messages from interrupt handlers which uses circular buffer.
  * "putchar" is very light, "call_in_loop" calls log_func with whatever is accumulated in the
  * buffer.
  * @author your name (you@domain.com)
@@ -17,7 +17,7 @@
 #else
 #if defined(ESP32) || defined(ESP8266)
 #include <esp_attr.h>
-#endif 
+#endif
 #endif
 
 #include <stddef.h>
@@ -33,8 +33,8 @@ namespace avp {
      * Should be called in loop. If there is something to log calls log_func
      */
     static void call_in_loop(void (*log_func)(const char *s, int sz)) {
-      if(Buf.LeftToRead()) {
-        const char *s = Buf.GetContinousBlockToRead();
+      const char *s = Buf.GetContinousBlockToRead();
+      if(s != nullptr) {
         log_func(s, Buf.GetSizeToRead());
         Buf.FinishedReading();
       }

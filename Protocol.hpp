@@ -83,7 +83,7 @@ namespace avp {
     - bool write_unbuffered(const uint8_t *Ptr, size_t Size, tReleaseFunc pReleaseFunc = nullptr)
     - bool write_byte(uint8_t d)
     - bool write(const uint8_t *Ptr, size_t Size) - buffered write
-    - void FlushRX()
+    - void PurgeRX()
     - bool read(uint8_t *pd)
     - void RX_Byte_IT(); - to restart RX if stopped
     - uint8_t GetByte() - no checking, you should check whether there is a byte beforehand
@@ -140,18 +140,18 @@ namespace avp {
     } // error_message
 
     /// flashing serial port input
-    static void FlushRX() {
+    static void PurgeRX() {
       // read the rest if something is transmitted
       Millisec::Pause(10); // for uart to finish
       uint8_t b;
       do {
-        Port::FlushRX();
+        Port::PurgeRX();
         // wait if something appears
         uint32_t WaitUntil = millis() + 3;
         while(WaitUntil - millis() > UINT32_MAX/2); // 10 millis delay
       } while(Port::read(&b));
       InputParser::Flush();
-    } // FlushRX
+    } // PurgeRX
 
    public:
     static void Init(const char *BeaconStr_) {
@@ -192,7 +192,7 @@ namespace avp {
 
       if(ErrStr != nullptr) {
         debug_printf("UART error:%s!",ErrStr);
-        FlushRX();
+        PurgeRX();
         Port::RX_Byte_IT(); // we have to restart RX, it may be stopped
         info_str(ErrStr);
       } else if(SomethingToRX()) {
@@ -203,15 +203,15 @@ namespace avp {
           switch(InputParser::ParseByte(Port::GetByte())) {
             case InputParser::WRONG_ID:
               return_error_str("Command is not defined!\n");
-              FlushRX();  // Oops
+              PurgeRX();  // Oops
               break;
             case InputParser::WRONG_PARAM_SIZE:
               return_error_str("Too many parameter bytes!\n");
-              FlushRX();  // Oops
+              PurgeRX();  // Oops
               break;
             case InputParser::BAD_CHECKSUM:
               return_error_code(CS_ERROR);
-              FlushRX();  // Oops
+              PurgeRX();  // Oops
               break;
             case InputParser::NO_ERROR: break;
             case InputParser::NOOP: ReturnOK(); break;

@@ -37,6 +37,7 @@
 #include "Error.hpp"
 #include "General.hpp"
 #include "CircBuffer.hpp"
+#include "CircBufferWithCont.hpp"
 
 #define AVP_PORT_DEF_RX_BUF_SIZE 7
 #define AVP_PORT_DEF_TX_BUF_SIZE 7
@@ -55,7 +56,7 @@ namespace avp {
         new data in buffer to transmit. This function may be called at the end of all primary "write"
         functions, from the interrupt indicating end of previous transfer, or from the "cycle" loop
         just in case. It should maintain locks when necessary.
-      -# should provide static void FlushRX();
+      -# should provide static void PurgeRX();
       -# should provide const char *GetError();
       -# should provide RX_Byte_IT() to restart RX if it stalled
    @tparam tSize: type of CircBufferPWR2 counter, should be big enough to fit all buffer sizes.
@@ -66,6 +67,7 @@ namespace avp {
   __PORT_TEMPLATE__ struct  Port: public HW_IO_ {
     struct BlockInfo;
     typedef void (* tReleaseFunc)();
+
     struct BlockInfo {
       const uint8_t *Ptr;
       size_t Size;
@@ -79,7 +81,7 @@ namespace avp {
     // ***************  data for unbuffered block transmit buffer
     static CircBufferPWR2<BlockInfo, Log2_TX_BlockBufSize, tSize> BlockInfoBufTX; // Block transmit buffer
     // *************** things for receive buffer
-    static CircBufferPWR2<uint8_t, Log2_RX_Buf_Size, tSize> BufferRX; //  receive buffer ( we receive by byte only )
+    static CircBufferWithCont<uint8_t, Log2_RX_Buf_Size, tSize> BufferRX; //  receive buffer ( we receive by byte only )
     static const uint8_t *pCurByteInBlock; //!< when we are currently reading from block it is read pointer
 
     /// @{
@@ -91,7 +93,6 @@ namespace avp {
       BufferRX.Write(b);
       return true;
     } // StoreReceivedByte
-
 
     /// This function is called from HW_IO interrupt handler to get byte from Circular buffer to send
     /// @note WRITING TO *p may immediately send byte, so do it ONLY ONCE !
@@ -136,7 +137,7 @@ namespace avp {
         @note This is the only function reading BlockInfoBufTX and BufferTX
      *
      * @param[out] pp - pointer to pointer from where to send data. Pointer returned  by this parameter should be
-        persistant enough to keep oin existing while HW_IO sends it out
+        persistant enough to keep on existing while HW_IO sends it out
      * @param[out] pSz - to return block size.
      * @return bool - whether there is anything to send
      *
@@ -146,18 +147,18 @@ namespace avp {
       // do FinishedReading
 
       if(LastSentIsBlock) { // finalize after previous block
-        const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead(); // returns the same slot as last time
+        const BlockInfo *pCurBlock = BlockInfoBufTX.GetSlotToRead(); // returns the same slot as the last time
         if(pCurBlock->pReleaseFunc != nullptr) (*pCurBlock->pReleaseFunc)();
         BlockInfoBufTX.FinishedReading();
         LastSentIsBlock = false;
       }
 
       if(!BufferTX.LeftToRead()) {
-          *pp = nullptr;
-          *pSz = 0;
-          return false;
+        *pp = nullptr;
+        *pSz = 0;
+        return false;
       } else {
-        static uint8_t b; // pointer to this variable is sent outside of this function, make sure it does not disappear
+        static uint8_t b; // pointer to this variable is sent outside of this function
         b = BufferTX.Read_();
         *pp = &b;
         *pSz = 1; // by default it is just a byte to send
@@ -224,7 +225,10 @@ namespace avp {
     // ALL write function return false if buffer is overrun and true if OK
     //! safe writeBufferRX.
     static bool write_byte(uint8_t d) {
-      if(!BufferTX.LeftToWrite()) return false;
+      if(!BufferTX.LeftToWrite()) {
+        HW_IO_::TryToSend();
+        return false;
+      }
       bool Res = write_byte_(d);
       HW_IO_::TryToSend(); // got something to transmit, reenable interrupt
       return Res;
@@ -280,11 +284,11 @@ namespace avp {
     }
 
     // ********************************** RECEPTION *********************
-    //! stores character by pointer pd, returns true if there is really a character to read
-    static void FlushRX() {
-      HW_IO_::FlushRX();
+    static void PurgeRX() {
+      HW_IO_::PurgeRX();
       BufferRX.Clear();
-    }
+    } // PurgeRX
+
     static bool SomethingToTX() {
       return BufferTX.LeftToRead() != 0;
     }
@@ -302,6 +306,8 @@ namespace avp {
     static bool SomethingToRX() {
       return BufferRX.LeftToRead() != 0;
     }
+
+    static void FinishedReadingRX() { BufferRX.FinishedReading(); }
 
     /*
     * this function does not check if buffer is empty and the return is undefined
@@ -338,7 +344,7 @@ namespace avp {
   _TEMPLATE_DECL_ const uint8_t *_TEMPLATE_SPEC_::pCurByteInBlock = nullptr;
   _TEMPLATE_DECL_ CircBufferPWR2<uint8_t, Log2_TX_Buf_size, tSize> _TEMPLATE_SPEC_::BufferTX;
   _TEMPLATE_DECL_ CircBufferPWR2<struct _TEMPLATE_SPEC_::BlockInfo, Log2_TX_BlockBufSize, tSize> _TEMPLATE_SPEC_::BlockInfoBufTX;
-  _TEMPLATE_DECL_ CircBufferPWR2<uint8_t, Log2_RX_Buf_Size, tSize> _TEMPLATE_SPEC_::BufferRX;
+  _TEMPLATE_DECL_ CircBufferWithCont<uint8_t, Log2_RX_Buf_Size, tSize> _TEMPLATE_SPEC_::BufferRX;
   _TEMPLATE_DECL_ uint8_t _TEMPLATE_SPEC_::RunningCS;
   _TEMPLATE_DECL_ uint16_t _TEMPLATE_SPEC_::BytesTransmitted = 0;
 
@@ -353,7 +359,7 @@ namespace avp {
    */
   __PORT_TEMPLATE__ struct  PortByteTX: public _TEMPLATE_SPEC_ {
     static void Init() {
-      HW_IO_::Init(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetByteToSend);
+      HW_IO_::SetCallBacks(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetByteToSend);
     }
   }; //  PortByteTX
 
@@ -367,7 +373,24 @@ namespace avp {
       -# HW_IO_ should call GetBlockToSend when it is ready to send new data
    */
   __PORT_TEMPLATE__ struct  PortBlockTX: public _TEMPLATE_SPEC_ {
-    static void Init() {
+    typedef void (* ProcessReadBlockCB_t)(const uint8_t *p, size_t pSz);
+
+    static inline ProcessReadBlockCB_t ProcessReadBlock;
+    //! this function is called from HW_IO interrupt handler to store received byte in the RX Circular buffer
+    static bool StoreReceivedByte(uint8_t b) {
+      if(_TEMPLATE_SPEC_::BufferRX.LeftToRead() > _TEMPLATE_SPEC_::BufferRX.GetCapacity() >> 1) FlushRX();
+      return _TEMPLATE_SPEC_::StoreReceivedByte(b);
+    } // StoreReceivedByte
+
+    static void FlushRX() {
+      auto p = _TEMPLATE_SPEC_::BufferRX.GetContinousBlockToRead(); // I do not just put it into ProcessReadBlock
+      // call because the order of parameter evaluation is undefined.
+      if(p != nullptr && ProcessReadBlock != nullptr)
+        ProcessReadBlock(p, _TEMPLATE_SPEC_::BufferRX.GetSizeToRead());
+    } // FlushRX
+
+    static void Init(ProcessReadBlockCB_t ProcessReadBlock_ = nullptr) {
+      ProcessReadBlock = ProcessReadBlock_;
       HW_IO_::SetCallBacks(_TEMPLATE_SPEC_::StoreReceivedByte,_TEMPLATE_SPEC_::GetBlockToSend);
     }
   }; //  PortBlockTX

@@ -8,11 +8,12 @@
 #ifndef VIRTCIRCBUFFER_H_
 #define VIRTCIRCBUFFER_H_
 
+/// @cond
 #include <stddef.h>
 #include <stdint.h>
 #include <type_traits>
-#include "Vector.h"
-// #include "Error.h"
+/// @endcond
+#include "Error.hpp"
 
 /** Circular Buffer of elements of class T. One reader and one writer may work in parallel. Reader is using
   * only BeingRead index, and writer only BeingWritten, so index can be screwed-up ONLY when cross-used,
@@ -33,8 +34,8 @@ struct CircBufferBase { // abstract class
   using ElementType = T;
 
   // *********** General functions
-  explicit CircBufferBase():BeingWritten(0) { Clear(); }
-  virtual ~CircBufferBase() {};
+  explicit CircBufferBase():BeingWritten(0), Buffer(new T[size]) { AVP_ASSERT(Buffer != nullptr); Clear(); }
+  virtual ~CircBufferBase() { delete[] Buffer; };
 
   virtual void Clear()  {  BeingRead = BeingWritten; }
   static constexpr CounterType GetCapacity() { return size - 1; };
@@ -92,7 +93,7 @@ struct CircBufferBase { // abstract class
   virtual const T &operator[] (CounterType BackIndex) const = 0;
 protected:
   CounterType BeingRead, BeingWritten; //!< indexes of buffer currently being read and written correspondingly. From 0 to GetCapacity()
-  avp::Vector<T,size> Buffer;
+  T *Buffer;
 
   virtual void NormalizeReadCounter() = 0;
 }; // CircBufferBase
@@ -111,7 +112,7 @@ struct CircBuffer: public CircBufferBase<T,size,CounterType> {
       return Base::Buffer[Base::BeingWritten >= BackIndex?Base::BeingWritten - BackIndex:Base::BeingWritten + size - BackIndex];
     }
   protected:
-    virtual void NormalizeReadCounter() { if(Base::BeingRead >= size) Base::BeingRead -= size; }
+    virtual void NormalizeReadCounter() override { if(Base::BeingRead >= size) Base::BeingRead -= size; }
 }; // CircBuffer
 
 /** CircBufferPWR2 is a CircBuffer with size being a power of 2, so for rollovers I can use binary AND operation
