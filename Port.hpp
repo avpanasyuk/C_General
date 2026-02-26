@@ -383,10 +383,15 @@ namespace avp {
     } // StoreReceivedByte
 
     static void FlushRX() {
+      static volatile bool Busy = false;
+
+      if(Busy) return;
+      Busy = true;
       auto p = _TEMPLATE_SPEC_::BufferRX.GetContinousBlockToRead(); // I do not just put it into ProcessReadBlock
       // call because the order of parameter evaluation is undefined.
       if(p != nullptr && ProcessReadBlock != nullptr)
         ProcessReadBlock(p, _TEMPLATE_SPEC_::BufferRX.GetSizeToRead());
+      Busy = false;
     } // FlushRX
 
     static void Init(ProcessReadBlockCB_t ProcessReadBlock_ = nullptr) {
