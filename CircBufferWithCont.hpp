@@ -94,11 +94,16 @@ struct CircBufferWithCont {
 
   // ************* Continous block reading functions
   /** instead of a single entry marks for reading a continuous block.
-  * Use GetSizeToRead to determine size of the block to read
+  * Use GetSizeToRead() after this function to determine size of the block to read
   * BeingWritten can change behind our back
+  * @retval - returns nullptr if previous block has not been processed yet or there is
+  *           nothing to read, othervise a pointer to the block
   */
   T const * FORCE_INLINE GetContinousBlockToRead() {
+    if(LastBlockSize) return nullptr; // previous block has not been processed yet
+
     auto FrozenBeingWritten = BeingWritten; // BeingWritten can change behind our back
+    if(BeingRead == FrozenBeingWritten) return nullptr; // nothing to process
     // which is OK, but we need to be consistent here
     if(BeingRead > FrozenBeingWritten) { // writing wrapped, continuous blocks goes just to the end of the buffer
       LastBlockSize = GetCapacity() + 1 - BeingRead; // BeingRead is at least 1 here

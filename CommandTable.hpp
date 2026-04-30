@@ -7,9 +7,9 @@
 #ifndef COMMANDTABLE_H_INCLUDED
 #define COMMANDTABLE_H_INCLUDED
 
-#include "Error.h"
-#include "Math.h"
-#include "CommandParser.h"
+#include "Error.hpp"
+#include "MyMath.hpp"
+#include "CommandParser.hpp"
 
 namespace avp {
   struct Command_ {
@@ -17,7 +17,7 @@ namespace avp {
     int8_t NumParamBytes; ///< if == -1 the command has variable number of arguments, and the first
     /// parameter byte is the number of following parameters
   }; // struct Command_
-  
+
 /// Table and NumCommands should be implemented in the user code
 template<uint8_t MaxNumParamBytes = 255>
   class CommandTable: public CommandParser {
@@ -67,9 +67,9 @@ template<uint8_t MaxNumParamBytes = 255>
 
       static void Flush() {InputI = 0;}
   }; // class CommandTable
-  
+
   template<uint8_t MaxNumParamBytes> int8_t CommandTable<MaxNumParamBytes>::CurNumOfParamBytes;
-  template<uint8_t MaxNumParamBytes> uint8_t CommandTable<MaxNumParamBytes>::InputI = 0; 
+  template<uint8_t MaxNumParamBytes> uint8_t CommandTable<MaxNumParamBytes>::InputI = 0;
 } // namespace avp
 
 STOP_IGNORING_WARNING

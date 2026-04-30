@@ -26,8 +26,8 @@ namespace avp {
      * Should be called in loop. If there is something to log calls log_func
      */
     static void call_in_loop(void (*log_func)(const char *s, int sz)) {
-      if(Buf.LeftToRead()) {
         const char *s = Buf.GetContinousBlockToRead();
+      if(s != nullptr) {
         log_func(s, Buf.GetSizeToRead());
         Buf.FinishedReading();
       }

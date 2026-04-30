@@ -12,7 +12,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <type_traits>
-#include "Array.h"
+#include "Array.hpp"
 /// @endcond
 // #include "Error.h"
 

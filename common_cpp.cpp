@@ -7,6 +7,8 @@
 #ifndef NO_STL
 #include <chrono>
 #include <string>
+#include <sstream>
+#include <iomanip>
 #endif // NO_STL
 
 #include "General.hpp"
@@ -15,14 +17,14 @@
 #ifndef NO_STL
 uint32_t millis() {
   return (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(
-             std::chrono::system_clock::now().time_since_epoch())
-      .count();
+           std::chrono::system_clock::now().time_since_epoch())
+         .count();
 } // millis
 
 uint32_t micros() {
   return (uint32_t)std::chrono::duration_cast<std::chrono::microseconds>(
-             std::chrono::system_clock::now().time_since_epoch())
-      .count();
+           std::chrono::system_clock::now().time_since_epoch())
+         .count();
 } // millis
 #endif
 namespace avp {
@@ -46,8 +48,8 @@ namespace avp {
   } // string_vprintf
 
   PRINTF_WRAPPER(std::string, string_printf, string_vprintf)
-  
-    std::string getCurrentTimeFormatted(const char *Format) {
+
+  std::string getCurrentTimeFormatted(const char *Format) {
     // Get current time
     std::time_t now = std::time(nullptr);
 

@@ -8,10 +8,10 @@
 /// @cond
 #include <stdint.h>
 /// @endcond
-#include "BitBang.h"#include "MyMath.h"
-#include "Error.h"
-#include "BitBang.h"
-#include "CommandParser.h"
+#include "BitBang.hpp"#include "MyMath.hpp"
+#include "Error.hpp"
+#include "BitBang.hpp"
+#include "CommandParser.hpp"
 
 namespace avp {
 /// unidirectional command chain
