@@ -8,24 +8,17 @@
  * @date 2026-01-27
  *
  * @copyright Copyright (c) 2026
+ * @note the FORCE_INLINE stuff is here so the functions an be called from ESP ISRs with IRAM_ATTR
  *
  */
 #pragma once
-
-#ifndef AVP_RAM_ATTR
-#define AVP_RAM_ATTR // set to IRAM_ATTR for ESP
-#else
-#if defined(ESP32) || defined(ESP8266)
-#include <esp_attr.h>
-#endif 
-#endif
 
 #include <stddef.h>
 #include "CircBufferWithCont.hpp"
 
 namespace avp {
   template<uint8_t sizeLog2>
-  struct DebugMessage {
+  struct ISR_Message {
     static inline CircBufferWithCont<char, sizeLog2, uint32_t> Buf;
     static constexpr char Overrun = '$';
 
@@ -40,7 +33,7 @@ namespace avp {
       }
     } // debug_in_loop
 
-    static int inline __attribute__((always_inline)) putchar(char c) { // redefining one in common_c.c
+    static int FORCE_INLINE putchar(char c) { // redefining one in common_c.c
       switch(Buf.LeftToWrite()) {
       case 0:
         return -1;
@@ -52,7 +45,7 @@ namespace avp {
         return c;
       }
     } // putchar
-  }; // class DebugMessage
+  }; // class ISR_Message
 } // namespace avp
 
 
