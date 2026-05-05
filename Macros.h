@@ -1,7 +1,13 @@
 #ifndef MACROS_H_INCLUDED
 #define MACROS_H_INCLUDED
 
-#define EXPAND(...) __VA_ARGS__
+#ifdef _MSC_VER
+#define FORCE_INLINE __forceinline
+#endif
+
+#ifdef __GNUC__ 
+#define FORCE_INLINE  inline __attribute__((always_inline))
+#endif
 
 // preprocessor tricks. __VA_ARGS__ is used so the last parameter may be empty
 #define _COMB2(a,...) a##__VA_ARGS__
