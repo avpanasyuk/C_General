@@ -47,6 +47,7 @@ int inline AVP_RAM_ATTR debug_put_hex(T x, bool LeadingZeroes = true) {
       LeadingZeroes = true;
     } else if(LeadingZeroes) if(debug_putchar('0') == -1) return -1;
   }
+  return 0;
 } // debug_put_hex<>
 
 template<typename T>

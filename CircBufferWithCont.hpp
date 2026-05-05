@@ -34,19 +34,19 @@ struct CircBufferWithCont {
 
   // *********** General functions
   CircBufferWithCont() { BeingWritten = 0; Clear(); }
-  void FORCE_INLINE Clear()  {  BeingRead = BeingWritten; LastBlockSize = 0;}
+  FORCE_INLINE void Clear()  {  BeingRead = BeingWritten; LastBlockSize = 0;}
   static constexpr size_t GetCapacity() { return (1UL << sizeLog2) - 1; };
 
   //************* Writer functions *************************************************
-  tSize FORCE_INLINE LeftToWrite() const  { return (BeingRead - 1 - BeingWritten) & Mask; }
+  FORCE_INLINE tSize LeftToWrite() const  { return (BeingRead - 1 - BeingWritten) & Mask; }
 
-  T * FORCE_INLINE GetSlotToWrite() { return &Buffer[BeingWritten]; }
+  FORCE_INLINE T * GetSlotToWrite() { return &Buffer[BeingWritten]; }
 
-  void FORCE_INLINE FinishedWriting() { BeingWritten = (BeingWritten + 1) & Mask; }
+  FORCE_INLINE void FinishedWriting() { BeingWritten = (BeingWritten + 1) & Mask; }
 
-  void FORCE_INLINE Write_(T const &d) { *GetSlotToWrite() = d; FinishedWriting(); }
+  FORCE_INLINE void Write_(T const &d) { *GetSlotToWrite() = d; FinishedWriting(); }
 
-  bool FORCE_INLINE Write(T const &d) {
+  FORCE_INLINE bool Write(T const &d) {
     if(LeftToWrite() == 0) return false;
     else { Write_(d); return true; }
   } // safe Write
@@ -54,7 +54,7 @@ struct CircBufferWithCont {
   // It is risky function because if there is no place to write it modifies BeingRead index, so interferes with reading function. E.g
   // if read is in progress and this function is called from the interrupt (or vise versa) things may get screwed up.
   // The function never fails
-  T * FORCE_INLINE ForceSlotToWrite()  {
+  FORCE_INLINE T * ForceSlotToWrite()  {
     if(LeftToWrite() == 0) { // we will free some space
       if(LastBlockSize == 0) LastBlockSize = 1; // when no read is on progress we still have to move pointer
       FinishedReading();
@@ -64,7 +64,7 @@ struct CircBufferWithCont {
 
   // It is marginally safer function because it moves BeingRead index only when no read is in progress. Interrupts may still screw things up
   // if racing condition occurs. Fails and returns NULL is reading is in progress
-  T * FORCE_INLINE SaferForceSlotToWrite()  {
+  FORCE_INLINE T * SaferForceSlotToWrite()  {
     if(LeftToWrite() == 0) { // we will try to free some space
       if(LastBlockSize == 0) BeingRead = (BeingRead + 1) & Mask; // move read pointer if no read is in progress
       else return nullptr; // will fail but not overwrite data being read
@@ -75,19 +75,19 @@ struct CircBufferWithCont {
 
 
   //************* Reader functions ***************************************
-  tSize FORCE_INLINE LeftToRead() const  { return (BeingWritten - BeingRead) & Mask; }
+  FORCE_INLINE tSize LeftToRead() const  { return (BeingWritten - BeingRead) & Mask; }
 
   //! @brief returns the same slot if called several times in a row. Only FinishReading moves pointer
-  T const * FORCE_INLINE GetSlotToRead() { LastBlockSize = 1; return &Buffer[BeingRead]; }
+  FORCE_INLINE T const * GetSlotToRead() { LastBlockSize = 1; return &Buffer[BeingRead]; }
 
-  void FORCE_INLINE FinishedReading() { 
+  FORCE_INLINE void FinishedReading() { 
     BeingRead = (BeingRead + LastBlockSize) & Mask; 
     LastBlockSize = 0; 
   }
 
-  T FORCE_INLINE Read_() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
+  FORCE_INLINE T Read_() { T temp = *GetSlotToRead(); FinishedReading(); return temp; }
 
-  bool FORCE_INLINE Read(T* Dst) {
+  FORCE_INLINE bool Read(T* Dst) {
     if(LeftToRead() == 0) return false;
     else { *Dst = Read_(); return true; }
   } // safer Read
@@ -99,7 +99,7 @@ struct CircBufferWithCont {
   * @retval - returns nullptr if previous block has not been processed yet or there is
   *           nothing to read, othervise a pointer to the block
   */
-  T const * FORCE_INLINE GetContinousBlockToRead() {
+  FORCE_INLINE T const * GetContinousBlockToRead() {
     if(LastBlockSize) return nullptr; // previous block has not been processed yet
 
     auto FrozenBeingWritten = BeingWritten; // BeingWritten can change behind our back
@@ -111,11 +111,11 @@ struct CircBufferWithCont {
     return &Buffer[BeingRead];
   } // GetContinousBlockToRead
 
-  tSize FORCE_INLINE GetSizeToRead() { return LastBlockSize; }
+  FORCE_INLINE tSize GetSizeToRead() { return LastBlockSize; }
 
   // ************* service functions
   // for debugging purposes
-  void FORCE_INLINE GetInternals(tSize *WriteI, tSize *ReadI, tSize *ReadSize) {
+  FORCE_INLINE void GetInternals(tSize *WriteI, tSize *ReadI, tSize *ReadSize) {
     *WriteI = BeingWritten; *ReadI = BeingRead; *ReadSize = LastBlockSize;
   } // GetInternals
 protected:

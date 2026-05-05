@@ -33,7 +33,7 @@ namespace avp {
       }
     } // debug_in_loop
 
-    static int FORCE_INLINE putchar(char c) { // redefining one in common_c.c
+    static FORCE_INLINE int putchar(char c) { // redefining one in common_c.c
       switch(Buf.LeftToWrite()) {
       case 0:
         return -1;

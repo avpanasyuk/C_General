@@ -5,8 +5,12 @@
 #define FORCE_INLINE __forceinline
 #endif
 
-#ifdef __GNUC__ 
+#ifdef __GNUC__
 #define FORCE_INLINE  inline __attribute__((always_inline))
+#endif
+
+#ifndef FORCE_INLINE
+#define FORCE_INLINE inline
 #endif
 
 // preprocessor tricks. __VA_ARGS__ is used so the last parameter may be empty

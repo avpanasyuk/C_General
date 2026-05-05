@@ -112,14 +112,14 @@ namespace avp {
   inline uint16_t bswap_16(uint16_t w) { return (w << 8) | (w >> 8); }
 
   template<typename T>
-  T FORCE_INLINE rotate_left(T x, unsigned n = 1) {
+  FORCE_INLINE T rotate_left(T x, unsigned n = 1) {
     static constexpr unsigned Nbits = sizeof(T)*8; 
     n &= Nbits - 1; // n mod 32
     return (x << n) | (x >> (Nbits - n));
   }
 
   template<typename T>
-  T FORCE_INLINE rotate_right(T x, unsigned n = 1) {
+  FORCE_INLINE T rotate_right(T x, unsigned n = 1) {
     static constexpr unsigned Nbits = sizeof(T)*8; 
 
     n &= Nbits - 1; // n mod 32
