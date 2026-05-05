@@ -102,6 +102,7 @@ const char *svprintf_alloc(const char *format, va_list ap) {
   va_list ap_;
   va_copy(ap_, ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
   int Size = vsnprintf(NULL, 0, format, ap_);
+  va_end(ap_);
   if(Size < 0) return "svprintf_alloc: format is wrong!";
   char *out = (char *)malloc(Size + 1); // +1 to include ending zero byte
   if(out == NULL) return "svprintf_alloc: failed to allocate memory!";
@@ -118,6 +119,7 @@ const char *svprintf_realloc(const char *format, va_list ap) {
   va_list ap_;
   va_copy(ap_, ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
   int Size = vsnprintf(NULL, 0, format, ap_);
+  va_end(ap_);
   if(Size < 0) return "string_vprintf: format is wrong!";
   static char *out = NULL;
   static size_t Reserved = 0;
@@ -133,8 +135,6 @@ PRINTF_WRAPPER_C(const char *, sprintf_realloc, svprintf_realloc)
  * pointer returned by this function should not be freed after use
  */
 const char *svprintf_static(const char *format, va_list ap) {
-  va_list ap_;
-  va_copy(ap_, ap); // turns out vsnprintf is changing ap, so we have to make a reserve copy
 #define BUFFER_SIZE 200
   static char Buffer[BUFFER_SIZE];
   vsnprintf(Buffer, BUFFER_SIZE, format, ap);

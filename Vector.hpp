@@ -16,7 +16,7 @@ namespace avp {
   class Vector {
     /**
     * this is a reference counting class for Vectors. The object of this class is shared between
-    * Vectors containing the same array of type T pointed on by "p". If Vectgor decides not to point to this
+    * Vectors containing the same array of type T pointed on by "p". If Vector decides not to point to this
     * particular object any more it decreases it's reference number.
     *
     * This class never decreases memory pointer by "p".
