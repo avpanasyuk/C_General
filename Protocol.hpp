@@ -102,7 +102,7 @@ namespace avp {
 
     static bool PortConnected;
     static const char *BeaconStr;
-    static size_t LeftToRead;
+    static size_t BytesLeftToRead;
     static uint8_t *DestPtr;
 
     /// base private message which writes both info and error messages
@@ -170,7 +170,7 @@ namespace avp {
     * It assumes that number of bytes to read is known. It does not check CS.
     */
     static void setup_to_read_bytes(size_t Num, uint8_t *Dest) {
-      LeftToRead = Num;
+      BytesLeftToRead = Num;
       DestPtr = Dest;
     } // setup_to_read_bytes
 
@@ -196,9 +196,9 @@ namespace avp {
         Port::RX_Byte_IT(); // we have to restart RX, it may be stopped
         info_str(ErrStr);
       } else if(SomethingToRX()) {
-        if(LeftToRead) {
-          *(DestPtr++) = Port::GetByte();
-          --LeftToRead;
+        if(BytesLeftToRead) {
+          if(DestPtr != nullptr) *(DestPtr++) = Port::GetByte(); else Port::GetByte();
+          --BytesLeftToRead;
         } else {
           switch(InputParser::ParseByte(Port::GetByte())) {
             case InputParser::WRONG_ID:
@@ -437,7 +437,7 @@ namespace avp {
 
   _TEMPLATE_DECL_ bool _TEMPLATE_SPEC_::PortConnected = false;
   _TEMPLATE_DECL_ const char *_TEMPLATE_SPEC_::BeaconStr;
-  _TEMPLATE_DECL_ size_t _TEMPLATE_SPEC_::LeftToRead = 0;
+  _TEMPLATE_DECL_ size_t _TEMPLATE_SPEC_::BytesLeftToRead = 0;
   _TEMPLATE_DECL_ uint8_t *_TEMPLATE_SPEC_::DestPtr = nullptr;
 
   _TEMPLATE_DECL_ uint16_t _TEMPLATE_SPEC_:: ReturnMultiSize = 0;

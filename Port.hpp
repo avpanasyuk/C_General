@@ -328,7 +328,7 @@ namespace avp {
             return false;
           }
         }
-        *(p++) = BufferRX.Read_();
+        if(p != nullptr) *(p++) = BufferRX.Read_(); else BufferRX.Read_();
       }
       return true;
     } // GetBytes
