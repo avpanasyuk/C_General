@@ -222,6 +222,8 @@ namespace avp {
       Port::TryToSend();
     } //  cycle
 
+////////////////////// RETURNS ///////////////////////////////////////////
+
     /// split info message into proper chunks
     /// @param Src - byte array to output
     /// @param Size - size_t size of array

@@ -6,7 +6,7 @@
 /// @endcond
 
 namespace avp {
-  typedef void (*CommandFunc_)(const uint8_t Params[]);
+  typedef void (*CommandFunc_)(const uint8_t []);
 
   class CommandParser {
   public:

@@ -95,6 +95,8 @@ namespace avp {
     void clear() { pPtrWithRefCnt->Used = 0; } // does not change reserved space
     bool empty() const { return size() == 0; }
     size_t size() const { return pPtrWithRefCnt->Used; }
+    size_t size_in_bytes() const { return size()*sizeof(T); }
+
     /**
       * Makes copy which does not share data
       */
