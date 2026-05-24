@@ -13,6 +13,9 @@
 #include <functional>
 #include <stdint.h>
 #include <stdarg.h>
+#ifndef NO_STL
+#include <string>
+#endif
 /// @endcond
 
 #include "General.h"
@@ -94,12 +97,8 @@ namespace avp {
   } // unsigned_is_smaller
 
 #ifndef NO_STL
-/// @cond
-#include <string>
-  /// @endcond
   std::string string_vprintf(const char *format, va_list a) __attribute__((format(printf, 1, 0)));
   std::string string_printf(char const *format, ...) __attribute__((format(printf, 1, 2)));
-
 #endif
 
   /// this function is for comparison two relatively close unsigned values of the same type in case larger of them  wraps
