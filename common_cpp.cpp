@@ -32,6 +32,10 @@ namespace avp {
     return ::Crc16(pcBlock, len, crc, poly);
   }
 
+  uint32_t Crc32(const uint8_t *pcBlock, long long len, uint32_t crc, uint32_t poly) {
+    return ::Crc32(pcBlock, len, crc, poly);
+  }
+
 #ifndef NO_STL
   std::string string_vprintf(const char *format, va_list ap) {
     va_list ap_;

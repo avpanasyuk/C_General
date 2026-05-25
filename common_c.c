@@ -154,3 +154,14 @@ uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t pol
   }
   return crc;
 } // Crc16
+
+uint32_t Crc32(const uint8_t *pcBlock, long long len, uint32_t crc, uint32_t poly) {
+  while(len--) {
+    crc ^= *(pcBlock++);
+
+    for(uint8_t i = 0; i < 8; ++i)
+      if(crc & 1u) crc = (crc >> 1) ^ poly;
+      else crc >>= 1;
+  }
+  return crc;
+} // Crc32

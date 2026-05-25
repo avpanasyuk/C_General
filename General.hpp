@@ -148,6 +148,11 @@ namespace avp {
   constexpr uint16_t CRC16_CCITT_POLY = 0x1021;
   uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc = 0xFFFF, uint16_t poly = CRC16_CCITT_POLY);
 
+  /// IEEE 802.3 (Ethernet) reflected polynomial. Pair with default crc init
+  /// 0xFFFFFFFF; the function returns the raw accumulator (no final XOR).
+  constexpr uint32_t CRC32_IEEE_POLY = 0xEDB88320;
+  uint32_t Crc32(const uint8_t *pcBlock, long long len, uint32_t crc = 0xFFFFFFFFu, uint32_t poly = CRC32_IEEE_POLY);
+
   template<typename T>
   class ReleaseWhenOutOfScope {
     const T p;
