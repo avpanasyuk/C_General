@@ -20,6 +20,7 @@ BinPackParameters: true
 AllowAllArgumentsOnNextLine: true
 AlignAfterOpenBracket: DontAlign 
 ContinuationIndentWidth: 2
+WhitespaceSensitiveMacros: ['IGNORE_WARNING']
 
 
 
