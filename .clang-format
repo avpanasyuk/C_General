@@ -1,6 +1,6 @@
 BasedOnStyle: LLVM
 BreakBeforeBraces: Attach
-ColumnLimit: 0
+ColumnLimit: 100
 IndentWidth: 2
 NamespaceIndentation: All
 AllowShortIfStatementsOnASingleLine: AllIfsAndElse 
