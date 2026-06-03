@@ -113,7 +113,9 @@ __inline__ static void debug_break(void)
   __builtin_trap();
 }
 #elif DEBUG_BREAK_IMPL == DEBUG_BREAK_USE_SIGTRAP
+/// @cond
 #include <signal.h>
+/// @endcond
 __attribute__((gnu_inline, always_inline))
 __inline__ static void debug_break(void)
 {

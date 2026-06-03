@@ -5,7 +5,9 @@
  *      Author: panasyuk
  */
 
+/// @cond
 #include <memory.h>
+/// @endcond
 #include "sort_and_median.h"
 
 static int MaxSizeInsertionSortIsBetter = 30; // we have to do a study and select this number. OK, 30 is about optimal,

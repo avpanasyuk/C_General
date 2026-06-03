@@ -2,9 +2,11 @@
 #define EXCEPTION_H
 
 #include "General.hpp"
+/// @cond
 #include <cstdarg>
 #include <exception>
 #include <string>
+/// @endcond
 
 
 namespace avp {

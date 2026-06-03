@@ -1,8 +1,10 @@
 #pragma once
 
+/// @cond
 #include <stdlib.h>
 #include <initializer_list>
 #include <limits>
+/// @endcond
 #include "MyMath.hpp"
 #include "Error.hpp"
 

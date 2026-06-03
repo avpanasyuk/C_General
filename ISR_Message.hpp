@@ -13,7 +13,9 @@
  */
 #pragma once
 
+/// @cond
 #include <stddef.h>
+/// @endcond
 #include "CircBufferWithCont.hpp"
 
 namespace avp {

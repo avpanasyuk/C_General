@@ -1,7 +1,9 @@
 #pragma once
 
+/// @cond
 #include <ostream>
 #include <streambuf>
+/// @endcond
 
 namespace avp {
   class OutStream : public std::ostream {

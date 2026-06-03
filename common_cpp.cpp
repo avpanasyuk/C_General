@@ -5,10 +5,12 @@
  *  Author: panasyuk
  */
 #ifndef NO_STL
+/// @cond
 #include <chrono>
 #include <string>
 #include <sstream>
 #include <iomanip>
+/// @endcond
 #endif // NO_STL
 
 #include "General.hpp"

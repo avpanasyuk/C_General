@@ -182,10 +182,12 @@ namespace avp {
 // some libraries use std::cout and std::cerr to report errors, lets have a way to redirect them is necessary
 #if !defined(NO_STL) && defined(REDIRECT_COUT)
 
+/// @cond
 #include <istream>
 #include <ostream>
 #include <streambuf>
 #include <iostream>
+/// @endcond
 
   class DebugStreamBuf : public std::streambuf {
   public:

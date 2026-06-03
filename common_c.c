@@ -6,11 +6,15 @@
  */
 
 #if defined(ESP32)
+/// @cond
 #include <esp_attr.h>
+/// @endcond
 #endif
 
 #if defined(ESP8266)
+/// @cond
 #include <Arduino.h>
+/// @endcond
 #endif
 
 #ifndef AVP_RAM_ATTR

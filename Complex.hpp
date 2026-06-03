@@ -9,7 +9,9 @@
 #ifndef AVP_COMPLEX_H_
 #define AVP_COMPLEX_H_
 
+/// @cond
 #include <cmath>
+/// @endcond
 
 #if defined(__ARM_FP)
 #include <arm_math.h>#endif

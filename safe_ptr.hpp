@@ -29,9 +29,11 @@ namespace avp {
 
 
 #if 0
+/// @cond
 #include <memory>
 #include <type_traits>
 #include <exception>
+/// @endcond
 
 template<typename T>
 class safe_ptr {

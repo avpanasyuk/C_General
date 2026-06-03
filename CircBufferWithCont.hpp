@@ -12,8 +12,10 @@
 #pragma once
 #include "Macros.h"
 
+/// @cond
 #include <stddef.h>
 #include <stdint.h>
+/// @endcond
 
 /** Circular Buffer of elements of class T. One reader and one writer may work in parallel. Reader is using
   * only BeingRead index, and writer only BeingWritten, so index can be screwed-up ONLY when cross-used,

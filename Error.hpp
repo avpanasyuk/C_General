@@ -17,10 +17,14 @@
 #define AVP_RAM_ATTR // set to IRAM_ATTR for ESP
 #else
 #if defined(ESP32)
+/// @cond
 #include <esp_attr.h>
+/// @endcond
 #endif
 #if defined(ESP8266)
+/// @cond
 #include <Arduino.h>
+/// @endcond
 #endif 
 #endif
 
@@ -92,8 +96,10 @@ int inline AVP_RAM_ATTR debug_put_decimal(T x) {
 /**
  ERRNO_ASSERT_ELSE_RETURN works with functions returning -1 when failed and filling errno
  */
+/// @cond
 #include <cstring>
 #include <cerrno>
+/// @endcond
 #define ERRNO_ASSERT_ELSE_RETURN(exp) do{ \
     if((exp) == -1) RETURN_ERROR_STRING(strerror(errno)); \
 }while(0)
