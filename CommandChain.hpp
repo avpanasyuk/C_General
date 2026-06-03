@@ -8,7 +8,8 @@
 /// @cond
 #include <stdint.h>
 /// @endcond
-#include "BitBang.hpp"#include "MyMath.hpp"
+#include "BitBang.hpp"
+#include "MyMath.hpp"
 #include "Error.hpp"
 #include "BitBang.hpp"
 #include "CommandParser.hpp"

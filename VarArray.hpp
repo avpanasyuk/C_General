@@ -1,5 +1,5 @@
 #pragma once
-#include "Array.h"
+#include "Array.hpp"
 
 namespace avp {
 /**

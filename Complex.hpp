@@ -14,7 +14,10 @@
 /// @endcond
 
 #if defined(__ARM_FP)
-#include <arm_math.h>#endif
+/// @cond
+#include <arm_math.h>
+/// @endcond
+#endif
 
 namespace avp {
   template<typename T = float>
