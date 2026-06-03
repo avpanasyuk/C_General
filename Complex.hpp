@@ -13,12 +13,6 @@
 #include <cmath>
 /// @endcond
 
-#if defined(__ARM_FP)
-/// @cond
-#include <arm_math.h>
-/// @endcond
-#endif
-
 namespace avp {
   template<typename T = float>
   struct Complex {
@@ -41,19 +35,16 @@ namespace avp {
 
     T abs_sqr() const { return Real*Real + Imag*Imag; }
 
-#if defined(__ARM_FP)
-    static inline T sqrt(T x) { float32_t t; arm_sqrt_f32(x, &t); return t; }
-#endif
-    T abs() const { return sqrt(abs_sqr()); }
+    T abs() const { return std::sqrt(abs_sqr()); }
 
     T sin_phase() const {
-      auto Out = sqrt(1.f/(1.f+sqr(Real/Imag)));
+      auto Out = std::sqrt(1.f/(1.f+sqr(Real/Imag)));
       return Imag >= 0 ?Out:-Out;
     } // sin_phase
 
     T cos_phase() const {
       auto s = sqr(Real);
-      auto Out = sqrt(s/(s+sqr(Imag)));
+      auto Out = std::sqrt(s/(s+sqr(Imag)));
       return Real >= 0 ?Out:-Out;
     } // cos_phase
 
