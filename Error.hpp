@@ -60,7 +60,7 @@ int inline AVP_RAM_ATTR debug_put_decimal(T x) {
     debug_putchar('-');
     return debug_put_decimal<T>(-x);
   }
-  char B[avp::CeilRatio(sizeof(x)*8,3U)];
+  char B[avp::CeilRatio<decltype(sizeof(x))>(sizeof(x)*8,3U)];  // both args size_t (64-bit-host safe)
 
   uint_fast8_t i = 0;
   do {
