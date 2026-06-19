@@ -2,7 +2,7 @@
 #define BITBANG_H_INCLUDED
 
 /**
-  @file C_General/BitBang.h
+  @file C_General/BitBang.hpp
   @author Alexander Panasyuk
   */
 
@@ -110,6 +110,13 @@ namespace avp {
 
   // byteswap
   inline uint16_t bswap_16(uint16_t w) { return (w << 8) | (w >> 8); }
+
+  //! read a big-endian (MSB-first on the wire) value from a byte buffer; host-endianness-independent,
+  //! unlike Ptr2typeRev which depends on the host being little-endian.
+  inline uint16_t get_be16(const uint8_t *p) { return uint16_t(uint16_t(p[0]) << 8 | p[1]); }
+  inline uint32_t get_be32(const uint8_t *p) {
+    return uint32_t(p[0]) << 24 | uint32_t(p[1]) << 16 | uint32_t(p[2]) << 8 | p[3];
+  }
 
   template<typename T>
   FORCE_INLINE T rotate_left(T x, unsigned n = 1) {
