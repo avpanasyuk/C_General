@@ -29,6 +29,16 @@
 // }
 #endif
 
+// ESP-IDF (not Arduino-ESP32, which is caught by ESP32 above and gets millis()/micros() from
+// esp32-hal). ESP_PLATFORM is defined by both, so exclude the Arduino case explicitly.
+#if defined(ESP_PLATFORM) && !defined(ARDUINO)
+/// @cond
+#include "esp_timer.h"
+/// @endcond
+inline uint32_t micros() { return (uint32_t)esp_timer_get_time(); }
+inline uint32_t millis() { return (uint32_t)(esp_timer_get_time() / 1000ULL); }
+#endif
+
 #ifndef NO_STL
 /// @cond
 #include <chrono>
