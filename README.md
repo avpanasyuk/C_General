@@ -15,14 +15,14 @@ under a project's `src/`.
 |--------|------------------|
 | `Error.h` / `Error.hpp` | `extern "C"` `debug_putchar`, `debug_puts`, `debug_printf`, `debug_puts_free`. Defaults are `__weak` in `common_c.c` so a project can override `debug_puts` to tee into Serial / OLED / log buffers (`debug_printf`/`debug_vprintf` route through it). |
 | `MyTime.hpp` | `avp::TimeOut`, `avp::TimePeriod`, `avp::TimePeriod1<period>`, `avp::Periodically<Fn>::Run(ms)` (the cooperative scheduler used pervasively in `loop()`), `RunPeriodically<Fn, period>`. |
-| `General.h` / `General.hpp` | `sprintf_static`, `sprintf_alloc`, `Crc16`, `avp::CallWhenOutOfScope`, `RestoreOnReturn`, `ReleaseWhenOutOfScope`, `unsigned_is_smaller`. `.h` = C-callable, `.hpp` = C++-only. |
+| `General.h` / `General.hpp` | `sprintf_static`, `sprintf_alloc`, `svprintf_puts`/`printf_wrapper` (printf → a `puts`-style sink, used for log vprintf), `Crc16`, `avp::CallWhenOutOfScope`, `RestoreOnReturn`, `ReleaseWhenOutOfScope`, `unsigned_is_smaller`. `.h` = C-callable, `.hpp` = C++-only. |
 | `Macros.h` / `Macros.hpp` | `IGNORE_WARNING(-Wfoo)` / `STOP_IGNORING_WARNING`, `FORCE_INLINE`, `N_ELEMENTS`, `TODO(...)`. |
 | `CircBuffer.hpp`, `CircBufferWithCont.hpp`, `VirtCircBuffer.hpp`, `DoubleLinearBuffer.hpp` | Ring / linear buffer variants. |
 | `CommandParser.hpp`, `CommandTable.hpp`, `CommandChain.hpp`, `Protocol.hpp` | Command parsing and the binary protocol layer. |
 | `Array.hpp`, `Vector.hpp`, `VarArray.hpp`, `BitVar.hpp`, `Complex.hpp`, `safe_ptr.hpp` | Containers / numeric / pointer helpers. |
 | `ISR_Message.hpp`, `BG_message.hpp`, `TriggerVar.hpp` | ISR-to-main messaging primitives. |
 | `MyMath.hpp`, `sort.c`, `sort_and_median.h` | Math / sorting / median helpers. |
-| `BitBang.hpp`, `IO.hpp`, `Port.hpp`, `OutStream.hpp` | Bit-banged IO and stream abstractions. |
+| `BitBang.hpp`, `IO.hpp`, `Port.hpp`, `OutStream.hpp` | Bit-banged IO and stream abstractions; `get_be16`/`get_be32` portable big-endian byte-buffer reads. |
 
 ## Gotchas
 
