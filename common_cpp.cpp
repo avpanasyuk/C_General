@@ -30,8 +30,8 @@ uint32_t micros() {
 } // millis
 #endif
 namespace avp {
-  uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly) {
-    return ::Crc16(pcBlock, len, crc, poly);
+  uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly, bool reflected) {
+    return ::Crc16(pcBlock, len, crc, poly, reflected);
   }
 
   uint32_t Crc32(const uint8_t *pcBlock, long long len, uint32_t crc, uint32_t poly) {

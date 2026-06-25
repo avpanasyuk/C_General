@@ -134,8 +134,24 @@ namespace avp {
   } // shift_array_left
 
   constexpr uint16_t CRC16_CCITT_POLY = 0x1021;
-  uint16_t Crc16(
-    const uint8_t *pcBlock, long long len, uint16_t crc = 0xFFFF, uint16_t poly = CRC16_CCITT_POLY);
+  /// Reflected (LSB-first) poly for Modbus-RTU; pair with crc init 0xFFFF and reflected=true.
+  constexpr uint16_t CRC16_MODBUS_POLY = 0xA001;
+  /**
+   * @brief Compute a 16-bit CRC over a byte block (bit-by-bit, table-free).
+   * @param pcBlock   pointer to the input bytes.
+   * @param len       number of bytes to process.
+   * @param crc       initial/seed value (default 0xFFFF).
+   * @param poly      generator polynomial. For @p reflected==false pass the
+   *                  normal poly (e.g. CRC16_CCITT_POLY); for @p reflected==true
+   *                  pass the *reflected* poly (e.g. CRC16_MODBUS_POLY = 0xA001).
+   * @param reflected false = MSB-first (shift left, test bit 15), the CRC16-CCITT
+   *                  family; true = LSB-first (shift right, test bit 0), as used
+   *                  by Modbus-RTU. The result is returned without any final XOR
+   *                  or output reflection.
+   * @return the computed CRC.
+   */
+  uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc = 0xFFFF,
+    uint16_t poly = CRC16_CCITT_POLY, bool reflected = false);
 
   /// IEEE 802.3 (Ethernet) reflected polynomial. Pair with default crc init
   /// 0xFFFFFFFF; the function returns the raw accumulator (no final XOR).

@@ -56,7 +56,10 @@ const char *sprintf_realloc(char const *format, ...) __attribute__ ((format (pri
 
 typedef void (*free_func_t)(void *);
 
-uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly);
+// reflected==0: MSB-first (shift left, test bit15) -- CRC16-CCITT family.
+// reflected!=0: LSB-first (shift right, test bit0) -- pass the reflected poly
+// (e.g. 0xA001 for Modbus-RTU) and crc init 0xFFFF.
+uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly, int reflected);
 uint32_t Crc32(const uint8_t *pcBlock, long long len, uint32_t crc, uint32_t poly);
 
 #ifdef __cplusplus
