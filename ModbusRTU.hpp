@@ -74,6 +74,9 @@ namespace avp {
      *         count, CRC ok); false on timeout, framing/length mismatch, CRC error,
      *         or a Modbus exception response. On false, LastError() explains why.
      * @note Blocks (polling @p rd) until the reply arrives or @p timeout_ms elapses.
+     * @note Tolerates a half-duplex echo of the request (auto-direction RS485): it
+     *       resynchronises to the reply header rather than assuming the first bytes
+     *       received are the response.
      */
     bool ReadHoldingRegisters(uint8_t addr, uint16_t startReg, uint16_t count, uint16_t *out) {
       Error = nullptr;
@@ -94,23 +97,29 @@ namespace avp {
       DrainRx();
       Write(req, sizeof req);
 
-      // Reply: addr, func, byteCount, <2*count data>, crcLo, crcHi.
-      uint8_t hdr[3];
-      if(!ReadBytes(hdr, 3)) { Error = "timeout waiting for reply"; return false; }
-      if(hdr[0] != addr) { Error = "wrong slave address in reply"; return false; }
-
-      if(hdr[1] & 0x80) { // exception response: addr, func|0x80, excCode, crc, crc
-        uint8_t tail[3];
-        ReadBytes(tail, 3); // excCode + 2 CRC; best-effort
-        Error = "modbus exception response";
-        return false;
+      // Locate the reply header, skipping any half-duplex echo of the request. On an
+      // auto-direction RS485 link (e.g. an XY-017) the transmitted frame is echoed
+      // back on RX, also starting addr,0x03,... -- so slide a 3-byte window over the
+      // stream until the exact data-reply header [addr, 0x03, 2*count] appears. The
+      // echo's third byte is the request's start-reg-hi (0x00) and 2*count is even,
+      // so neither the echo nor an exception's func (0x83, odd) can false-match it.
+      const uint8_t nData = uint8_t(2 * count);
+      uint8_t w1 = 0, w2 = 0, w3 = 0;
+      uint32_t start = Millis();
+      bool gotHeader = false;
+      while(Millis() - start <= TimeoutMs) {
+        int c = Read();
+        if(c < 0) continue;
+        start = Millis(); // reset deadline on progress
+        w1 = w2; w2 = w3; w3 = uint8_t(c);
+        if(w2 == addr && w3 == (0x03 | 0x80)) { Error = "modbus exception response"; return false; }
+        if(w1 == addr && w2 == 0x03 && w3 == nData) { gotHeader = true; break; }
       }
-      if(hdr[1] != 0x03) { Error = "unexpected function code in reply"; return false; }
-      if(hdr[2] != 2 * count) { Error = "unexpected byte count in reply"; return false; }
+      if(!gotHeader) { Error = "timeout waiting for reply"; return false; }
 
-      const uint8_t nData = hdr[2];
+      // Header found; read the data + 2 CRC bytes and validate CRC over the whole frame.
       uint8_t frame[3 + 2 * 125 + 2]; // header + max data + CRC
-      frame[0] = hdr[0]; frame[1] = hdr[1]; frame[2] = hdr[2];
+      frame[0] = addr; frame[1] = 0x03; frame[2] = nData;
       if(!ReadBytes(frame + 3, nData + 2)) { Error = "timeout reading reply body"; return false; }
 
       uint16_t calc = ModbusCrc(frame, 3 + nData);
