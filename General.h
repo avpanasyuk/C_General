@@ -45,8 +45,12 @@ const char *svprintf_alloc(const char *format, va_list a) __attribute__ ((format
 const char *sprintf_alloc(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
 
 /**
- * following two function return a pointer to the same memory every time, and reallocated the space for this memory as necessary
- * this memory does not need to be free"d"
+ * @brief printf into a fixed static buffer (BUFFER_SIZE in common_c.c) — the NO-HEAP alternative to
+ * Arduino String. Prefer this on memory-constrained firmware: it does no alloc/dealloc, so it cannot
+ * fragment RAM (String's churn "muddies" memory). Returns a pointer to a shared static buffer that is
+ * valid only until the next call — copy/consume it before calling again; never free it. Output longer
+ * than the buffer is truncated (vsnprintf-safe, no overflow), so keep the buffer sized for the longest
+ * expected string (e.g. a full HTML status line).
  */
 const char *svprintf_static(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
 const char *sprintf_static(char const *format, ...) __attribute__ ((format (printf, 1, 2)));

@@ -139,7 +139,7 @@ PRINTF_WRAPPER_C(const char *, sprintf_realloc, svprintf_realloc)
  * pointer returned by this function should not be freed after use
  */
 const char *svprintf_static(const char *format, va_list ap) {
-#define BUFFER_SIZE 200
+#define BUFFER_SIZE 256 // fits a full HTML status line (temps+diffs+efficiency); vsnprintf truncates safely if exceeded
   static char Buffer[BUFFER_SIZE];
   vsnprintf(Buffer, BUFFER_SIZE, format, ap);
   return Buffer; // we do not write ending 0 byte
