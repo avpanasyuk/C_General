@@ -50,13 +50,13 @@ namespace avp {
     Iterator<const T> const begin() const { // const version
       return Iterator<const T>(Data);
     }
-    virtual Iterator<const T> const end() const { // const version
+    Iterator<const T> const end() const { // const version
       return Iterator<const T>(Data + Length);
     }
     Iterator<T> begin() { // non-const version
       return Iterator<T>(Data);
     }
-    virtual Iterator<T> end() { // non-const version
+    Iterator<T> end() { // non-const version
       return Iterator<T>(Data + Length);
     }
 
@@ -79,24 +79,24 @@ namespace avp {
     SELF_OP_T(Array) // assign a single value T to the whole Array
                      // const Array &operator=(const T *p) { for(size_t i=0; i < ReservedSz; i++) Data[i] = p[i];  return *this;}
 
-    virtual T &operator[](size_t i) {
+    T &operator[](size_t i) {
       AVP_ASSERT(i < Length);
       return Data[i];
     }
 
-    virtual const T &operator[](size_t i) const {
+    const T &operator[](size_t i) const {
       AVP_ASSERT(i < Length);
       return Data[i];
     }
 
     static constexpr size_t N() { return Length; }
 
-    virtual size_t size() const { return N(); }
+    size_t size() const { return N(); }
 
     const T *get_ptr() const {
       return Data;
     }
-    virtual const T *after_last() const {
+    const T *after_last() const {
       return Data + Length;
     }
 

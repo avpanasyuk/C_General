@@ -30,10 +30,10 @@ namespace avp {
       for(size_t i; i < rhs.Size; ++i) Data[i] = T(rhs[i]);
       Size = rhs.Size;
     }
-    virtual Iterator<const T> const end() const { // const version
+    Iterator<const T> const end() const { // const version
       return Iterator<const T>(Data + Size);
     }
-    virtual Iterator<T> end() { // non-const version
+    Iterator<T> end() { // non-const version
       return Iterator<T>(Data + Size);
     }
 
@@ -53,19 +53,19 @@ namespace avp {
       return *this;
     }
 
-    virtual T &operator[](size_t i) {
+    T &operator[](size_t i) {
       AVP_ASSERT(i < Size);
       return Data[i];
     }
 
-    virtual const T &operator[](size_t i) const {
+    const T &operator[](size_t i) const {
       AVP_ASSERT(i < Size);
       return Data[i];
     }
 
-    virtual size_t size() const { return Size; }
+    size_t size() const { return Size; }
 
-    virtual const T *after_last() const {
+    const T *after_last() const {
       return Data + ReservedSz;
     }
 
