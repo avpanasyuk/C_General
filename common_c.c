@@ -132,7 +132,7 @@ const char *svprintf_realloc(const char *format, va_list ap) {
   static char *out = NULL;
   static size_t Reserved = 0;
   if(Size + 1 > Reserved) out = (char *)realloc(out, Reserved = 2 * (Size + 1));
-  if(out == NULL) return "svprintf_static: failed to reallocate memory!";
+  if(out == NULL) return "svprintf_realloc: failed to reallocate memory!";
   vsprintf(out, format, ap);
   return out; // we do not write ending 0 byte
 } // string_vprintf
