@@ -20,6 +20,14 @@ g++ -std=c++17 -fsyntax-only -I. -c common_c.c common_cpp.cpp
 building a consumer project (`pio run` in the project that vendors this submodule) — a header can
 pass a host syntax check and break on AVR/ESP/STM32.
 
+`common_c.c` also has an MSVC branch (the `_MSC_VER` `/alternatename` block — see the weak-symbol note
+below); GCC builds never exercise it, so verify it with clang-cl after touching that file or the
+`Error.h` declarations it depends on:
+
+```powershell
+& 'C:\Program Files\LLVM\bin\clang-cl.exe' /I. /D_CRT_SECURE_NO_WARNINGS /c common_c.c /Fo:D:\TEMP\General\
+```
+
 **Not every header compiles standalone today.** Cleanly syntax-checking a header you didn't touch is
 not a prerequisite; don't "fix" these as a side quest, but don't be surprised by them either:
 

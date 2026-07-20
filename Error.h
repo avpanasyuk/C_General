@@ -39,7 +39,6 @@
 
 #endif
 
-#ifdef __GNUC__
 #ifdef __cplusplus
   extern "C" {
 #endif
@@ -113,6 +112,7 @@
   } while(0)
 
 // #endif
+#ifdef __GNUC__
 // clang-format off
 IGNORE_WARNING(-Wunused-value)
 // clang-format on
