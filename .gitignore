@@ -1,6 +1,10 @@
 **/Release*/*
 **/Debug*/*
 
+# local IDE / Claude state
+.claude/
+.vscode/
+
 *.save
 /*.i
 *.bak
