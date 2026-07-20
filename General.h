@@ -53,7 +53,10 @@ const char *sprintf_alloc(char const *format, ...) __attribute__ ((format (print
  * expected string (e.g. a full HTML status line).
  */
 const char *svprintf_static(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
+#ifndef __cplusplus
+// C++ gets a guarded overload of this name instead -- see the bottom of this header.
 const char *sprintf_static(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
+#endif
 
 #ifndef NDEBUG
 /// Non-zero while an avp::StaticStr (StaticStr.hpp) holds the shared buffer; svprintf_static
@@ -82,4 +85,11 @@ uint32_t Crc32(const uint8_t *pcBlock, long long len, uint32_t crc, uint32_t pol
 
 #ifdef __cplusplus
 }
+
+// The C++ sprintf_static lives in StaticStr.hpp (it returns avp::StaticStr, which holds the
+// shared buffer for the result's lifetime). Included here so General.h users get it by
+// default, after svprintf_static is declared and outside extern "C". The two headers include
+// each other; both orders resolve because each needs only declarations the other makes
+// before its own include.
+#include "StaticStr.hpp"
 #endif
