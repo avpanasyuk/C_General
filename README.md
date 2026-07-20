@@ -15,7 +15,8 @@ under a project's `src/`.
 |--------|------------------|
 | `Error.h` / `Error.hpp` | `extern "C"` `debug_putchar`, `debug_puts`, `debug_printf`, `debug_puts_free`. Defaults are `__weak` in `common_c.c` so a project can override `debug_puts` to tee into Serial / OLED / log buffers (`debug_printf`/`debug_vprintf` route through it). |
 | `MyTime.hpp` | `avp::TimeOut`, `avp::TimePeriod`, `avp::TimePeriod1<period>`, `avp::Periodically<Fn>::Run(ms)` (the cooperative scheduler used pervasively in `loop()`), `RunPeriodically<Fn, period>`. |
-| `General.h` / `General.hpp` | `sprintf_static`, `sprintf_alloc`, `svprintf_puts`/`printf_wrapper` (printf → a `puts`-style sink, used for log vprintf), `Crc16`, `avp::CallWhenOutOfScope`, `RestoreOnReturn`, `ReleaseWhenOutOfScope`, `unsigned_is_smaller`. `.h` = C-callable, `.hpp` = C++-only. |
+| `General.h` / `General.hpp` | `sprintf_static`, `sprintf_alloc`, `svprintf_puts`/`printf_wrapper` (printf → a `puts`-style sink, used for log vprintf), `Crc16`, `avp::CallWhenOutOfScope`, `RestoreOnReturn`, `ReleaseWhenOutOfScope`, `unsigned_is_smaller`. `.h` = C-callable, `.hpp` = C++-only. Also `DEBUG_PRINTF_BUFFER_SIZE` (default 256) — the per-call stack buffer `debug_vprintf` formats into; override it on RAM-tight targets. |
+| `StaticStr.hpp` | `avp::sprintf_guarded()` → a move-only `avp::StaticStr` holding `sprintf_static`'s shared buffer for its lifetime, so a second format into it asserts instead of silently corrupting the first result. Detection only, and only where `NDEBUG` is absent. |
 | `Macros.h` / `Macros.hpp` | `IGNORE_WARNING(-Wfoo)` / `STOP_IGNORING_WARNING`, `FORCE_INLINE`, `N_ELEMENTS`, `TODO(...)`. |
 | `CircBuffer.hpp`, `CircBufferWithCont.hpp`, `VirtCircBuffer.hpp`, `DoubleLinearBuffer.hpp` | Ring / linear buffer variants. |
 | `CommandParser.hpp`, `CommandTable.hpp`, `CommandChain.hpp`, `Protocol.hpp` | Command parsing and the binary protocol layer. |

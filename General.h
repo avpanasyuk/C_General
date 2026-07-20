@@ -55,6 +55,20 @@ const char *sprintf_alloc(char const *format, ...) __attribute__ ((format (print
 const char *svprintf_static(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
 const char *sprintf_static(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
 
+#ifndef NDEBUG
+/// Non-zero while an avp::StaticStr (StaticStr.hpp) holds the shared buffer; svprintf_static
+/// asserts on it so a second format into a still-held string is caught instead of corrupting it.
+extern int sprintf_static_claimed;
+#endif
+
+/// Stack staging area debug_vprintf formats into, per call. Deliberately NOT the shared
+/// svprintf_static buffer, so a debug_*() call can never overwrite a sprintf_static() result
+/// its caller is still holding. Longer output truncates (vsnprintf-safe). Override it on
+/// RAM-tight targets -- 256 B of stack is cheap on ESP but not on an AVR.
+#ifndef DEBUG_PRINTF_BUFFER_SIZE
+#define DEBUG_PRINTF_BUFFER_SIZE 256
+#endif
+
 const char *svprintf_realloc(const char *format, va_list a) __attribute__ ((format (printf, 1, 0)));
 const char *sprintf_realloc(char const *format, ...) __attribute__ ((format (printf, 1, 2)));
 

@@ -44,7 +44,9 @@ int debug_puts_default(const char *s) {
 
 #pragma comment(linker, "/alternatename:debug_vprintf=debug_vprintf_default")
 int debug_vprintf_default(const char *format, va_list a) {
-  return debug_puts(svprintf_static(format, a));
+  char buf[DEBUG_PRINTF_BUFFER_SIZE]; // private to this call -- see the note by svprintf_static
+  vsnprintf(buf, sizeof buf, format, a);
+  return debug_puts(buf);
 } // debug_vprintf
 
 #pragma comment(linker, "/alternatename:debug_puts_free=debug_puts_free_default")
@@ -78,7 +80,9 @@ __weak int AVP_RAM_ATTR debug_puts(const char *s) {
 } // debug_puts
 
 __weak int AVP_RAM_ATTR debug_vprintf(const char *format, va_list a) {
-  return debug_puts(svprintf_static(format, a));
+  char buf[DEBUG_PRINTF_BUFFER_SIZE]; // private to this call -- see the note by svprintf_static
+  vsnprintf(buf, sizeof buf, format, a);
+  return debug_puts(buf);
 } // debug_vprintf
 
 __weak int AVP_RAM_ATTR debug_puts_free(const char *s, free_func_t free_func) {
@@ -138,8 +142,24 @@ PRINTF_WRAPPER_C(const char *, sprintf_realloc, svprintf_realloc)
 /*
  * pointer returned by this function should not be freed after use
  */
+/* Buffer is shared by every caller, so a second call overwrites a string the first
+ * caller may still be holding. Two things keep that from biting:
+ *   - debug_vprintf stages into its own stack buffer, so no debug_*() call can
+ *     clobber a sprintf_static() result (it used to, silently corrupting output);
+ *   - avp::StaticStr (StaticStr.hpp) claims the buffer for its lifetime, and the
+ *     assert below catches anyone formatting into it while a claim is live.
+ * The assert can safely report through debug_printf precisely because of the first
+ * point -- that path no longer re-enters this function.
+ */
+#ifndef NDEBUG
+int sprintf_static_claimed = 0; // set by avp::StaticStr; checked here
+#endif
+
 const char *svprintf_static(const char *format, va_list ap) {
 #define BUFFER_SIZE 256 // fits a full HTML status line (temps+diffs+efficiency); vsnprintf truncates safely if exceeded
+#ifndef NDEBUG
+  AVP_ASSERT(!sprintf_static_claimed);
+#endif
   static char Buffer[BUFFER_SIZE];
   vsnprintf(Buffer, BUFFER_SIZE, format, ap);
   return Buffer; // we do not write ending 0 byte
