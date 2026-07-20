@@ -43,24 +43,25 @@ both branches** or MSVC builds silently lose it.
 **Two build-flag dimensions gate large parts of the code:**
 - `NO_STL=1` (embedded default) compiles out `std::string`/STL paths in `Error.hpp`, `General.hpp`,
   `MyTime.hpp`, `millis_micros.hpp`, `common_cpp.cpp`. Anything new touching STL needs the guard.
-- `NDEBUG` removes the `StaticStr` claim tracking (`sprintf_static_claimed`) and turns `AVP_ASSERT`
-  into a bare expression evaluation — **the expression still runs, the check does not**. Never put a
-  side-effect-free check in `AVP_ASSERT` expecting it to catch anything in release.
+- `NDEBUG` turns `AVP_ASSERT` into a bare expression evaluation — **the expression still runs, the
+  check does not**. Never put a side-effect-free check in `AVP_ASSERT` expecting it to catch anything
+  in release.
 
 **The shared `sprintf_static` buffer** (256 B static in `common_c.c`) is the library's one piece of
-global mutable state, and its safety rests on two coupled facts: `debug_vprintf` formats into its own
-stack buffer (`DEBUG_PRINTF_BUFFER_SIZE`) so debug output can never clobber a live result, and
-`avp::StaticStr` (returned by the C++ `sprintf_static`) claims the buffer for its lifetime so reuse
-asserts. Breaking either — e.g. routing `debug_vprintf` back through `svprintf_static` to save RAM —
-reintroduces silent corruption *and* makes the assert re-enter. `General.h` and `StaticStr.hpp`
-include each other; the cycle resolves only in the current order, so don't reshuffle those includes.
+global mutable state, and it is unguarded by design: the result is valid only until the next call, and
+a caller holding it past one is on its own. An RAII claim was tried and removed — the lifetime of the
+guard object ends at the semicolon of `const char *p = sprintf_static(...)`, so it cannot see the case
+that actually bites, while costing every `String` call site an explicit `.c_str()`. The one protection
+that does hold is structural: `debug_vprintf` formats into its own stack buffer
+(`DEBUG_PRINTF_BUFFER_SIZE`), so no `debug_*()` call can clobber a live result. Do not route
+`debug_vprintf` back through `svprintf_static` to save RAM — that reintroduces a corruption bug that
+cost real field debugging (see commit 9d164ff).
 
 ## Repo facts
 
-- Remote: `GitHub` only (`github.com/avpanasyuk/C_General`) — the `HOME` bsd mirror the README names
-  is **not configured** as a remote here.
-- `doxyfile` is stale: it holds absolute `c:\GIT_REPS\PROJECTS\JefCore\...` input paths and pre-rename
-  `.h` filenames (`Time.h`, `Math.h`, `Vector.h`) that no longer exist. Don't run it expecting output;
-  regenerate its INPUT list if doxygen is actually needed.
-</content>
-</invoke>
+This checkout is the **primary** C_General repository — projects vendor it as a submodule, so a change
+here propagates to every consumer on their next bump. Remotes are the usual `GitHub` + `HOME` pair.
+
+`doxyfile` is stale: it holds absolute `c:\GIT_REPS\PROJECTS\JefCore\...` input paths and pre-rename
+`.h` filenames (`Time.h`, `Math.h`, `Vector.h`) that no longer exist. Don't run it expecting output;
+regenerate its INPUT list if doxygen is actually needed.

@@ -143,23 +143,12 @@ PRINTF_WRAPPER_C(const char *, sprintf_realloc, svprintf_realloc)
  * pointer returned by this function should not be freed after use
  */
 /* Buffer is shared by every caller, so a second call overwrites a string the first
- * caller may still be holding. Two things keep that from biting:
- *   - debug_vprintf stages into its own stack buffer, so no debug_*() call can
- *     clobber a sprintf_static() result (it used to, silently corrupting output);
- *   - avp::StaticStr (StaticStr.hpp) claims the buffer for its lifetime, and the
- *     assert below catches anyone formatting into it while a claim is live.
- * The assert can safely report through debug_printf precisely because of the first
- * point -- that path no longer re-enters this function.
+ * caller may still be holding -- consume the result before calling again. debug_vprintf
+ * stages into its own stack buffer, so at least no debug_*() call can clobber a
+ * sprintf_static() result.
  */
-#ifndef NDEBUG
-int sprintf_static_claimed = 0; // set by avp::StaticStr; checked here
-#endif
-
 const char *svprintf_static(const char *format, va_list ap) {
 #define BUFFER_SIZE 256 // fits a full HTML status line (temps+diffs+efficiency); vsnprintf truncates safely if exceeded
-#ifndef NDEBUG
-  AVP_ASSERT(!sprintf_static_claimed);
-#endif
   static char Buffer[BUFFER_SIZE];
   vsnprintf(Buffer, BUFFER_SIZE, format, ap);
   return Buffer; // we do not write ending 0 byte
