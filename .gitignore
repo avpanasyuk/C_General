@@ -2,7 +2,8 @@
 **/Debug*/*
 
 # local IDE / Claude state
-.claude/
+.claude/settings.local.json
+.claude/*.tmp.*
 .vscode/
 
 *.save
