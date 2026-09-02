@@ -148,7 +148,11 @@ PRINTF_WRAPPER_C(const char *, sprintf_realloc, svprintf_realloc)
  * sprintf_static() result.
  */
 const char *svprintf_static(const char *format, va_list ap) {
-#define BUFFER_SIZE 256 // fits a full HTML status line (temps+diffs+efficiency); vsnprintf truncates safely if exceeded
+// Sized for a full HTML status line. 256 was not enough: the SDP810 node's /status page reaches
+// 290 bytes once a sensor error string is appended -- so it truncated precisely in the case the
+// page exists to report. vsnprintf truncates safely (no overflow), which is what makes the
+// failure silent and worth over-sizing against. 512 costs 256 bytes of static RAM per program.
+#define BUFFER_SIZE 512
   static char Buffer[BUFFER_SIZE];
   vsnprintf(Buffer, BUFFER_SIZE, format, ap);
   return Buffer; // we do not write ending 0 byte
