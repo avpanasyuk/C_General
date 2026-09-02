@@ -133,6 +133,27 @@ namespace avp {
     }
   } // shift_array_left
 
+  /// Sensirion / SMBus PEC generator polynomial (x^8+x^5+x^4+1), MSB-first.
+  /// Sensirion parts (SHT3x, SDP8xx, SCD4x) seed it with 0xFF; SMBus PEC seeds with 0x00.
+  constexpr uint8_t CRC8_SENSIRION_POLY = 0x31;
+  /// Reflected (LSB-first) poly for Dallas/Maxim 1-Wire; pair with crc init 0x00 and reflected=true.
+  constexpr uint8_t CRC8_DALLAS_POLY = 0x8C;
+  /**
+   * @brief Compute an 8-bit CRC over a byte block (bit-by-bit, table-free).
+   * @param pcBlock   pointer to the input bytes.
+   * @param len       number of bytes to process.
+   * @param crc       initial/seed value (default 0xFF, as Sensirion sensors use).
+   * @param poly      generator polynomial. For @p reflected==false pass the normal
+   *                  poly (e.g. CRC8_SENSIRION_POLY); for @p reflected==true pass the
+   *                  *reflected* poly (e.g. CRC8_DALLAS_POLY = 0x8C).
+   * @param reflected false = MSB-first (shift left, test bit 7), the Sensirion/SMBus
+   *                  family; true = LSB-first (shift right, test bit 0), as used by
+   *                  Dallas/Maxim 1-Wire. The result is returned without any final XOR.
+   * @return the computed CRC.
+   */
+  uint8_t Crc8(const uint8_t *pcBlock, long long len, uint8_t crc = 0xFF,
+    uint8_t poly = CRC8_SENSIRION_POLY, bool reflected = false);
+
   constexpr uint16_t CRC16_CCITT_POLY = 0x1021;
   /// Reflected (LSB-first) poly for Modbus-RTU; pair with crc init 0xFFFF and reflected=true.
   constexpr uint16_t CRC16_MODBUS_POLY = 0xA001;

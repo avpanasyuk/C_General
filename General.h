@@ -71,6 +71,10 @@ typedef void (*free_func_t)(void *);
 // reflected==0: MSB-first (shift left, test bit15) -- CRC16-CCITT family.
 // reflected!=0: LSB-first (shift right, test bit0) -- pass the reflected poly
 // (e.g. 0xA001 for Modbus-RTU) and crc init 0xFFFF.
+// reflected==0: MSB-first (shift left, test bit7) -- Sensirion/SMBus family (poly 0x31).
+// reflected!=0: LSB-first (shift right, test bit0) -- pass the reflected poly
+// (e.g. 0x8C for Dallas/Maxim 1-Wire) and crc init 0x00.
+uint8_t Crc8(const uint8_t *pcBlock, long long len, uint8_t crc, uint8_t poly, int reflected);
 uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly, int reflected);
 uint32_t Crc32(const uint8_t *pcBlock, long long len, uint32_t crc, uint32_t poly);
 

@@ -156,6 +156,16 @@ const char *svprintf_static(const char *format, va_list ap) {
 
 PRINTF_WRAPPER_C(const char *, sprintf_static, svprintf_static)
 
+uint8_t Crc8(const uint8_t *pcBlock, long long len, uint8_t crc, uint8_t poly, int reflected) {
+  while(len--) {
+    crc ^= *(pcBlock++);
+    for(uint8_t i = 0; i < 8; ++i)
+      if(reflected) crc = (crc & 1) ? (crc >> 1) ^ poly : (crc >> 1);   // LSB-first (Dallas/Maxim)
+      else crc = (crc & 0x80) ? (crc << 1) ^ poly : (crc << 1);         // MSB-first (Sensirion/SMBus)
+  }
+  return crc;
+} // Crc8
+
 uint16_t Crc16(const uint8_t *pcBlock, long long len, uint16_t crc, uint16_t poly, int reflected) {
   while(len--) {
     if(reflected) { // LSB-first (e.g. Modbus-RTU with poly 0xA001)
