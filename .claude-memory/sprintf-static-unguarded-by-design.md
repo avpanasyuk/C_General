@@ -5,7 +5,7 @@ metadata:
   type: project
 ---
 
-`sprintf_static()` hands out a pointer into one shared 256 B static buffer and is
+`sprintf_static()` hands out a pointer into one shared 512 B static buffer (`BUFFER_SIZE` in `common_c.c`) and is
 **deliberately left unguarded**. An RAII guard (`avp::StaticStr`, a move-only claim +
 assert) was implemented and then removed on 2026-07-20.
 

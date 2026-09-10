@@ -55,7 +55,8 @@ both branches** or MSVC builds silently lose it.
   check does not**. Never put a side-effect-free check in `AVP_ASSERT` expecting it to catch anything
   in release.
 
-**The shared `sprintf_static` buffer** (256 B static in `common_c.c`) is the library's one piece of
+**The shared `sprintf_static` buffer** (`BUFFER_SIZE`, 512 B static in `common_c.c` — 256 truncated a
+real SDP810 status page) is the library's one piece of
 global mutable state, and it is unguarded by design: the result is valid only until the next call, and
 a caller holding it past one is on its own. An RAII claim was tried and removed — the lifetime of the
 guard object ends at the semicolon of `const char *p = sprintf_static(...)`, so it cannot see the case
@@ -67,8 +68,13 @@ cost real field debugging (see commit 9d164ff).
 
 ## Repo facts
 
-This checkout is the **primary** C_General repository — projects vendor it as a submodule, so a change
-here propagates to every consumer on their next bump. Remotes are the usual `GitHub` + `HOME` pair.
+**This checkout is a convenience clone, not the working copy.** The canonical C_General is
+`github.com/avpanasyuk/C_General` (`HOME` mirror on bsd); every consumer vendors its own submodule
+clone, and that is where library edits actually get made. So this directory goes stale silently —
+found two commits behind both remotes on 2026-09-10 — and a change made *here* propagates to nobody
+until it is pushed. `git fetch --all` and fast-forward before reading it as current, and never treat
+its state as evidence of what the library contains. Remotes are the usual `GitHub` + `HOME` pair.
+Library-wide rules and the submodule workflow live in `LIBS/CLAUDE.md`.
 
 `doxyfile` is stale: it holds absolute `c:\GIT_REPS\PROJECTS\JefCore\...` input paths and pre-rename
 `.h` filenames (`Time.h`, `Math.h`, `Vector.h`) that no longer exist. Don't run it expecting output;
